@@ -21,6 +21,7 @@ import { startServer as startHttpServer, stopServer } from './httpServer';
 import { HttpServerEndpoint, Plugin, PluginOptions } from './Plugin';
 import { createPlugin } from './pluginRegistry';
 
+
 const logger = new Logger(module);
 
 export interface LogStoreNode {
@@ -130,15 +131,20 @@ export const createLogStoreNode = async (
 				toEthereumAddress(nodeAddress)
 			);
 
-			logger.info(
-				`Welcome to the LogStore Network. Your node's generated name is ${mnemonic}.`
-			);
-			// TODO: Network Explorer link
-			logger.info(
-				`View your node in the Network Explorer: https://streamr.network/network-explorer/nodes/${encodeURIComponent(
-					nodeId
-				)}`
-			);
+			if (config.mode.type === 'standalone') {
+				logger.info(`Running in standalone mode.`);
+			} else {
+				logger.info(`Running in network mode.`);
+				logger.info(
+					`Welcome to the LogStore Network. Your node's generated name is ${mnemonic}.`
+				);
+				// TODO: Network Explorer link
+				logger.info(
+					`View your node in the Network Explorer: https://streamr.network/network-explorer/nodes/${encodeURIComponent(
+						nodeId
+					)}`
+				);
+			}
 			logger.info(`Network node ${nodeId} running`);
 			logger.info(`Ethereum address ${nodeAddress}`);
 			logger.info(
