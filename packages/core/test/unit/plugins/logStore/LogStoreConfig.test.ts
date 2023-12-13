@@ -14,7 +14,7 @@ import { toEthereumAddress, wait } from '@streamr/utils';
 import { BigNumber } from 'ethers';
 import { range } from 'lodash';
 
-import { LogStoreConfig } from '../../../../src/plugins/logStore/LogStoreConfig';
+import { LogStoreNetworkConfig } from '../../../../src/plugins/logStore/LogStoreConfig';
 
 const { parse } = StreamPartIDUtils;
 
@@ -44,7 +44,7 @@ function makeStubStream(streamId: string): Stream {
 	} as Stream;
 }
 
-describe(LogStoreConfig, () => {
+describe(LogStoreNetworkConfig, () => {
 	let getLogStoreStreams: jest.Mock<
 		Promise<{ streams: Stream[]; blockNumber: number }>,
 		[]
@@ -60,7 +60,7 @@ describe(LogStoreConfig, () => {
 	>;
 	let onStreamPartAdded: jest.Mock<void, [StreamPartID]>;
 	let onStreamPartRemoved: jest.Mock<void, [StreamPartID]>;
-	let logStoreConfig: LogStoreConfig;
+	let logStoreConfig: LogStoreNetworkConfig;
 
 	beforeEach(async () => {
 		getLogStoreStreams = jest.fn();
@@ -80,7 +80,7 @@ describe(LogStoreConfig, () => {
 
 		onStreamPartAdded = jest.fn();
 		onStreamPartRemoved = jest.fn();
-		logStoreConfig = new LogStoreConfig(
+		logStoreConfig = new LogStoreNetworkConfig(
 			// CLUSTER_ID,
 			1,
 			0,

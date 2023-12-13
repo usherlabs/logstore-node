@@ -20,7 +20,7 @@ import { Heartbeat } from '../../../../src/plugins/logStore/Heartbeat';
 import { LogStore } from '../../../../src/plugins/logStore/LogStore';
 import { PropagationDispatcher } from '../../../../src/plugins/logStore/PropagationDispatcher';
 import { PropagationResolver } from '../../../../src/plugins/logStore/PropagationResolver';
-import { QueryRequestManager } from '../../../../src/plugins/logStore/QueryRequestManager';
+import { NetworkQueryRequestManager } from '../../../../src/plugins/logStore/NetworkQueryRequestManager';
 import { QueryResponseManager } from '../../../../src/plugins/logStore/QueryResponseManager';
 import { BroadbandPublisher } from '../../../../src/shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../../src/shared/BroadbandSubscriber';
@@ -141,7 +141,7 @@ describe(PropagationResolver, () => {
 	let onlineBrokers: EthereumAddress[];
 	let propagationResolver: PropagationResolver;
 	let queryResponseManager: QueryResponseManager;
-	let queryRequestManager: QueryRequestManager;
+	let queryRequestManager: NetworkQueryRequestManager;
 
 	const listeners = new Set<MessageListener>();
 
@@ -242,7 +242,7 @@ describe(PropagationResolver, () => {
 			propagationDispatcher
 		);
 
-		queryRequestManager = new QueryRequestManager(
+		queryRequestManager = new NetworkQueryRequestManager(
 			queryResponseManager,
 			propagationResolver,
 			publisher,
