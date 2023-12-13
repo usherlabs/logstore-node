@@ -48,12 +48,12 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	constructor(options: PluginOptions) {
 		super(options);
 
-		const networkStrictBrokerConfig =
-			this.brokerConfig.mode?.type === 'network-participant'
-				? this.brokerConfig.mode
+		const networkStrictNodeConfig =
+			this.nodeConfig.mode?.type === 'network-participant'
+				? this.nodeConfig.mode
 				: undefined;
 
-		if (!networkStrictBrokerConfig) {
+		if (!networkStrictNodeConfig) {
 			throw new Error('Network config is undefined');
 		}
 
@@ -68,8 +68,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		);
 
 		this.kyvePool = new KyvePool(
-			networkStrictBrokerConfig.pool.url,
-			networkStrictBrokerConfig.pool.id
+			networkStrictNodeConfig.pool.url,
+			networkStrictNodeConfig.pool.id
 		);
 
 		this.heartbeatSubscriber = new BroadbandSubscriber(
@@ -127,7 +127,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 
 		this.reportPoller = new ReportPoller(
 			this.kyvePool,
-			networkStrictBrokerConfig.pool,
+			networkStrictNodeConfig.pool,
 			this.signer,
 			this.systemPublisher,
 			this.systemSubscriber
@@ -270,7 +270,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 
 	public async validateUserQueryAccess(address: EthereumAddress) {
 		const provider = new ethers.providers.JsonRpcProvider(
-			this.brokerConfig.client.contracts?.streamRegistryChainRPCs!.rpcs[0]
+			this.nodeConfig.client.contracts?.streamRegistryChainRPCs!.rpcs[0]
 		);
 		const queryManager = await getQueryManagerContract(provider);
 		const balance = await queryManager.balanceOf(address);

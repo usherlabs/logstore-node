@@ -8,14 +8,14 @@ const THRESHOLD = 60 * 1000;
 
 export class Heartbeat {
 	private clientId?: EthereumAddress;
-	private brokers: Map<EthereumAddress, number>;
+	private nodes: Map<EthereumAddress, number>;
 	private timer?: NodeJS.Timer;
 
 	constructor(
 		private readonly publisher: BroadbandPublisher,
 		private readonly subscriber: BroadbandSubscriber
 	) {
-		this.brokers = new Map();
+		this.nodes = new Map();
 	}
 
 	public async start(clientId: EthereumAddress) {
@@ -32,11 +32,11 @@ export class Heartbeat {
 		await this.subscriber.unsubscribe();
 	}
 
-	public get onlineBrokers() {
+	public get onlineNodes() {
 		const result: EthereumAddress[] = [];
-		for (const [broker, timestamp] of this.brokers) {
+		for (const [node, timestamp] of this.nodes) {
 			if (Date.now() - timestamp <= THRESHOLD) {
-				result.push(broker);
+				result.push(node);
 			}
 		}
 
@@ -52,6 +52,6 @@ export class Heartbeat {
 			return;
 		}
 
-		this.brokers.set(metadata.publisherId, metadata.timestamp);
+		this.nodes.set(metadata.publisherId, metadata.timestamp);
 	}
 }

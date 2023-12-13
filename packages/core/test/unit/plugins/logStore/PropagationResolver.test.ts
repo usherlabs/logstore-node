@@ -138,7 +138,7 @@ describe(PropagationResolver, () => {
 	let heartbeat: Heartbeat;
 	let publisher: BroadbandPublisher;
 	let subscriber: BroadbandSubscriber;
-	let onlineBrokers: EthereumAddress[];
+	let onlineNodes: EthereumAddress[];
 	let propagationResolver: PropagationResolver;
 	let queryResponseManager: QueryResponseManager;
 	let queryRequestManager: NetworkQueryRequestManager;
@@ -213,8 +213,8 @@ describe(PropagationResolver, () => {
 		} satisfies Partial<LogStore> as unknown as LogStore;
 
 		heartbeat = {} satisfies Partial<Heartbeat> as unknown as Heartbeat;
-		Object.defineProperty(heartbeat, 'onlineBrokers', {
-			get: jest.fn().mockImplementation(() => onlineBrokers),
+		Object.defineProperty(heartbeat, 'onlineNodes', {
+			get: jest.fn().mockImplementation(() => onlineNodes),
 		});
 
 		publisher = {
@@ -258,7 +258,7 @@ describe(PropagationResolver, () => {
 	it(
 		'resolves if the primary node is the only one broker in the network',
 		async () => {
-			onlineBrokers = [];
+			onlineNodes = [];
 
 			// this runs once we await propagationResolver.propagate()
 			setImmediate(() => {
@@ -282,7 +282,7 @@ describe(PropagationResolver, () => {
 	it(
 		'resolves if foreign responses match the primary response',
 		async () => {
-			onlineBrokers = [foreignBrokerId_1, foreignBrokerId_2];
+			onlineNodes = [foreignBrokerId_1, foreignBrokerId_2];
 
 			// this runs once we await propagationResolver.propagate()
 			setImmediate(() => {
@@ -318,7 +318,7 @@ describe(PropagationResolver, () => {
 	it(
 		'resolves when propagated messages arrive',
 		async () => {
-			onlineBrokers = [foreignBrokerId_1, foreignBrokerId_2];
+			onlineNodes = [foreignBrokerId_1, foreignBrokerId_2];
 
 			// this runs once we await propagationResolver.propagate()
 			setImmediate(() => {
@@ -364,7 +364,7 @@ describe(PropagationResolver, () => {
 	it(
 		'drops propagated corrupted propagated messages',
 		async () => {
-			onlineBrokers = [foreignBrokerId_1, foreignBrokerId_2];
+			onlineNodes = [foreignBrokerId_1, foreignBrokerId_2];
 
 			// this runs once we await propagationResolver.propagate()
 			setImmediate(() => {
@@ -413,7 +413,7 @@ describe(PropagationResolver, () => {
 	it(
 		'fails with propagation timeout',
 		async () => {
-			onlineBrokers = [foreignBrokerId_1];
+			onlineNodes = [foreignBrokerId_1];
 			jest.useFakeTimers({ advanceTimers: false });
 
 			// this runs once we await propagationResolver.propagate()

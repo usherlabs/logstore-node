@@ -174,7 +174,7 @@ describe(PropagationDispatcher, () => {
 
 		const propagationResolver = new PropagationResolver(
 			{
-				get onlineBrokers(): [] {
+				get onlineNodes(): [] {
 					return [];
 				},
 			} as Partial<Heartbeat> as Heartbeat,

@@ -27,7 +27,7 @@ export interface PluginOptions {
 	logStoreClient: LogStoreClient;
 	mode: PluginModeConfig;
 	topicsStream: Stream | null;
-	brokerConfig: StrictConfig;
+	nodeConfig: StrictConfig;
 	signer: Signer;
 }
 
@@ -37,7 +37,7 @@ export abstract class Plugin<T extends object> {
 	readonly name: string;
 	readonly logStoreClient: LogStoreClient;
 	readonly modeConfig: PluginModeConfig;
-	readonly brokerConfig: StrictConfig;
+	readonly nodeConfig: StrictConfig;
 	readonly signer: Signer;
 	readonly pluginConfig: T;
 	private readonly httpServerEndpoints: HttpServerEndpoint[] = [];
@@ -46,9 +46,9 @@ export abstract class Plugin<T extends object> {
 		this.name = options.name;
 		this.logStoreClient = options.logStoreClient;
 		this.modeConfig = options.mode;
-		this.brokerConfig = options.brokerConfig;
+		this.nodeConfig = options.nodeConfig;
 		this.signer = options.signer;
-		this.pluginConfig = options.brokerConfig.plugins[this.name];
+		this.pluginConfig = options.nodeConfig.plugins[this.name];
 		const configSchema = this.getConfigSchema();
 		if (configSchema !== undefined) {
 			validateConfig(this.pluginConfig, configSchema, `${this.name} plugin`);
@@ -64,12 +64,12 @@ export abstract class Plugin<T extends object> {
 	}
 
 	/**
-	 * This lifecycle method is called once when Broker starts
+	 * This lifecycle method is called once when LogStore Node starts
 	 */
 	abstract start(): Promise<unknown>;
 
 	/**
-	 * This lifecycle method is called once when Broker stops
+	 * This lifecycle method is called once when LogStore Node stops
 	 * It is be called only if the plugin was started successfully
 	 */
 	abstract stop(): Promise<unknown>;

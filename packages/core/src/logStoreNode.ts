@@ -14,7 +14,7 @@ import _ from 'lodash';
 
 import { version as CURRENT_VERSION } from '../package.json';
 import { Config } from './config/config';
-import BROKER_CONFIG_SCHEMA from './config/config.schema.json';
+import NODE_CONFIG_SCHEMA from './config/config.schema.json';
 import { validateConfig } from './config/validateConfig';
 import { generateMnemonicFromAddress } from './helpers/generateMnemonicFromAddress';
 import { startServer as startHttpServer, stopServer } from './httpServer';
@@ -23,16 +23,16 @@ import { createPlugin } from './pluginRegistry';
 
 const logger = new Logger(module);
 
-export interface Broker {
+export interface LogStoreNode {
 	getNode: () => Promise<NetworkNodeStub>;
 	start: () => Promise<unknown>;
 	stop: () => Promise<unknown>;
 }
 
-export const createBroker = async (
+export const createLogStoreNode = async (
 	configWithoutDefaults: Config
-): Promise<Broker> => {
-	const config = validateConfig(configWithoutDefaults, BROKER_CONFIG_SCHEMA);
+): Promise<LogStoreNode> => {
+	const config = validateConfig(configWithoutDefaults, NODE_CONFIG_SCHEMA);
 	validateClientConfig(config.client);
 
 	// Tweaks suggested by the Streamr Team
@@ -86,7 +86,7 @@ export const createBroker = async (
 			name,
 			logStoreClient,
 			mode: modeConfig,
-			brokerConfig: config,
+			nodeConfig: config,
 			topicsStream,
 			signer,
 		};
@@ -98,7 +98,7 @@ export const createBroker = async (
 
 	const getNode = async (): Promise<NetworkNodeStub> => {
 		if (!started) {
-			throw new Error('cannot invoke on non-started broker');
+			throw new Error('cannot invoke on non-started logStore node');
 		}
 		return logStoreClient.getNode();
 	};
@@ -106,7 +106,7 @@ export const createBroker = async (
 	return {
 		getNode,
 		start: async () => {
-			logger.info(`Starting LogStore broker version ${CURRENT_VERSION}`);
+			logger.info(`Starting LogStore node version ${CURRENT_VERSION}`);
 			await Promise.all(plugins.map((plugin) => plugin.start()));
 			const httpServerEndpoints = plugins.flatMap((plugin: Plugin<any>) => {
 				return plugin
@@ -125,9 +125,9 @@ export const createBroker = async (
 			}
 
 			const nodeId = (await logStoreClient.getNode()).getNodeId();
-			const brokerAddress = await logStoreClient.getAddress();
+			const nodeAddress = await logStoreClient.getAddress();
 			const mnemonic = generateMnemonicFromAddress(
-				toEthereumAddress(brokerAddress)
+				toEthereumAddress(nodeAddress)
 			);
 
 			logger.info(
@@ -140,7 +140,7 @@ export const createBroker = async (
 				)}`
 			);
 			logger.info(`Network node ${nodeId} running`);
-			logger.info(`Ethereum address ${brokerAddress}`);
+			logger.info(`Ethereum address ${nodeAddress}`);
 			logger.info(
 				`Tracker Configuration: ${
 					config.client.network?.trackers

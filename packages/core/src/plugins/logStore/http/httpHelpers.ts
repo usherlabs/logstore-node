@@ -19,7 +19,7 @@ export const sendSuccess = (
 	version: number | undefined,
 	streamId: string,
 	requestId: string,
-	participatingBrokers: string[],
+	participatingNodes: string[],
 	req: Request,
 	res: Response
 ) => {
@@ -45,7 +45,7 @@ export const sendSuccess = (
 	if (hasToVerifyNetworkResponses(req)) {
 		responseTransform.updateMetadata((metadata) => ({
 			...metadata,
-			participatingNodesAddress: participatingBrokers,
+			participatingNodesAddress: participatingNodes,
 			requestId: requestId,
 		}));
 	}

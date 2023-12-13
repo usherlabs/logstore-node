@@ -22,15 +22,15 @@ const RESPONSES_THRESHOLD = 1.0;
 class QueryPropagationState {
 	private primaryResponseHashMap: Map<string, string> | null = null;
 	private awaitingMessageIds: Map<string, string>;
-	public brokersResponseState: Map<EthereumAddress, boolean>;
+	public nodesResponseState: Map<EthereumAddress, boolean>;
 	private foreignResponseBuffer: [QueryResponse, MessageMetadata][] = [];
 	private propagateBuffer: QueryPropagate[] = [];
 	public messagesReadyToBeStored: [string, string][] = [];
 
-	constructor(onlineBrokers: EthereumAddress[]) {
+	constructor(onlineNodes: EthereumAddress[]) {
 		this.awaitingMessageIds = new Map<string, string>();
-		this.brokersResponseState = new Map<EthereumAddress, boolean>(
-			onlineBrokers.map((broker) => [broker, false])
+		this.nodesResponseState = new Map<EthereumAddress, boolean>(
+			onlineNodes.map((node) => [node, false])
 		);
 	}
 
@@ -41,7 +41,7 @@ class QueryPropagationState {
 			return;
 		}
 
-		this.brokersResponseState.set(
+		this.nodesResponseState.set(
 			toEthereumAddress(primaryResponse.requestPublisherId),
 			true
 		);
@@ -71,7 +71,7 @@ class QueryPropagationState {
 			}
 		}
 
-		this.brokersResponseState.set(metadata.publisherId, true);
+		this.nodesResponseState.set(metadata.publisherId, true);
 	}
 
 	public onPropagate(queryPropagate: QueryPropagate) {
@@ -114,19 +114,19 @@ class QueryPropagationState {
 	}
 
 	/**
-	 * We know if we are ready if we have received responses from sufficient brokers
+	 * We know if we are ready if we have received responses from sufficient nodes
 	 * that previously said that this query was missing messages
 	 */
 	public get isReady() {
-		// this means there's no one identified as online. This broker is alone and there's no chance to receive a propagate.
-		if (this.brokersResponseState.size === 0) {
+		// this means there's no one identified as online. This node is alone and there's no chance to receive a propagate.
+		if (this.nodesResponseState.size === 0) {
 			return true;
 		}
 
 		const respondedCount = Array.from(
-			this.brokersResponseState.values()
+			this.nodesResponseState.values()
 		).filter(Boolean).length;
-		const percentResponded = respondedCount / this.brokersResponseState.size;
+		const percentResponded = respondedCount / this.nodesResponseState.size;
 
 		return (
 			percentResponded >= RESPONSES_THRESHOLD &&
@@ -222,14 +222,14 @@ export class PropagationResolver {
 		const queryState = this.getOrCreateQueryState(queryResponse.requestId);
 		queryState.onPrimaryQueryResponse(queryResponse);
 
-		// it may be ready if there are no other brokers responding here
+		// it may be ready if there are no other nodes responding here
 		this.finishIfReady(queryState, queryResponse.requestId);
 	}
 
 	private getOrCreateQueryState(requestId: RequestId) {
 		const queryState =
 			this.queryPropagationStateMap.get(requestId) ??
-			new QueryPropagationState(this.heartbeat.onlineBrokers);
+			new QueryPropagationState(this.heartbeat.onlineNodes);
 		this.queryPropagationStateMap.set(requestId, queryState);
 		return queryState;
 	}
@@ -284,7 +284,7 @@ export class PropagationResolver {
 	}
 
 	// It may be ready if
-	// - we received all necessary responses from sufficient brokers
+	// - we received all necessary responses from sufficient nodes
 	// - we have no more missing messages waiting for propagation.
 	private finishIfReady(
 		queryState: QueryPropagationState,
@@ -294,7 +294,7 @@ export class PropagationResolver {
 			const callback = this.queryCallbacks.get(requestId);
 			this.clean(requestId);
 			if (callback) {
-				callback(Array.from(queryState.brokersResponseState.keys()));
+				callback(Array.from(queryState.nodesResponseState.keys()));
 			}
 		}
 	}

@@ -28,7 +28,7 @@ export interface LogStorePluginConfig {
 	};
 	// TODO: Do we need the cluster config for LogStore
 	cluster: {
-		// If clusterAddress is undefined, the broker's address will be used
+		// If clusterAddress is undefined, the node's address will be used
 		clusterAddress?: EthereumAddress;
 		clusterSize: number;
 		myIndexInCluster: number;

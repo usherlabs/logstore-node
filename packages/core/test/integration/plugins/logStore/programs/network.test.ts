@@ -26,7 +26,7 @@ import { providers, Wallet } from 'ethers';
 import { defer, firstValueFrom, switchAll } from 'rxjs';
 import { switchMap } from 'rxjs/internal/operators/switchMap';
 
-import { Broker } from '../../../../../src/broker';
+import { LogStoreNode } from '../../../../../src/logStoreNode';
 import {
 	createLogStoreClient,
 	createTestStream,
@@ -60,7 +60,7 @@ describe('Network Mode Programs', () => {
 	let storeConsumerAccount: Wallet;
 
 	// Broker
-	let logStoreBroker: Broker;
+	let logStoreBroker: LogStoreNode;
 
 	// Clients
 	let publisherClient: LogStoreClient;

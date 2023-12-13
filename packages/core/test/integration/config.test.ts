@@ -1,13 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 
-import { createBroker } from '../../src/broker';
+import { createLogStoreNode } from '../../src/logStoreNode';
 
 const PATH = './configs';
 
 describe('Config', () => {
 	it('start with minimal config', async () => {
-		const broker = await createBroker({});
+		const broker = await createLogStoreNode({});
 		await broker.start();
 		await broker.stop();
 	});
@@ -21,7 +21,7 @@ describe('Config', () => {
 				const filePath = PATH + path.sep + fileName;
 				const content = fs.readFileSync(filePath);
 				const config = JSON.parse(content.toString());
-				return expect(createBroker(config)).resolves.toBeDefined();
+				return expect(createLogStoreNode(config)).resolves.toBeDefined();
 			});
 		}
 	);

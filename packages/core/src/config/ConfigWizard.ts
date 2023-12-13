@@ -198,9 +198,9 @@ export const startConfigWizard = async (
 		logger.info(`Your node's generated name is ${mnemonic}.`);
 		logger.info('View your node in the Network Explorer:');
 		logger.info(networkExplorerUrl);
-		logger.info('You can start the broker now with');
+		logger.info('You can start the logStore node now with');
 		logger.info(`logstore-broker ${storagePath}`);
 	} catch (e: any) {
-		logger.error('Broker Config Wizard encountered an error:\n' + e.message);
+		logger.error('LogStore Node Config Wizard encountered an error:\n' + e.message);
 	}
 };

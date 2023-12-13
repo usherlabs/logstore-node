@@ -15,7 +15,7 @@ import {
 import { Wallet } from 'ethers';
 import _ from 'lodash';
 
-import { Broker, createBroker as createLogStoreBroker } from '../src/broker';
+import { LogStoreNode, createLogStoreNode as createLogStoreBroker } from '../src/logStoreNode';
 import { Config } from '../src/config/config';
 
 export const STREAMR_DOCKER_DEV_HOST =
@@ -104,7 +104,7 @@ export const startTestTracker = async (port: number): Promise<Tracker> => {
 
 export const startLogStoreBroker = async (
 	testConfig: LogStoreBrokerTestConfig
-): Promise<Broker> => {
+): Promise<LogStoreNode> => {
 	const broker = await createLogStoreBroker(
 		formLogStoreNetworkBrokerConfig(testConfig)
 	);

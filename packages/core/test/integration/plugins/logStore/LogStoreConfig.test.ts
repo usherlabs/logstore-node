@@ -19,7 +19,7 @@ import { waitForCondition } from '@streamr/utils';
 import cassandra, { Client } from 'cassandra-driver';
 import { providers, Wallet } from 'ethers';
 
-import { Broker } from '../../../../src/broker';
+import { LogStoreNode } from '../../../../src/logStoreNode';
 import {
 	createLogStoreClient,
 	createTestStream,
@@ -52,7 +52,7 @@ describe('LogStoreConfig', () => {
 	let adminAccount: Wallet;
 
 	// Broker
-	let logStoreBroker: Broker;
+	let logStoreBroker: LogStoreNode;
 
 	// Clients
 	let publisherClient: LogStoreClient;

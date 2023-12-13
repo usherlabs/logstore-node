@@ -1,18 +1,18 @@
 import { Command } from 'commander';
 
-import { createBroker } from '../broker';
+import { createLogStoreNode } from '../logStoreNode';
 import { overrideConfigToEnvVarsIfGiven } from '../config/config';
 import { readConfigAndMigrateIfNeeded } from '../config/migration';
 import { configOption } from './options';
 
 export const testCommand = new Command('test')
-	.description('Test the configuration (does not start the broker node)')
+	.description('Test the configuration (does not start the logStore node)')
 	.addOption(configOption)
 	.action(async (args) => {
 		try {
 			const config = readConfigAndMigrateIfNeeded(args.config);
 			overrideConfigToEnvVarsIfGiven(config);
-			await createBroker(config);
+			await createLogStoreNode(config);
 			console.info('the configuration is valid');
 			// TODO: remove process.exit(0)
 			// We should not need explicit exit call if all setTimeouts are cleared.

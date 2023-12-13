@@ -25,7 +25,7 @@ import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { waitForCondition } from '@streamr/utils';
 import { providers, Wallet } from 'ethers';
 
-import { Broker } from '../../../src/broker';
+import { LogStoreNode } from '../../../src/logStoreNode';
 import {
 	createLogStoreClient,
 	createTestStream,
@@ -58,7 +58,7 @@ describe('Network Mode Queries', () => {
 	let storeConsumerAccount: Wallet;
 
 	// Broker
-	let logStoreBroker: Broker;
+	let logStoreBroker: LogStoreNode;
 
 	// Clients
 	let publisherClient: LogStoreClient;

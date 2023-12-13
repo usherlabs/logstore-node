@@ -7,7 +7,7 @@ import { Command } from 'commander';
 import { ethers } from 'ethers';
 
 import { overrideConfigToEnvVarsIfGiven } from '../config/config';
-import BROKER_CONFIG_SCHEMA from '../config/config.schema.json';
+import LOGSTORE_NODE_CONFIG_SCHEMA from '../config/config.schema.json';
 import { readConfigAndMigrateIfNeeded } from '../config/migration';
 import { validateConfig } from '../config/validateConfig';
 import { configOption } from './options';
@@ -24,7 +24,7 @@ export const leaveCommand = new Command('leave')
 			overrideConfigToEnvVarsIfGiven(configWithoutDefaults);
 			const config = validateConfig(
 				configWithoutDefaults,
-				BROKER_CONFIG_SCHEMA
+				LOGSTORE_NODE_CONFIG_SCHEMA
 			);
 			validateClientConfig(config.client);
 
