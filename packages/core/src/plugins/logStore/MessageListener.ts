@@ -1,30 +1,28 @@
 import { LogStoreClient } from '@logsn/client';
 import { StreamMessage, StreamMessageType } from '@streamr/protocol';
 
+import { ObservableEventEmitter } from '../../utils/events';
 import { LogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
-import { MessageProcessor } from './MessageProcessor';
 
 /**
  * Represents a message listener for storing messages in a log store.
  */
-export class MessageListener {
+export class MessageListener extends ObservableEventEmitter<{
+	message: (msg: StreamMessage) => void;
+}> {
 	private logStore?: LogStore;
 	private logStoreConfig?: LogStoreConfig;
-	private messageProcessor?: MessageProcessor;
 
 	private cleanupTimer?: NodeJS.Timer;
 
-	constructor(private readonly logStoreClient: LogStoreClient) {}
+	constructor(private readonly logStoreClient: LogStoreClient) {
+		super();
+	}
 
-	public async start(
-		logStore: LogStore,
-		logStoreConfig: LogStoreConfig,
-		messageProcessor: MessageProcessor
-	) {
+	public async start(logStore: LogStore, logStoreConfig: LogStoreConfig) {
 		this.logStore = logStore;
 		this.logStoreConfig = logStoreConfig;
-		this.messageProcessor = messageProcessor;
 
 		const node = await this.logStoreClient.getNode();
 		// Subscribe to all stream partitions at logstore registry
@@ -34,8 +32,9 @@ export class MessageListener {
 	public async stop() {
 		clearInterval(this.cleanupTimer);
 		const node = await this.logStoreClient.getNode();
+		this.removeAllListeners();
 		node.removeMessageListener(this.onStreamMessage);
-		this.logStoreConfig!.getStreamParts().forEach((streamPart) => {
+		this.logStoreConfig?.getStreamParts().forEach((streamPart) => {
 			node.unsubscribe(streamPart);
 		});
 	}
@@ -50,7 +49,7 @@ export class MessageListener {
 			this.logStoreConfig!.hasStreamPart(msg.getStreamPartID())
 		) {
 			await this.logStore!.store(msg);
-			await this.messageProcessor!.process(msg);
+			this.emit('message', msg);
 		}
 	}
 }

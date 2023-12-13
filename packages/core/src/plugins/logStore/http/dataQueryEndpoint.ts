@@ -1,17 +1,14 @@
 /**
  * Endpoints for RESTful data requests
  */
-import { getQueryManagerContract } from '@logsn/shared';
 import {
 	MetricsContext,
 	MetricsDefinition,
 	RateMetric,
 	toEthereumAddress,
 } from '@streamr/utils';
-import { ethers } from 'ethers';
 import { Request, RequestHandler, Response } from 'express';
 
-import { StrictConfig } from '../../../config/config';
 import { HttpServerEndpoint } from '../../../Plugin';
 import { createBasicAuthenticatorMiddleware } from '../authentication';
 import { LogStoreContext, logStoreContext } from '../context';
@@ -21,7 +18,6 @@ import { getForLastQueryRequest } from './getDataForRequest/getForLastQueryReque
 import { getForRangeQueryRequest } from './getDataForRequest/getForRangeQueryRequest';
 import { sendError, sendSuccess } from './httpHelpers';
 import { FromRequest, LastRequest, RangeRequest } from './requestTypes';
-
 
 // TODO: move this to protocol-js
 export const MIN_SEQUENCE_NUMBER_VALUE = 0;
@@ -90,16 +86,10 @@ const getDataForRequest = async (
 			throw new Error('Used store before it was initialized');
 		}
 
-		const { queryRequestManager } = store;
-
-		const { participatingNodes } =
-			await queryRequestManager.publishQueryRequestAndWaitForPropagateResolution(
+		const { data, participatingNodes } =
+			await store.logStorePlugin.processQueryRequest(
 				queryRequestBag.queryRequest
 			);
-
-		const data = queryRequestManager.getDataForQueryRequest(
-			queryRequestBag.queryRequest
-		);
 
 		return {
 			data,
@@ -109,10 +99,7 @@ const getDataForRequest = async (
 	}
 };
 
-const createHandler = (
-	config: Pick<StrictConfig, 'client'>,
-	metrics: MetricsDefinition
-): RequestHandler => {
+const createHandler = (metrics: MetricsDefinition): RequestHandler => {
 	return async (req: Request, res: Response) => {
 		if (Number.isNaN(parseInt(req.params.partition))) {
 			sendError(
@@ -125,13 +112,17 @@ const createHandler = (
 		const format = getFormat(req.query.format as string | undefined);
 
 		const consumer = toEthereumAddress(req.consumer!);
-		const provider = new ethers.providers.JsonRpcProvider(
-			config.client!.contracts?.streamRegistryChainRPCs!.rpcs[0]
-		);
-		const queryManager = await getQueryManagerContract(provider);
-		const balance = await queryManager.balanceOf(consumer);
-		if (!balance.gt(0)) {
-			sendError('Not enough balance', res);
+
+		const store = logStoreContext.getStore();
+		if (!store) {
+			throw new Error('LogStore context was not initialized');
+		}
+
+		const { logStorePlugin } = store;
+
+		const validation = await logStorePlugin.validateUserQueryAccess(consumer);
+		if (!validation.valid) {
+			sendError(validation.message, res);
 			return;
 		}
 
@@ -177,7 +168,6 @@ function injectLogstoreContextMiddleware(
 }
 
 export const createDataQueryEndpoint = (
-	config: Pick<StrictConfig, 'client'>,
 	metricsContext: MetricsContext
 ): HttpServerEndpoint => {
 	const ctx = logStoreContext.getStore();
@@ -195,7 +185,7 @@ export const createDataQueryEndpoint = (
 			// below is usually created after the endpoint is created.
 			injectLogstoreContextMiddleware(ctx),
 			createBasicAuthenticatorMiddleware(),
-			createHandler(config, metrics),
+			createHandler(metrics),
 		],
 	};
 };

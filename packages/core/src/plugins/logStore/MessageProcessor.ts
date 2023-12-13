@@ -1,5 +1,5 @@
-import { BrokerProgram, BrokerProgramModule } from '@logsn/broker-program';
 import { LogStoreClient, Stream } from '@logsn/client';
+import { BrokerProgram, BrokerProgramModule } from '@logsn/program';
 import { StreamMessage } from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
 

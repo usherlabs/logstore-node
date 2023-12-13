@@ -13,7 +13,7 @@ import { Logger, scheduleAtInterval } from '@streamr/utils';
 import axios from 'axios';
 import { ethers, Signer, Wallet } from 'ethers';
 
-import { StrictConfig } from '../../config/config';
+import { NetworkParticipantMode } from '../../config/config';
 import { decompressData } from '../../helpers/decompressFile';
 import { BroadbandPublisher } from '../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../shared/BroadbandSubscriber';
@@ -25,7 +25,6 @@ const REPORT_TRESHOLD_MULTIPLIER = 0.5;
 
 export class ReportPoller {
 	private readonly kyvePool: KyvePool;
-	private readonly poolConfig: StrictConfig['pool'];
 	private readonly signer: Signer;
 	private readonly publisher: BroadbandPublisher;
 	private readonly subscriber: BroadbandSubscriber;
@@ -39,13 +38,12 @@ export class ReportPoller {
 
 	constructor(
 		kyvePool: KyvePool,
-		config: StrictConfig,
+		private readonly poolConfig: NonNullable<NetworkParticipantMode['pool']>,
 		signer: Signer,
 		publisher: BroadbandPublisher,
 		subscriber: BroadbandSubscriber
 	) {
 		this.kyvePool = kyvePool;
-		this.poolConfig = config.pool;
 		this.latestBundle = 0;
 		this.signer = signer;
 		this.publisher = publisher;
