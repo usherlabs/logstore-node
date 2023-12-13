@@ -1,4 +1,4 @@
-import { BrokerProgram } from '@logsn/broker-program';
+import { BrokerProgram } from '@logsn/program';
 
 import { Program } from './program';
 
