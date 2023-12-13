@@ -25,14 +25,14 @@ import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { waitForCondition } from '@streamr/utils';
 import { providers, Wallet } from 'ethers';
 
-import { Broker } from '../../src/broker';
+import { Broker } from '../../../src/broker';
 import {
 	createLogStoreClient,
 	createTestStream,
 	sleep,
 	startLogStoreBroker,
 	startTestTracker,
-} from '../utils';
+} from '../../utils';
 
 jest.setTimeout(60000);
 
@@ -44,7 +44,7 @@ const STAKE_AMOUNT = BigInt('1000000000000000000');
 //    In this case dev-env doesn't run any brokers and there is no brokers joined the network (NodeManager.totalNodes == 0)
 const TRACKER_PORT = undefined;
 
-describe('Queries', () => {
+describe('Network Mode Queries', () => {
 	const provider = new providers.JsonRpcProvider(
 		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
 		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
