@@ -7,16 +7,28 @@ import { StrictConfig } from './config/config';
 import { validateConfig } from './config/validateConfig';
 import { Endpoint } from './httpServer';
 
-export interface PluginOptions {
-	name: string;
-	logStoreClient: LogStoreClient;
+export type NetworkModeConfig = {
+	type: 'network-participant';
 	heartbeatStream: Stream;
 	recoveryStream: Stream;
 	systemStream: Stream;
-	topicsStream: Stream;
+	nodeManager: LogStoreNodeManager;
+};
+
+export type StandaloneModeConfig = {
+	type: 'standalone';
+	trackedStreams: { id: string; partitions: number }[];
+};
+
+type PluginModeConfig = NetworkModeConfig | StandaloneModeConfig;
+
+export interface PluginOptions {
+	name: string;
+	logStoreClient: LogStoreClient;
+	mode: PluginModeConfig;
+	topicsStream: Stream | null;
 	brokerConfig: StrictConfig;
 	signer: Signer;
-	nodeManger: LogStoreNodeManager;
 }
 
 export type HttpServerEndpoint = Omit<Endpoint, 'apiAuthentication'>;
@@ -24,26 +36,18 @@ export type HttpServerEndpoint = Omit<Endpoint, 'apiAuthentication'>;
 export abstract class Plugin<T extends object> {
 	readonly name: string;
 	readonly logStoreClient: LogStoreClient;
-	readonly heartbeatStream: Stream;
-	readonly recoveryStream: Stream;
-	readonly systemStream: Stream;
-	readonly topicsStream: Stream;
+	readonly modeConfig: PluginModeConfig;
 	readonly brokerConfig: StrictConfig;
 	readonly signer: Signer;
-	readonly nodeManger: LogStoreNodeManager;
 	readonly pluginConfig: T;
 	private readonly httpServerEndpoints: HttpServerEndpoint[] = [];
 
 	constructor(options: PluginOptions) {
 		this.name = options.name;
 		this.logStoreClient = options.logStoreClient;
-		this.heartbeatStream = options.heartbeatStream;
-		this.recoveryStream = options.recoveryStream;
-		this.systemStream = options.systemStream;
-		this.topicsStream = options.topicsStream;
+		this.modeConfig = options.mode;
 		this.brokerConfig = options.brokerConfig;
 		this.signer = options.signer;
-		this.nodeManger = options.nodeManger;
 		this.pluginConfig = options.brokerConfig.plugins[this.name];
 		const configSchema = this.getConfigSchema();
 		if (configSchema !== undefined) {

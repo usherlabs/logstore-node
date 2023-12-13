@@ -10,6 +10,7 @@ import { Logger, toEthereumAddress } from '@streamr/utils';
 import { ethers } from 'ethers';
 import { Server as HttpServer } from 'http';
 import { Server as HttpsServer } from 'https';
+import _ from 'lodash';
 
 import { version as CURRENT_VERSION } from '../package.json';
 import { Config } from './config/config';
@@ -45,16 +46,6 @@ export const createBroker = async (
 		config.client.contracts!.logStoreNodeManagerChainAddress!
 	);
 
-	const heartbeatStreamId = toStreamID('/heartbeat', nodeManagerAddress);
-	const recoveryStreamId = toStreamID('/recovery', nodeManagerAddress);
-	const systemStreamId = toStreamID('/system', nodeManagerAddress);
-	const topicsStreamId = toStreamID('/topics', nodeManagerAddress);
-
-	const heartbeatStream = await logStoreClient.getStream(heartbeatStreamId);
-	const recoveryStream = await logStoreClient.getStream(recoveryStreamId);
-	const systemStream = await logStoreClient.getStream(systemStreamId);
-	const topicsStream = await logStoreClient.getStream(topicsStreamId);
-
 	const privateKey = (config.client!.auth as PrivateKeyAuthConfig).privateKey;
 
 	const provider = new ethers.providers.JsonRpcProvider(
@@ -62,19 +53,42 @@ export const createBroker = async (
 	);
 	const signer = new ethers.Wallet(privateKey, provider);
 
-	const nodeManger = await getNodeManagerContract(signer);
+	const nodeManagerStream = _.flow(
+		_.partial(toStreamID, _, nodeManagerAddress),
+		(v) => logStoreClient.getStream(v)
+	);
+
+	// `topicsStream` may be defined directly by the config if in 'standalone' mode, or it could be null if not configured.
+	// In 'network' mode, it will be obtained from the default stream of the nodeManager.
+	const topicsStream = await (async () => {
+		if (config.mode.type === 'standalone') {
+			return config.mode.topicsStream
+				? await logStoreClient.getStream(config.mode.topicsStream)
+				: null;
+		} else {
+			return await nodeManagerStream('/topics');
+		}
+	})();
+
+	const modeConfig: PluginOptions['mode'] =
+		config.mode.type === 'network-participant'
+			? {
+					type: 'network-participant',
+					heartbeatStream: await nodeManagerStream('/heartbeat'),
+					recoveryStream: await nodeManagerStream('/recovery'),
+					systemStream: await nodeManagerStream('/system'),
+					nodeManager: await getNodeManagerContract(signer),
+			  }
+			: config.mode;
 
 	const plugins: Plugin<any>[] = Object.keys(config.plugins).map((name) => {
 		const pluginOptions: PluginOptions = {
 			name,
 			logStoreClient,
-			heartbeatStream,
-			recoveryStream,
-			systemStream,
-			topicsStream,
+			mode: modeConfig,
 			brokerConfig: config,
+			topicsStream,
 			signer,
-			nodeManger,
 		};
 		return createPlugin(name, pluginOptions);
 	});

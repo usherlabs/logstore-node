@@ -1,4 +1,3 @@
-import { CONFIG_TEST } from '@logsn/client';
 import { toEthereumAddress } from '@streamr/utils';
 import chalk from 'chalk';
 import { Wallet } from 'ethers';

@@ -13,6 +13,14 @@ export interface LogStoreConfigListener {
 	onStreamPartRemoved: (streamPart: StreamPartID) => void;
 }
 
+export interface LogStoreConfig {
+	hasStreamPart(streamPart: StreamPartID): boolean;
+
+	getStreamParts(): ReadonlySet<StreamPartID>;
+
+	destroy(): Promise<void>;
+}
+
 /**
  * Manages the two data sources for LogStore node assignments (poll-based and
  * event-based), feeding the received full state and partial state updates to
@@ -33,7 +41,7 @@ export interface LogStoreConfigListener {
  *  issues. Therefore, if the real-time system fails, polling acts as a sort-of
  *  backup system.
  */
-export class LogStoreConfig {
+export class LogStoreNetworkConfig implements LogStoreConfig {
 	private readonly listener: LogStoreConfigListener;
 	private readonly synchronizer = new SetMembershipSynchronizer<StreamPartID>();
 	private readonly clusterSize: number;
@@ -115,4 +123,27 @@ export class LogStoreConfig {
 		);
 		logger.info('added %j to and removed %j from state', added, removed);
 	}
+}
+
+export class LogStoreStandaloneConfig implements LogStoreConfig {
+	private readonly streamParts: Set<StreamPartID>;
+
+	constructor(
+		trackedStreams: StreamPartID[],
+		listener: LogStoreConfigListener
+	) {
+		this.streamParts = new Set<StreamPartID>(trackedStreams);
+		// done as above just to permit it to evolve to dynamically add streams and better consistency
+		this.streamParts.forEach(listener.onStreamPartAdded);
+	}
+
+	hasStreamPart(streamPart: StreamPartID): boolean {
+		return this.streamParts.has(streamPart);
+	}
+
+	getStreamParts(): ReadonlySet<StreamPartID> {
+		return this.streamParts;
+	}
+
+	async destroy(): Promise<void> {}
 }
