@@ -28,15 +28,17 @@ interface LogStoreBrokerTestConfig {
 	keyspace?: string;
 	logStoreConfigRefreshInterval?: number;
 	httpServerPort?: number;
+	mode?: Config['mode'];
 }
 
-export const formLogStoreBrokerConfig = ({
+export const formLogStoreNetworkBrokerConfig = ({
 	trackerPort,
 	privateKey,
 	extraPlugins = {},
 	keyspace = 'logstore_test',
 	logStoreConfigRefreshInterval = 0,
 	httpServerPort = 7171,
+	mode
 }: LogStoreBrokerTestConfig): Config => {
 	const plugins: Record<string, any> = { ...extraPlugins };
 	plugins['logStore'] = {
@@ -81,6 +83,7 @@ export const formLogStoreBrokerConfig = ({
 			},
 		},
 		plugins,
+		mode,
 		httpServer: {
 			port: httpServerPort,
 		},
@@ -103,7 +106,7 @@ export const startLogStoreBroker = async (
 	testConfig: LogStoreBrokerTestConfig
 ): Promise<Broker> => {
 	const broker = await createLogStoreBroker(
-		formLogStoreBrokerConfig(testConfig)
+		formLogStoreNetworkBrokerConfig(testConfig)
 	);
 	await broker.start();
 	return broker;
