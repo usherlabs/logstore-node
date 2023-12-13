@@ -4,10 +4,11 @@ import {
 	NodeMetadata,
 	Stream,
 } from '@logsn/client';
-import { LogStoreManager, LogStoreNodeManager } from '@logsn/contracts';
+import { LogStoreManager, LogStoreNodeManager, LSAN } from '@logsn/contracts';
 import {
 	getNodeManagerContract,
 	getStoreManagerContract,
+	getTokenManagerContract,
 	prepareStakeForNodeManager,
 	prepareStakeForStoreManager,
 } from '@logsn/shared';
@@ -48,6 +49,7 @@ describe('LogStoreConfig', () => {
 	let logStoreBrokerAccount: Wallet;
 	let publisherAccount: Wallet;
 	let storeOwnerAccount: Wallet;
+	let adminAccount: Wallet;
 
 	// Broker
 	let logStoreBroker: Broker;
@@ -59,6 +61,8 @@ describe('LogStoreConfig', () => {
 	// Contracts
 	let nodeManager: LogStoreNodeManager;
 	let storeManager: LogStoreManager;
+	let nodeAdminManager: LogStoreNodeManager;
+	let tokenAdminManager: LSAN;
 
 	let tracker: Tracker;
 	let testStream: Stream;
@@ -71,10 +75,16 @@ describe('LogStoreConfig', () => {
 		);
 		publisherAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeOwnerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
+		adminAccount = new Wallet(
+			process.env.CONTRACT_OWNER_PRIVATE_KEY!,
+			provider
+		);
 
 		// Contracts
 		nodeManager = await getNodeManagerContract(logStoreBrokerAccount);
 		storeManager = await getStoreManagerContract(storeOwnerAccount);
+		nodeAdminManager = await getNodeManagerContract(adminAccount);
+		tokenAdminManager = await getTokenManagerContract(adminAccount);
 
 		// Clients
 		cassandraClient = new cassandra.Client({
@@ -95,6 +105,13 @@ describe('LogStoreConfig', () => {
 		const nodeMetadata: NodeMetadata = {
 			http: 'http://127.0.0.1:7171',
 		};
+
+		await nodeAdminManager
+			.whitelistApproveNode(logStoreBrokerAccount.address)
+			.then((tx) => tx.wait());
+		await tokenAdminManager
+			.addWhitelist(logStoreBrokerAccount.address, nodeManager.address)
+			.then((tx) => tx.wait());
 
 		await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
 		(await nodeManager.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))).wait();
