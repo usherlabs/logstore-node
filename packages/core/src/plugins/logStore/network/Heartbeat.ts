@@ -1,7 +1,7 @@
 import { EthereumAddress, MessageMetadata } from '@logsn/client';
 
-import { BroadbandPublisher } from '../../shared/BroadbandPublisher';
-import { BroadbandSubscriber } from '../../shared/BroadbandSubscriber';
+import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
+import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 
 const INTERVAL = 1 * 1000;
 const THRESHOLD = 60 * 1000;

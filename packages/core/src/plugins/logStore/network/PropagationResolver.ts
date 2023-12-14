@@ -9,9 +9,9 @@ import {
 import { createSignaturePayload, StreamMessage } from '@streamr/protocol';
 import { Logger, toEthereumAddress } from '@streamr/utils';
 
-import { BroadbandSubscriber } from '../../shared/BroadbandSubscriber';
+import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import { Heartbeat } from './Heartbeat';
-import { LogStore } from './LogStore';
+import { LogStore } from '../LogStore';
 
 const logger = new Logger(module);
 

@@ -5,23 +5,23 @@ import { EthereumAddress, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
 import { ethers } from 'ethers';
 
-import { NetworkModeConfig, PluginOptions } from '../../Plugin';
-import { BroadbandPublisher } from '../../shared/BroadbandPublisher';
-import { BroadbandSubscriber } from '../../shared/BroadbandSubscriber';
-import PLUGIN_CONFIG_SCHEMA from './config.schema.json';
+import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
+import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
+import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
+import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
 import { Heartbeat } from './Heartbeat';
 import { KyvePool } from './KyvePool';
-import { LogStoreNetworkConfig } from './LogStoreConfig';
-import { LogStorePlugin } from './LogStorePlugin';
+import { LogStorePlugin } from '../LogStorePlugin';
 import { MessageMetricsCollector } from './MessageMetricsCollector';
 import { NetworkQueryRequestManager } from './NetworkQueryRequestManager';
 import { PropagationDispatcher } from './PropagationDispatcher';
 import { PropagationResolver } from './PropagationResolver';
 import { QueryResponseManager } from './QueryResponseManager';
-import { createRecoveryEndpoint } from './recoveryEndpoint';
+import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { ReportPoller } from './ReportPoller';
 import { SystemCache } from './SystemCache';
 import { SystemRecovery } from './SystemRecovery';
+import {LogStoreNetworkConfig} from "./LogStoreNetworkConfig";
 
 const METRICS_INTERVAL = 60 * 1000;
 
@@ -49,7 +49,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		super(options);
 
 		const networkStrictNodeConfig =
-			this.nodeConfig.mode?.type === 'network-participant'
+			this.nodeConfig.mode?.type === 'network'
 				? this.nodeConfig.mode
 				: undefined;
 
@@ -135,7 +135,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	}
 
 	get networkConfig(): NetworkModeConfig {
-		if (this.modeConfig.type !== 'network-participant') {
+		if (this.modeConfig.type !== 'network') {
 			throw new Error('Something went wrong, this should be a network plugin');
 		}
 		return this.modeConfig;

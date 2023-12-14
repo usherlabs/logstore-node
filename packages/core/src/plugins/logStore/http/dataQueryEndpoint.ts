@@ -10,7 +10,7 @@ import {
 import { Request, RequestHandler, Response } from 'express';
 
 import { HttpServerEndpoint } from '../../../Plugin';
-import { createBasicAuthenticatorMiddleware } from '../authentication';
+import { createBasicAuthenticatorMiddleware } from './authentication';
 import { LogStoreContext, logStoreContext } from '../context';
 import { getFormat } from './DataQueryFormat';
 import { getForFromQueryRequest } from './getDataForRequest/getForFromQueryRequest';

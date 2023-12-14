@@ -10,16 +10,17 @@ import { Logger } from '@streamr/utils';
 import { keccak256 } from 'ethers/lib/utils';
 import { Readable } from 'stream';
 
-import { BroadbandPublisher } from '../../shared/BroadbandPublisher';
-import { BroadbandSubscriber } from '../../shared/BroadbandSubscriber';
-import { LogStore } from './LogStore';
+import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
+import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
+import { LogStore } from '../LogStore';
 import { PropagationResolver } from './PropagationResolver';
 import { QueryResponseManager } from './QueryResponseManager';
-import { StandaloneQueryRequestManager } from './StandaloneQueryRequestManager';
+
+import {BaseQueryRequestManager} from "../BaseQueryRequestManager";
 
 const logger = new Logger(module);
 
-export class NetworkQueryRequestManager extends StandaloneQueryRequestManager {
+export class NetworkQueryRequestManager extends BaseQueryRequestManager {
 	constructor(
 		private readonly queryResponseManager: QueryResponseManager,
 		private readonly propagationResolver: PropagationResolver,

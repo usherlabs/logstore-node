@@ -3,9 +3,9 @@ import { RecoveryRequest } from '@logsn/protocol';
 import { Logger, MetricsContext, RateMetric } from '@streamr/utils';
 import express, { Request, RequestHandler, Response } from 'express';
 
-import { HttpServerEndpoint } from '../../Plugin';
+import { HttpServerEndpoint } from '../../../Plugin';
 import { createBasicAuthenticatorMiddleware } from './authentication';
-import { Heartbeat } from './Heartbeat';
+import { Heartbeat } from '../network/Heartbeat';
 
 const logger = new Logger(module);
 

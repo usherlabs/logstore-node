@@ -3,8 +3,8 @@ import { Plugin, PluginOptions } from './Plugin';
 // import { ConsoleMetricsPlugin } from './plugins/consoleMetrics/ConsoleMetricsPlugin'
 // import { WebsocketPlugin } from './plugins/websocket/WebsocketPlugin'
 // import { MqttPlugin } from './plugins/mqtt/MqttPlugin'
-import { LogStoreNetworkPlugin } from './plugins/logStore/LogStoreNetworkPlugin';
-import { LogStoreStandalonePlugin } from './plugins/logStore/LogStoreStandalonePlugin';
+import { LogStoreNetworkPlugin } from './plugins/logStore/network/LogStoreNetworkPlugin';
+import { LogStoreStandalonePlugin } from './plugins/logStore/standalone/LogStoreStandalonePlugin';
 
 // import { BrubeckMinerPlugin } from './plugins/brubeckMiner/BrubeckMinerPlugin'
 // import { SubscriberPlugin } from './plugins/subscriber/SubscriberPlugin'
@@ -25,7 +25,7 @@ export const createPlugin = (
 		// case 'mqtt':
 		//     return new MqttPlugin(pluginOptions)
 		case 'logStore':
-			return pluginOptions.mode.type === 'network-participant'
+			return pluginOptions.mode.type === 'network'
 				? new LogStoreNetworkPlugin(pluginOptions)
 				: new LogStoreStandalonePlugin(pluginOptions);
 		// case 'brubeckMiner':

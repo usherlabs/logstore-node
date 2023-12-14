@@ -2,7 +2,7 @@ import { MessageMetadata } from '@logsn/client';
 import { SystemMessage, SystemMessageType } from '@logsn/protocol';
 import { Logger } from '@streamr/utils';
 
-import { BroadbandSubscriber } from '../../shared/BroadbandSubscriber';
+import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import { KyvePool } from './KyvePool';
 
 const logger = new Logger(module);

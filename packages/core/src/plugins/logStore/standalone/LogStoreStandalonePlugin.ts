@@ -3,19 +3,19 @@ import { toStreamID, toStreamPartID } from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
 import _ from 'lodash';
 
-import { PluginOptions, StandaloneModeConfig } from '../../Plugin';
-import { LogStoreStandaloneConfig } from './LogStoreConfig';
-import { LogStorePlugin } from './LogStorePlugin';
-import { StandaloneQueryRequestManager } from './StandaloneQueryRequestManager';
+import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
+import { LogStorePlugin } from '../LogStorePlugin';
+import {LogStoreStandaloneConfig} from "./LogStoreStandaloneConfig";
+import {BaseQueryRequestManager} from "../BaseQueryRequestManager";
 
 const logger = new Logger(module);
 
 export class LogStoreStandalonePlugin extends LogStorePlugin {
-	private standaloneQueryRequestManager: StandaloneQueryRequestManager;
+	private standaloneQueryRequestManager: BaseQueryRequestManager;
 
 	constructor(options: PluginOptions) {
 		super(options);
-		this.standaloneQueryRequestManager = new StandaloneQueryRequestManager();
+		this.standaloneQueryRequestManager = new BaseQueryRequestManager();
 	}
 
 	private get standaloneConfig(): StandaloneModeConfig {

@@ -6,8 +6,8 @@ import {
 } from '@logsn/protocol';
 import { EthereumAddress, Logger } from '@streamr/utils';
 
-import { BroadbandPublisher } from '../../shared/BroadbandPublisher';
-import { BroadbandSubscriber } from '../../shared/BroadbandSubscriber';
+import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
+import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import { PropagationDispatcher } from './PropagationDispatcher';
 import { PropagationResolver } from './PropagationResolver';
 

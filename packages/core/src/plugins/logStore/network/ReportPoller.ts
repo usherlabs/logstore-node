@@ -13,10 +13,10 @@ import { Logger, scheduleAtInterval } from '@streamr/utils';
 import axios from 'axios';
 import { ethers, Signer, Wallet } from 'ethers';
 
-import { NetworkParticipantMode } from '../../config/config';
-import { decompressData } from '../../helpers/decompressFile';
-import { BroadbandPublisher } from '../../shared/BroadbandPublisher';
-import { BroadbandSubscriber } from '../../shared/BroadbandSubscriber';
+import { NetworkParticipantMode } from '../../../config/config';
+import { decompressData } from '../../../helpers/decompressFile';
+import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
+import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import { KyvePool } from './KyvePool';
 import { ReportPoll } from './ReportPoll';
 
