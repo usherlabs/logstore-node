@@ -1,5 +1,5 @@
 {
-	"name": "@logsn/node",
+	"name": "logstore-node",
 	"version": "0.0.1",
 	"description": "Log Store Node",
 	"repository": "git@github.com:usherlabs/logstore.git",
