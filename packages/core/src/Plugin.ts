@@ -8,7 +8,7 @@ import { validateConfig } from './config/validateConfig';
 import { Endpoint } from './httpServer';
 
 export type NetworkModeConfig = {
-	type: 'network-participant';
+	type: 'network';
 	heartbeatStream: Stream;
 	recoveryStream: Stream;
 	systemStream: Stream;

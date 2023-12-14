@@ -5,7 +5,7 @@ import path from 'path';
 import { DeepRequired } from 'ts-essentials';
 
 export type NetworkParticipantMode = {
-	type: 'network-participant';
+	type: 'network';
 	pool?: {
 		id: string;
 		url: string;

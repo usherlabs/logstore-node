@@ -86,7 +86,7 @@
 					"properties": {
 						"type": {
 							"type": "string",
-							"enum": ["network-participant"]
+							"enum": ["network"]
 						},
 						"pool": {
 							"type": "object",
@@ -117,7 +117,7 @@
 				}
 			],
 			"default": {
-				"type": "network-participant"
+				"type": "network"
 			}
 		},
 		"httpServer": {
