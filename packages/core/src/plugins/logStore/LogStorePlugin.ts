@@ -43,8 +43,6 @@ export interface LogStorePluginConfig {
 	};
 }
 
-type a = Node
-
 export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 	protected maybeLogStore?: LogStore;
 	protected maybeLogStoreConfig?: LogStoreConfig;
