@@ -7,7 +7,7 @@
   },
 	"mode": {
 		"type": "standalone",
-		"topicsStream": "0x365bdc64e2adb50e12e56a53b7cc438aw123f0dd/topics",
+		"topicsStream": "0xc0ffee254729296a45a3885639AC7E10F9d54979/topics",
 		"trackedStreams": [
 			{
 				"id": "testStream.id",
