@@ -19,7 +19,7 @@ import { waitForCondition } from '@streamr/utils';
 import cassandra, { Client } from 'cassandra-driver';
 import { providers, Wallet } from 'ethers';
 
-import { LogStoreNode } from '../../../../src/logStoreNode';
+import { LogStoreNode } from '../../../../src/node';
 import {
 	createLogStoreClient,
 	createTestStream,

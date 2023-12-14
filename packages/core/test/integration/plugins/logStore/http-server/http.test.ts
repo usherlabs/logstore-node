@@ -38,7 +38,7 @@ import { providers, Wallet } from 'ethers';
 import { range } from 'lodash';
 import { Readable } from 'stream';
 
-import { LogStoreNode } from '../../../../../src/logStoreNode';
+import { LogStoreNode } from '../../../../../src/node';
 import { toObject } from '../../../../../src/plugins/logStore/http/DataQueryFormat';
 import {
 	createLogStoreClient,

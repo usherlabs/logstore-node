@@ -15,7 +15,7 @@ import {
 import { Wallet } from 'ethers';
 import _ from 'lodash';
 
-import { LogStoreNode, createLogStoreNode as createLogStoreBroker } from '../src/logStoreNode';
+import { LogStoreNode, createLogStoreNode as createLogStoreBroker } from '../src/node';
 import { Config } from '../src/config/config';
 
 export const STREAMR_DOCKER_DEV_HOST =

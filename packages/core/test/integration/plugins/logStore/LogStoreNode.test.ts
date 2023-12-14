@@ -3,7 +3,7 @@ import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { toEthereumAddress } from '@streamr/utils';
 import { Wallet } from 'ethers';
 
-import { LogStoreNode } from '../../../../src/logStoreNode';
+import { LogStoreNode } from '../../../../src/node';
 import { startLogStoreBroker, startTestTracker } from '../../../utils';
 
 const trackerPort = 12503;

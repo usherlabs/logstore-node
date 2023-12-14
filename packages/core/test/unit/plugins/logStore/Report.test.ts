@@ -20,7 +20,7 @@ import { providers } from 'ethers';
 import { range } from 'lodash';
 
 // import { StrictConfig } from '../../../../src/config/config';
-import { ReportPoller } from '../../../../src/plugins/logStore/ReportPoller';
+import { ReportPoller } from '../../../../src/plugins/logStore/network/ReportPoller';
 import {
 	createLogStoreClient,
 	createTestStream,

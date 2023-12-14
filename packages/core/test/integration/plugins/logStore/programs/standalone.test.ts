@@ -9,7 +9,7 @@ import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { providers, Wallet } from 'ethers';
 import { defer, firstValueFrom, switchAll } from 'rxjs';
 
-import { LogStoreNode } from '../../../../../src/logStoreNode';
+import { LogStoreNode } from '../../../../../src/node';
 import {
 	createLogStoreClient,
 	createTestStream,

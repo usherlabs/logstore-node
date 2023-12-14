@@ -26,7 +26,7 @@ import { providers, Wallet } from 'ethers';
 import { defer, firstValueFrom, switchAll } from 'rxjs';
 import { switchMap } from 'rxjs/internal/operators/switchMap';
 
-import { LogStoreNode } from '../../../../../src/logStoreNode';
+import { LogStoreNode } from '../../../../../src/node';
 import {
 	createLogStoreClient,
 	createTestStream,

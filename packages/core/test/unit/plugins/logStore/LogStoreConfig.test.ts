@@ -14,7 +14,7 @@ import { toEthereumAddress, wait } from '@streamr/utils';
 import { BigNumber } from 'ethers';
 import { range } from 'lodash';
 
-import { LogStoreNetworkConfig } from '../../../../src/plugins/logStore/LogStoreConfig';
+import { LogStoreNetworkConfig } from '../../../../src/plugins/logStore/network/LogStoreNetworkConfig';
 
 const { parse } = StreamPartIDUtils;
 

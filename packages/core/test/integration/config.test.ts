@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { createLogStoreNode } from '../../src/logStoreNode';
+import { createLogStoreNode } from '../../src/node';
 
 const PATH = './configs';
 
@@ -12,7 +12,10 @@ describe('Config', () => {
 		await broker.stop();
 	});
 
-	const fileNames = fs.readdirSync(PATH);
+	const fileNames = fs.readdirSync(PATH).filter(
+		// we don't want to test standalone example as it contains invalid stream address
+		(fileName) => fileName !== 'standalone-node.example.json'
+	);
 
 	describe.each(fileNames.map((fileName) => [fileName]))(
 		'validate',
