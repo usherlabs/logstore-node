@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 
-import { createLogStoreNode } from '../logStoreNode';
+import { createLogStoreNode } from '../node';
 import { overrideConfigToEnvVarsIfGiven } from '../config/config';
 import { readConfigAndMigrateIfNeeded } from '../config/migration';
 import { configOption } from './options';
