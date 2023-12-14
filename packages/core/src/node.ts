@@ -72,9 +72,9 @@ export const createLogStoreNode = async (
 	})();
 
 	const modeConfig: PluginOptions['mode'] =
-		config.mode.type === 'network-participant'
+		config.mode.type === 'network'
 			? {
-					type: 'network-participant',
+					type: 'network',
 					heartbeatStream: await nodeManagerStream('/heartbeat'),
 					recoveryStream: await nodeManagerStream('/recovery'),
 					systemStream: await nodeManagerStream('/system'),
