@@ -14,7 +14,7 @@ export const delegateAddressArgument = new Argument(
 // Options
 export const metadataOption = new Option(
 	'-m, --metadata <string>',
-	`Broker Node's metadata representing its http endpoint. ie. { "http": "http://127.0.0.1:7171" }`
+	`LogStore Node's metadata representing its http endpoint. ie. { "http": "http://127.0.0.1:7171" }`
 );
 
 export const configOption = new Option(

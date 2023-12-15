@@ -1,11 +1,11 @@
 import { Stream } from '@logsn/client';
 import { RecoveryRequest } from '@logsn/protocol';
 import { Logger, MetricsContext, RateMetric } from '@streamr/utils';
-import { json, Request, RequestHandler, Response } from 'express';
+import express, { Request, RequestHandler, Response } from 'express';
 
-import { HttpServerEndpoint } from '../../Plugin';
+import { HttpServerEndpoint } from '../../../Plugin';
 import { createBasicAuthenticatorMiddleware } from './authentication';
-import { Heartbeat } from './Heartbeat';
+import { Heartbeat } from '../network/Heartbeat';
 
 const logger = new Logger(module);
 
@@ -27,7 +27,7 @@ const createHandler = (
 			JSON.stringify(recoveryRequest)
 		);
 
-		res.json(heartbeat.onlineBrokers);
+		res.json(heartbeat.onlineNodes);
 	};
 };
 
@@ -44,7 +44,7 @@ export const createRecoveryEndpoint = (
 		path: `/recovery`,
 		method: 'post',
 		requestHandlers: [
-			json(),
+			express.json(),
 			createBasicAuthenticatorMiddleware(),
 			createHandler(systemStream, heartbeat),
 		],

@@ -3,7 +3,7 @@ import { Command } from 'commander';
 import { startConfigWizard } from '../config/ConfigWizard';
 
 export const initCommand = new Command('init')
-	.description('Initialise the configuration for the broker node')
+	.description('Initialise the configuration for the LogStore node')
 	.action(async () => {
 		try {
 			startConfigWizard();

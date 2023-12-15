@@ -1,7 +1,7 @@
 import { LogStoreClient, Stream } from '@logsn/client';
 import { wait } from '@streamr/utils';
 
-import { LogStorePoller } from '../../../../src/plugins/logStore/LogStorePoller';
+import { LogStorePoller } from '../../../../src/plugins/logStore/network/LogStorePoller';
 
 const POLL_TIME = 5;
 

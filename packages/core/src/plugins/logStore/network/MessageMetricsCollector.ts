@@ -6,11 +6,11 @@ import {
 } from '@logsn/client';
 import { SystemMessageType } from '@logsn/protocol';
 
-import { BroadbandSubscriber } from '../../shared/BroadbandSubscriber';
+import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import {
 	MessageMetricsSubject,
 	MessageMetricsSummary,
-} from '../../shared/MessageMetricsSummary';
+} from '../../../shared/MessageMetricsSummary';
 
 const METRICS_SUBJECTS: MessageMetricsSubject[] = [
 	{

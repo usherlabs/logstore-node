@@ -2,9 +2,29 @@ import { LogStoreClientConfig } from '@logsn/client';
 import { camelCase, set } from 'lodash';
 import * as os from 'os';
 import path from 'path';
+import { DeepRequired } from 'ts-essentials';
+
+export type NetworkParticipantMode = {
+	type: 'network';
+	pool?: {
+		id: string;
+		url: string;
+		pollInterval: number;
+	};
+};
+type StandaloneMode = {
+	type: 'standalone';
+	trackedStreams: {
+		id: string;
+		partitions: number;
+	}[];
+	topicsStream?: string;
+};
+type Mode = StandaloneMode | NetworkParticipantMode;
 
 export interface Config {
 	client?: LogStoreClientConfig;
+	mode?: Mode;
 	httpServer?: {
 		port: number;
 		sslCertificate?: {
@@ -13,11 +33,6 @@ export interface Config {
 		};
 	};
 	plugins?: Record<string, any>;
-	pool?: {
-		id: string;
-		url: string;
-		pollInterval: number;
-	};
 }
 
 // StrictConfig is a config object to which some default values have been applied
@@ -26,7 +41,7 @@ export type StrictConfig = Config & {
 	client: Exclude<Config['client'], undefined>;
 	plugins: Exclude<Config['plugins'], undefined>;
 	httpServer: Exclude<Config['httpServer'], undefined>;
-	pool: Exclude<Config['pool'], undefined>;
+	mode: NonNullable<DeepRequired<Config['mode']>>;
 };
 
 export interface ConfigFile extends Config {

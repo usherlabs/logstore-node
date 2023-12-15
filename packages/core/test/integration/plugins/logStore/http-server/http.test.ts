@@ -38,7 +38,7 @@ import { providers, Wallet } from 'ethers';
 import { range } from 'lodash';
 import { Readable } from 'stream';
 
-import { Broker } from '../../../../../src/broker';
+import { LogStoreNode } from '../../../../../src/node';
 import { toObject } from '../../../../../src/plugins/logStore/http/DataQueryFormat';
 import {
 	createLogStoreClient,
@@ -90,7 +90,7 @@ describe('http works', () => {
 	let storeConsumerAccount: Wallet;
 
 	// Broker
-	let logStoreBroker: Broker;
+	let logStoreBroker: LogStoreNode;
 
 	// Clients
 	let publisherClient: LogStoreClient;

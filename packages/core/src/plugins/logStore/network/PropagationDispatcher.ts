@@ -1,7 +1,7 @@
 import { QueryPropagate, QueryResponse } from '@logsn/protocol';
 
-import { BroadbandPublisher } from '../../shared/BroadbandPublisher';
-import { LogStore } from './LogStore';
+import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
+import { LogStore } from '../LogStore';
 
 type RequestId = string;
 

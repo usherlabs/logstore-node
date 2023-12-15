@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.streamr.network/config-v2.schema.json",
+  "client": {
+    "auth": {
+      "privateKey": "0xbb00000000000000000000000000000000000000000000000000000000000001"
+    }
+  },
+	"mode": {
+		"type": "standalone",
+		"topicsStream": "0xc0ffee254729296a45a3885639AC7E10F9d54979/topics",
+		"trackedStreams": [
+			{
+				"id": "testStream.id",
+				"partitions": 1
+			}
+		]
+	},
+  "httpServer": {
+    "port": 7771
+  },
+  "plugins": {
+    "logStore": {
+      "cassandra": {
+        "hosts": [
+          "cassandra"
+        ],
+        "username": "",
+        "password": "",
+        "keyspace": "logstore_broker_1",
+        "datacenter": "datacenter1"
+      },
+      "programs": {
+        "chainRpcUrls": {
+          "8997": "http://10.200.10.1:8546",
+          "137": "https://polygon.llamarpc.com"
+        }
+      }
+    }
+  }
+}

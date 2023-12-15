@@ -11,7 +11,7 @@ import { Command } from 'commander';
 import { ethers } from 'ethers';
 
 import { overrideConfigToEnvVarsIfGiven } from '../config/config';
-import BROKER_CONFIG_SCHEMA from '../config/config.schema.json';
+import NODE_CONFIG_SCHEMA from '../config/config.schema.json';
 import { readConfigAndMigrateIfNeeded } from '../config/migration';
 import { validateConfig } from '../config/validateConfig';
 import {
@@ -46,7 +46,7 @@ export const joinCommand = new Command('join')
 				overrideConfigToEnvVarsIfGiven(configWithoutDefaults);
 				const config = validateConfig(
 					configWithoutDefaults,
-					BROKER_CONFIG_SCHEMA
+					NODE_CONFIG_SCHEMA
 				);
 				validateClientConfig(config.client);
 

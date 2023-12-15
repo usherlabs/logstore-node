@@ -10,28 +10,30 @@ import { Logger, toEthereumAddress } from '@streamr/utils';
 import { ethers } from 'ethers';
 import { Server as HttpServer } from 'http';
 import { Server as HttpsServer } from 'https';
+import _ from 'lodash';
 
 import { version as CURRENT_VERSION } from '../package.json';
 import { Config } from './config/config';
-import BROKER_CONFIG_SCHEMA from './config/config.schema.json';
+import NODE_CONFIG_SCHEMA from './config/config.schema.json';
 import { validateConfig } from './config/validateConfig';
 import { generateMnemonicFromAddress } from './helpers/generateMnemonicFromAddress';
 import { startServer as startHttpServer, stopServer } from './httpServer';
 import { HttpServerEndpoint, Plugin, PluginOptions } from './Plugin';
 import { createPlugin } from './pluginRegistry';
 
+
 const logger = new Logger(module);
 
-export interface Broker {
+export interface LogStoreNode {
 	getNode: () => Promise<NetworkNodeStub>;
 	start: () => Promise<unknown>;
 	stop: () => Promise<unknown>;
 }
 
-export const createBroker = async (
+export const createLogStoreNode = async (
 	configWithoutDefaults: Config
-): Promise<Broker> => {
-	const config = validateConfig(configWithoutDefaults, BROKER_CONFIG_SCHEMA);
+): Promise<LogStoreNode> => {
+	const config = validateConfig(configWithoutDefaults, NODE_CONFIG_SCHEMA);
 	validateClientConfig(config.client);
 
 	// Tweaks suggested by the Streamr Team
@@ -45,16 +47,6 @@ export const createBroker = async (
 		config.client.contracts!.logStoreNodeManagerChainAddress!
 	);
 
-	const heartbeatStreamId = toStreamID('/heartbeat', nodeManagerAddress);
-	const recoveryStreamId = toStreamID('/recovery', nodeManagerAddress);
-	const systemStreamId = toStreamID('/system', nodeManagerAddress);
-	const topicsStreamId = toStreamID('/topics', nodeManagerAddress);
-
-	const heartbeatStream = await logStoreClient.getStream(heartbeatStreamId);
-	const recoveryStream = await logStoreClient.getStream(recoveryStreamId);
-	const systemStream = await logStoreClient.getStream(systemStreamId);
-	const topicsStream = await logStoreClient.getStream(topicsStreamId);
-
 	const privateKey = (config.client!.auth as PrivateKeyAuthConfig).privateKey;
 
 	const provider = new ethers.providers.JsonRpcProvider(
@@ -62,19 +54,42 @@ export const createBroker = async (
 	);
 	const signer = new ethers.Wallet(privateKey, provider);
 
-	const nodeManger = await getNodeManagerContract(signer);
+	const nodeManagerStream = _.flow(
+		_.partial(toStreamID, _, nodeManagerAddress),
+		(v) => logStoreClient.getStream(v)
+	);
+
+	// `topicsStream` may be defined directly by the config if in 'standalone' mode, or it could be null if not configured.
+	// In 'network' mode, it will be obtained from the default stream of the nodeManager.
+	const topicsStream = await (async () => {
+		if (config.mode.type === 'standalone') {
+			return config.mode.topicsStream
+				? await logStoreClient.getStream(config.mode.topicsStream)
+				: null;
+		} else {
+			return await nodeManagerStream('/topics');
+		}
+	})();
+
+	const modeConfig: PluginOptions['mode'] =
+		config.mode.type === 'network'
+			? {
+					type: 'network',
+					heartbeatStream: await nodeManagerStream('/heartbeat'),
+					recoveryStream: await nodeManagerStream('/recovery'),
+					systemStream: await nodeManagerStream('/system'),
+					nodeManager: await getNodeManagerContract(signer),
+			  }
+			: config.mode;
 
 	const plugins: Plugin<any>[] = Object.keys(config.plugins).map((name) => {
 		const pluginOptions: PluginOptions = {
 			name,
 			logStoreClient,
-			heartbeatStream,
-			recoveryStream,
-			systemStream,
+			mode: modeConfig,
+			nodeConfig: config,
 			topicsStream,
-			brokerConfig: config,
 			signer,
-			nodeManger,
 		};
 		return createPlugin(name, pluginOptions);
 	});
@@ -84,7 +99,7 @@ export const createBroker = async (
 
 	const getNode = async (): Promise<NetworkNodeStub> => {
 		if (!started) {
-			throw new Error('cannot invoke on non-started broker');
+			throw new Error('cannot invoke on non-started logStore node');
 		}
 		return logStoreClient.getNode();
 	};
@@ -92,7 +107,7 @@ export const createBroker = async (
 	return {
 		getNode,
 		start: async () => {
-			logger.info(`Starting LogStore broker version ${CURRENT_VERSION}`);
+			logger.info(`Starting LogStore node version ${CURRENT_VERSION}`);
 			await Promise.all(plugins.map((plugin) => plugin.start()));
 			const httpServerEndpoints = plugins.flatMap((plugin: Plugin<any>) => {
 				return plugin
@@ -111,22 +126,27 @@ export const createBroker = async (
 			}
 
 			const nodeId = (await logStoreClient.getNode()).getNodeId();
-			const brokerAddress = await logStoreClient.getAddress();
+			const nodeAddress = await logStoreClient.getAddress();
 			const mnemonic = generateMnemonicFromAddress(
-				toEthereumAddress(brokerAddress)
+				toEthereumAddress(nodeAddress)
 			);
 
-			logger.info(
-				`Welcome to the LogStore Network. Your node's generated name is ${mnemonic}.`
-			);
-			// TODO: Network Explorer link
-			logger.info(
-				`View your node in the Network Explorer: https://streamr.network/network-explorer/nodes/${encodeURIComponent(
-					nodeId
-				)}`
-			);
+			if (config.mode.type === 'standalone') {
+				logger.info(`Running in standalone mode.`);
+			} else {
+				logger.info(`Running in network mode.`);
+				logger.info(
+					`Welcome to the LogStore Network. Your node's generated name is ${mnemonic}.`
+				);
+				// TODO: Network Explorer link
+				logger.info(
+					`View your node in the Network Explorer: https://streamr.network/network-explorer/nodes/${encodeURIComponent(
+						nodeId
+					)}`
+				);
+			}
 			logger.info(`Network node ${nodeId} running`);
-			logger.info(`Ethereum address ${brokerAddress}`);
+			logger.info(`Ethereum address ${nodeAddress}`);
 			logger.info(
 				`Tracker Configuration: ${
 					config.client.network?.trackers

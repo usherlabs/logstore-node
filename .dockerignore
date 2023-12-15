@@ -1,0 +1,17 @@
+**/.git*
+**/.husky*
+**/.turbo*
+**/.vscode*
+**/dist*
+**/node_modules*
+
+dev-network
+!dev-network/assets/validator/cli
+
+docs
+
+packages/contracts/.openzeppelin
+packages/contracts/artifacts
+packages/contracts/cache
+packages/contracts/types
+packages/contracts/.env

@@ -11,6 +11,7 @@ export const validateConfig = (
 ): StrictConfig => {
 	const ajv = new Ajv({
 		useDefaults,
+		discriminator: true,
 	});
 	addFormats(ajv);
 	ajv.addFormat('ethereum-address', /^0x[a-zA-Z0-9]{40}$/);

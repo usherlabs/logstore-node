@@ -1,5 +1,5 @@
-import { BrokerProgram, BrokerProgramModule } from '@logsn/broker-program';
 import { LogStoreClient, Stream } from '@logsn/client';
+import { LogStoreNodeProgram, LogStoreNodeProgramModule } from '@logsn/program';
 import { StreamMessage } from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
 
@@ -18,7 +18,7 @@ interface EventMessage {
 }
 
 export class MessageProcessor {
-	private programs: { [key: string]: BrokerProgram } = {};
+	private programs: { [key: string]: LogStoreNodeProgram } = {};
 
 	constructor(
 		private readonly config: Pick<LogStorePluginConfig, 'programs'>,
@@ -59,7 +59,7 @@ export class MessageProcessor {
 			});
 		} catch (error) {
 			logger.error(
-				'Failed to process Event by BrokerProgram %o',
+				'Failed to process Event by LogStoreNodeProgram %o',
 				{
 					logStoreChainId: __logStoreChainId,
 					logStoreChannelId: __logStoreChannelId,
@@ -72,7 +72,7 @@ export class MessageProcessor {
 	private async getProgram(
 		chainId: string,
 		channelId: string
-	): Promise<BrokerProgram | undefined> {
+	): Promise<LogStoreNodeProgram | undefined> {
 		let program = this.programs[`${chainId}/${channelId}`];
 
 		if (!program) {
@@ -94,12 +94,12 @@ export class MessageProcessor {
 
 			try {
 				const path = `${__dirname}/programs/${programPath}`;
-				const programModule = (await import(path)) as BrokerProgramModule;
+				const programModule = (await import(path)) as LogStoreNodeProgramModule;
 
 				program = programModule.createProgram(rpcUrl);
 				this.programs[`${chainId}/${channelId}`] = program;
 			} catch (error) {
-				logger.error('Failed to create BrokerProgram for channel', {
+				logger.error('Failed to create LogStoreNodeProgram for channel', {
 					logStoreChannelId: channelId,
 					error,
 				});
