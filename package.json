@@ -1,5 +1,5 @@
 {
-	"name": "@logsn/node",
+	"name": "logstore-node",
 	"version": "0.0.1",
 	"description": "Log Store Node",
 	"repository": "git@github.com:usherlabs/logstore.git",
@@ -8,6 +8,7 @@
 	"license": "GPL-3.0",
 	"private": true,
 	"scripts": {
+		"build": "npx turbo run build --force",
 		"clean": "del packages/*/node_modules packages/*/dist node_modules",
 		"format": "prettier --write \"**/*.{js,jsx,mjs,ts,tsx,json,css,scss,md,sol}\""
 	},

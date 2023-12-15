@@ -1,7 +1,7 @@
 {
 	"$id": "config.schema.json",
 	"$schema": "http://json-schema.org/draft-07/schema#",
-	"description": "Broker configuration format",
+	"description": "Node configuration format",
 	"type": "object",
 	"additionalProperties": false,
 	"properties": {
@@ -23,9 +23,7 @@
 									"pattern": "^(0x)?[a-fA-F0-9]{64}$"
 								}
 							},
-							"required": [
-								"privateKey"
-							]
+							"required": ["privateKey"]
 						},
 						{
 							"type": "object",
@@ -34,9 +32,7 @@
 									"type": "object"
 								}
 							},
-							"required": [
-								"ethereum"
-							]
+							"required": ["ethereum"]
 						}
 					]
 				}
@@ -49,35 +45,83 @@
 			"additionalProperties": true,
 			"default": {}
 		},
-		"pool": {
-			"type": "object",
-			"description": "Kyve Pool configuration",
-			"additionalProperties": false,
-			"properties": {
-				"id": {
-					"description": "The Id of the pool to poll for a new bundle",
-					"type": "string"
-				},
-				"url": {
-					"description": "The URL of the pool to poll for a new bundle",
-					"type": "string"
-				},
-				"pollInterval": {
-					"description": "The interval to which to poll the kyve network for newly validated bundles",
-					"type": "number"
-				}
+		"mode": {
+			"discriminator": {
+				"propertyName": "type"
 			},
-			"required": ["id", "url", "pollInterval"],
+			"type": "object",
+			"required": ["type"],
+			"oneOf": [
+				{
+					"type": "object",
+					"properties": {
+						"type": {
+							"type": "string",
+							"enum": ["standalone"]
+						},
+						"topicsStreamId": {
+							"type": "string"
+						},
+						"trackedStreams": {
+							"type": "array",
+							"description": "Streams to track",
+							"items": {
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string"
+									},
+									"partitions": {
+										"type": "number"
+									}
+								},
+								"required": ["id", "partitions"]
+							}
+						}
+					},
+					"required": ["type", "trackedStreams"]
+				},
+				{
+					"type": "object",
+					"properties": {
+						"type": {
+							"type": "string",
+							"enum": ["network"]
+						},
+						"pool": {
+							"type": "object",
+							"description": "Kyve Pool configuration for network participant mode",
+							"additionalProperties": false,
+							"properties": {
+								"id": {
+									"description": "The Id of the pool to poll for a new bundle",
+									"type": "string"
+								},
+								"url": {
+									"description": "The URL of the pool to poll for a new bundle",
+									"type": "string"
+								},
+								"pollInterval": {
+									"description": "The interval to which to poll the kyve network for newly validated bundles",
+									"type": "number"
+								}
+							},
+							"required": ["id", "url", "pollInterval"],
+							"default": {
+								"id": "26",
+								"url": "https://api-eu-1.korellia.kyve.network",
+								"pollInterval": 60000
+							}
+						}
+					}
+				}
+			],
 			"default": {
-				"id": "26",
-				"url": "https://api-eu-1.korellia.kyve.network",
-				"pollInterval": 60000
+				"type": "network"
 			}
 		},
 		"httpServer": {
-			"type": [
-				"object"
-			],
+			"type": ["object"],
 			"description": "HTTP server configuration",
 			"default": {},
 			"additionalProperties": false,
@@ -90,10 +134,7 @@
 				"sslCertificate": {
 					"description": "Files to use for SSL",
 					"type": "object",
-					"required": [
-						"certFileName",
-						"privateKeyFileName"
-					],
+					"required": ["certFileName", "privateKeyFileName"],
 					"additionalProperties": false,
 					"properties": {
 						"certFileName": {
@@ -117,10 +158,7 @@
 		},
 		"smartContractConfig": {
 			"type": "object",
-			"required": [
-				"contractAddress",
-				"jsonRpcProvider"
-			],
+			"required": ["contractAddress", "jsonRpcProvider"],
 			"additionalProperties": false,
 			"properties": {
 				"contractAddress": {

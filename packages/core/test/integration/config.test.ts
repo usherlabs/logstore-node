@@ -1,18 +1,21 @@
 import fs from 'fs';
 import path from 'path';
 
-import { createBroker } from '../../src/broker';
+import { createLogStoreNode } from '../../src/node';
 
 const PATH = './configs';
 
 describe('Config', () => {
 	it('start with minimal config', async () => {
-		const broker = await createBroker({});
+		const broker = await createLogStoreNode({});
 		await broker.start();
 		await broker.stop();
 	});
 
-	const fileNames = fs.readdirSync(PATH);
+	const fileNames = fs.readdirSync(PATH).filter(
+		// we don't want to test standalone example as it contains invalid stream address
+		(fileName) => fileName !== 'standalone-node.example.json'
+	);
 
 	describe.each(fileNames.map((fileName) => [fileName]))(
 		'validate',
@@ -21,7 +24,7 @@ describe('Config', () => {
 				const filePath = PATH + path.sep + fileName;
 				const content = fs.readFileSync(filePath);
 				const config = JSON.parse(content.toString());
-				return expect(createBroker(config)).resolves.toBeDefined();
+				return expect(createLogStoreNode(config)).resolves.toBeDefined();
 			});
 		}
 	);

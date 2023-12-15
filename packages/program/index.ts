@@ -1,8 +1,8 @@
-export type BrokerProgramModule = {
-	createProgram(rpcUrl: string): BrokerProgram;
+export type LogStoreNodeProgramModule = {
+	createProgram(rpcUrl: string): LogStoreNodeProgram;
 };
 
-export abstract class BrokerProgram {
+export abstract class LogStoreNodeProgram {
 	protected readonly rpcUrl: string;
 
 	constructor(rpcUrl: string) {

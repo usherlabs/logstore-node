@@ -1,15 +1,11 @@
 import { EthereumAddress } from '@streamr/utils';
 import { AsyncLocalStorage } from 'async_hooks';
 
-
-
-import { PropagationResolver } from './PropagationResolver';
-import { QueryRequestManager } from './QueryRequestManager';
+import { LogStorePlugin } from './LogStorePlugin';
 
 export type LogStoreContext = {
 	clientId: EthereumAddress;
-	queryRequestManager: QueryRequestManager;
-	propagationResolver: PropagationResolver;
+	logStorePlugin: LogStorePlugin;
 };
 /**
  * An object representing the context of a log store instance.

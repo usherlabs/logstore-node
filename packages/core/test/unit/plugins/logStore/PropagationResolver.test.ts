@@ -16,12 +16,12 @@ import { EthereumAddress, toEthereumAddress } from '@streamr/utils';
 import { Wallet } from 'ethers';
 import { keccak256 } from 'ethers/lib/utils';
 
-import { Heartbeat } from '../../../../src/plugins/logStore/Heartbeat';
+import { Heartbeat } from '../../../../src/plugins/logStore/network/Heartbeat';
 import { LogStore } from '../../../../src/plugins/logStore/LogStore';
-import { PropagationDispatcher } from '../../../../src/plugins/logStore/PropagationDispatcher';
-import { PropagationResolver } from '../../../../src/plugins/logStore/PropagationResolver';
-import { QueryRequestManager } from '../../../../src/plugins/logStore/QueryRequestManager';
-import { QueryResponseManager } from '../../../../src/plugins/logStore/QueryResponseManager';
+import { PropagationDispatcher } from '../../../../src/plugins/logStore/network/PropagationDispatcher';
+import { PropagationResolver } from '../../../../src/plugins/logStore/network/PropagationResolver';
+import { NetworkQueryRequestManager } from '../../../../src/plugins/logStore/network/NetworkQueryRequestManager';
+import { QueryResponseManager } from '../../../../src/plugins/logStore/network/QueryResponseManager';
 import { BroadbandPublisher } from '../../../../src/shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../../src/shared/BroadbandSubscriber';
 
@@ -138,10 +138,10 @@ describe(PropagationResolver, () => {
 	let heartbeat: Heartbeat;
 	let publisher: BroadbandPublisher;
 	let subscriber: BroadbandSubscriber;
-	let onlineBrokers: EthereumAddress[];
+	let onlineNodes: EthereumAddress[];
 	let propagationResolver: PropagationResolver;
 	let queryResponseManager: QueryResponseManager;
-	let queryRequestManager: QueryRequestManager;
+	let queryRequestManager: NetworkQueryRequestManager;
 
 	const listeners = new Set<MessageListener>();
 
@@ -213,8 +213,8 @@ describe(PropagationResolver, () => {
 		} satisfies Partial<LogStore> as unknown as LogStore;
 
 		heartbeat = {} satisfies Partial<Heartbeat> as unknown as Heartbeat;
-		Object.defineProperty(heartbeat, 'onlineBrokers', {
-			get: jest.fn().mockImplementation(() => onlineBrokers),
+		Object.defineProperty(heartbeat, 'onlineNodes', {
+			get: jest.fn().mockImplementation(() => onlineNodes),
 		});
 
 		publisher = {
@@ -242,7 +242,7 @@ describe(PropagationResolver, () => {
 			propagationDispatcher
 		);
 
-		queryRequestManager = new QueryRequestManager(
+		queryRequestManager = new NetworkQueryRequestManager(
 			queryResponseManager,
 			propagationResolver,
 			publisher,
@@ -258,7 +258,7 @@ describe(PropagationResolver, () => {
 	it(
 		'resolves if the primary node is the only one broker in the network',
 		async () => {
-			onlineBrokers = [];
+			onlineNodes = [];
 
 			// this runs once we await propagationResolver.propagate()
 			setImmediate(() => {
@@ -282,7 +282,7 @@ describe(PropagationResolver, () => {
 	it(
 		'resolves if foreign responses match the primary response',
 		async () => {
-			onlineBrokers = [foreignBrokerId_1, foreignBrokerId_2];
+			onlineNodes = [foreignBrokerId_1, foreignBrokerId_2];
 
 			// this runs once we await propagationResolver.propagate()
 			setImmediate(() => {
@@ -318,7 +318,7 @@ describe(PropagationResolver, () => {
 	it(
 		'resolves when propagated messages arrive',
 		async () => {
-			onlineBrokers = [foreignBrokerId_1, foreignBrokerId_2];
+			onlineNodes = [foreignBrokerId_1, foreignBrokerId_2];
 
 			// this runs once we await propagationResolver.propagate()
 			setImmediate(() => {
@@ -364,7 +364,7 @@ describe(PropagationResolver, () => {
 	it(
 		'drops propagated corrupted propagated messages',
 		async () => {
-			onlineBrokers = [foreignBrokerId_1, foreignBrokerId_2];
+			onlineNodes = [foreignBrokerId_1, foreignBrokerId_2];
 
 			// this runs once we await propagationResolver.propagate()
 			setImmediate(() => {
@@ -413,7 +413,7 @@ describe(PropagationResolver, () => {
 	it(
 		'fails with propagation timeout',
 		async () => {
-			onlineBrokers = [foreignBrokerId_1];
+			onlineNodes = [foreignBrokerId_1];
 			jest.useFakeTimers({ advanceTimers: false });
 
 			// this runs once we await propagationResolver.propagate()

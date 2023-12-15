@@ -11,11 +11,11 @@ import { EthereumAddress, toEthereumAddress } from '@streamr/utils';
 import { Wallet } from 'ethers';
 import { keccak256 } from 'ethers/lib/utils';
 
-import { Heartbeat } from '../../../../src/plugins/logStore/Heartbeat';
+import { Heartbeat } from '../../../../src/plugins/logStore/network/Heartbeat';
 import { LogStore } from '../../../../src/plugins/logStore/LogStore';
-import { PropagationDispatcher } from '../../../../src/plugins/logStore/PropagationDispatcher';
-import { PropagationResolver } from '../../../../src/plugins/logStore/PropagationResolver';
-import { QueryResponseManager } from '../../../../src/plugins/logStore/QueryResponseManager';
+import { PropagationDispatcher } from '../../../../src/plugins/logStore/network/PropagationDispatcher';
+import { PropagationResolver } from '../../../../src/plugins/logStore/network/PropagationResolver';
+import { QueryResponseManager } from '../../../../src/plugins/logStore/network/QueryResponseManager';
 import { BroadbandPublisher } from '../../../../src/shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../../src/shared/BroadbandSubscriber';
 
@@ -174,7 +174,7 @@ describe(PropagationDispatcher, () => {
 
 		const propagationResolver = new PropagationResolver(
 			{
-				get onlineBrokers(): [] {
+				get onlineNodes(): [] {
 					return [];
 				},
 			} as Partial<Heartbeat> as Heartbeat,

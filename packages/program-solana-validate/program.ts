@@ -1,4 +1,4 @@
-import { BrokerProgram } from '@logsn/broker-program';
+import { LogStoreNodeProgram } from '@logsn/program';
 import web3 from '@solana/web3.js';
 
 interface Event {
@@ -7,7 +7,7 @@ interface Event {
 	signature: string;
 }
 
-export class Program extends BrokerProgram {
+export class Program extends LogStoreNodeProgram {
 	private connection: web3.Connection;
 
 	constructor(rpcUrl: string) {

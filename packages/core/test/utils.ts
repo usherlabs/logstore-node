@@ -15,7 +15,7 @@ import {
 import { Wallet } from 'ethers';
 import _ from 'lodash';
 
-import { Broker, createBroker as createLogStoreBroker } from '../src/broker';
+import { LogStoreNode, createLogStoreNode as createLogStoreBroker } from '../src/node';
 import { Config } from '../src/config/config';
 
 export const STREAMR_DOCKER_DEV_HOST =
@@ -28,15 +28,17 @@ interface LogStoreBrokerTestConfig {
 	keyspace?: string;
 	logStoreConfigRefreshInterval?: number;
 	httpServerPort?: number;
+	mode?: Config['mode'];
 }
 
-export const formLogStoreBrokerConfig = ({
+export const formLogStoreNetworkBrokerConfig = ({
 	trackerPort,
 	privateKey,
 	extraPlugins = {},
 	keyspace = 'logstore_test',
 	logStoreConfigRefreshInterval = 0,
 	httpServerPort = 7171,
+	mode
 }: LogStoreBrokerTestConfig): Config => {
 	const plugins: Record<string, any> = { ...extraPlugins };
 	plugins['logStore'] = {
@@ -81,6 +83,7 @@ export const formLogStoreBrokerConfig = ({
 			},
 		},
 		plugins,
+		mode,
 		httpServer: {
 			port: httpServerPort,
 		},
@@ -101,9 +104,9 @@ export const startTestTracker = async (port: number): Promise<Tracker> => {
 
 export const startLogStoreBroker = async (
 	testConfig: LogStoreBrokerTestConfig
-): Promise<Broker> => {
+): Promise<LogStoreNode> => {
 	const broker = await createLogStoreBroker(
-		formLogStoreBrokerConfig(testConfig)
+		formLogStoreNetworkBrokerConfig(testConfig)
 	);
 	await broker.start();
 	return broker;

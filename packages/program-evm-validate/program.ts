@@ -1,7 +1,7 @@
-import { BrokerProgram } from '@logsn/broker-program';
+import { LogStoreNodeProgram } from '@logsn/program';
 import { providers } from 'ethers';
 
-export class Program extends BrokerProgram {
+export class Program extends LogStoreNodeProgram {
 	private provider: providers.JsonRpcProvider;
 
 	constructor(rpcUrl: string) {
