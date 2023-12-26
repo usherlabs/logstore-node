@@ -71,6 +71,17 @@ export const createLogStoreNode = async (
 		}
 	})();
 
+	// same as topics stream comment
+	const validationErrorsStream = await (async () => {
+		if (config.mode.type === 'standalone') {
+			return config.mode.validationErrorStream
+				? await logStoreClient.getStream(config.mode.validationErrorStream)
+				: null;
+		} else {
+			return await nodeManagerStream('/validation-errors');
+		}
+	})()
+
 	const modeConfig: PluginOptions['mode'] =
 		config.mode.type === 'network'
 			? {
@@ -89,6 +100,7 @@ export const createLogStoreNode = async (
 			mode: modeConfig,
 			nodeConfig: config,
 			topicsStream,
+			validationErrorsStream,
 			signer,
 		};
 		return createPlugin(name, pluginOptions);

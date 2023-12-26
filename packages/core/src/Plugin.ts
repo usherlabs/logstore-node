@@ -27,6 +27,7 @@ export interface PluginOptions {
 	logStoreClient: LogStoreClient;
 	mode: PluginModeConfig;
 	topicsStream: Stream | null;
+	validationErrorsStream: Stream | null;
 	nodeConfig: StrictConfig;
 	signer: Signer;
 }
