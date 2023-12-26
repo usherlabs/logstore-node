@@ -3,16 +3,20 @@ import addFormats from 'ajv-formats';
 
 import { StrictConfig } from './config';
 
+export function getDefaultAjv(useDefaults = true) {
+	return new Ajv({
+		useDefaults,
+		discriminator: true,
+	});
+}
+
 export const validateConfig = (
 	data: unknown,
 	schema: Schema,
 	contextName?: string,
 	useDefaults = true
 ): StrictConfig => {
-	const ajv = new Ajv({
-		useDefaults,
-		discriminator: true,
-	});
+	const ajv = getDefaultAjv(useDefaults);
 	addFormats(ajv);
 	ajv.addFormat('ethereum-address', /^0x[a-zA-Z0-9]{40}$/);
 	if (!ajv.validate(schema, data)) {
