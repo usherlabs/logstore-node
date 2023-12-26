@@ -2,7 +2,7 @@ import { EncryptionType, StreamMessage } from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
 
-import { validateConfig } from '../../../config/validateConfig';
+import { getErrors } from '../../../config/validateConfig';
 
 
 export const InvalidSchemaError = Symbol('Invalid schema');
@@ -13,12 +13,12 @@ export type ValidationSchemaMap = Map<string, SchemaValues>;
 const logger = new Logger(module);
 
 const validateEventFromSchema = (schema: Schema) => (event: any) => {
-	try {
-		validateConfig(event, schema, undefined, false);
-		return { valid: true } as const;
-	} catch (e) {
-		return { valid: false, errors: e.message } as const;
+	const errors = getErrors(event, schema);
+	if (errors.length > 0) {
+		return { valid: false, errors } as const;
 	}
+
+	return { valid: true } as const;
 };
 
 const getSchemaFromMetadata =
