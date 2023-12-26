@@ -46,7 +46,7 @@ export const createValidationHandler =
 		}
 
 		if (schema === InvalidSchemaError) {
-			return { valid: false, errors: 'Invalid schema' } as const;
+			return { valid: false, errors: ['Invalid schema'] } as const;
 		}
 
 		return validateEventFromSchema(schema)(message.getContent());
