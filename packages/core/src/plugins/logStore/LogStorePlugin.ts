@@ -12,6 +12,9 @@ import { LogStore, startCassandraLogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
 import { MessageListener } from './MessageListener';
 import { MessageProcessor } from './MessageProcessor';
+import { NodeStreamsRegistry } from './NodeStreamsRegistry';
+import { ValidationSchemaManager } from './validation-schema/ValidationSchemaManager';
+
 
 const logger = new Logger(module);
 
@@ -49,12 +52,25 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 	private _metricsContext?: MetricsContext;
 	protected readonly messageListener: MessageListener;
 	protected readonly topicsStream: Stream | null;
+	protected readonly validationErrorsStream: Stream | null;
+	protected readonly validationManager: ValidationSchemaManager;
+	protected readonly nodeStreamsRegistry: NodeStreamsRegistry;
 	private readonly messageProcessor?: MessageProcessor;
 
 	constructor(options: PluginOptions) {
 		super(options);
-		this.messageListener = new MessageListener(this.logStoreClient);
+		this.validationErrorsStream = options.validationErrorsStream;
 		this.topicsStream = options.topicsStream;
+		this.nodeStreamsRegistry = new NodeStreamsRegistry(this.logStoreClient);
+		this.validationManager = new ValidationSchemaManager(
+			this.nodeStreamsRegistry,
+			this.logStoreClient,
+			this.validationErrorsStream
+		);
+		this.messageListener = new MessageListener(
+			this.logStoreClient,
+			this.validationManager
+		);
 
 		if (this.topicsStream) {
 			this.messageProcessor = new MessageProcessor(
@@ -112,6 +128,8 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 			await this.logStoreClient.getNode()
 		).getMetricsContext();
 
+		await this.validationManager.start();
+
 		this.maybeLogStore = await this.startCassandraStorage(this.metricsContext);
 
 		await this.messageListener.start(this.maybeLogStore, this.logStoreConfig);
@@ -123,6 +141,7 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 		await Promise.all([
 			this.messageListener.stop(),
 			this.maybeLogStore?.close(),
+			this.validationManager.stop(),
 			this.maybeLogStoreConfig?.destroy(),
 		]);
 	}

@@ -1,6 +1,7 @@
 import { Stream } from '@logsn/client';
 import { QueryRequest } from '@logsn/protocol';
 import { getQueryManagerContract } from '@logsn/shared';
+import { StreamPartIDUtils } from '@streamr/protocol';
 import { EthereumAddress, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
 import { ethers } from 'ethers';
@@ -9,19 +10,19 @@ import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
+import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
+import { LogStorePlugin } from '../LogStorePlugin';
 import { Heartbeat } from './Heartbeat';
 import { KyvePool } from './KyvePool';
-import { LogStorePlugin } from '../LogStorePlugin';
+import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
 import { MessageMetricsCollector } from './MessageMetricsCollector';
 import { NetworkQueryRequestManager } from './NetworkQueryRequestManager';
 import { PropagationDispatcher } from './PropagationDispatcher';
 import { PropagationResolver } from './PropagationResolver';
 import { QueryResponseManager } from './QueryResponseManager';
-import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { ReportPoller } from './ReportPoller';
 import { SystemCache } from './SystemCache';
 import { SystemRecovery } from './SystemRecovery';
-import {LogStoreNetworkConfig} from "./LogStoreNetworkConfig";
 
 const METRICS_INTERVAL = 60 * 1000;
 
@@ -221,6 +222,9 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 				onStreamPartAdded: async (streamPart) => {
 					try {
 						await node.subscribeAndWaitForJoin(streamPart); // best-effort, can time out
+						await this.nodeStreamsRegistry.registerStreamId(
+							StreamPartIDUtils.getStreamID(streamPart)
+						);
 					} catch (_e) {
 						// no-op
 					}
@@ -244,8 +248,11 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 						);
 					}
 				},
-				onStreamPartRemoved: (streamPart) => {
+				onStreamPartRemoved: async (streamPart) => {
 					node.unsubscribe(streamPart);
+					await this.nodeStreamsRegistry.unregisterStreamId(
+						StreamPartIDUtils.getStreamID(streamPart)
+					);
 				},
 			}
 		);
