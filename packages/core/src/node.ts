@@ -74,8 +74,8 @@ export const createLogStoreNode = async (
 	// same as topics stream comment
 	const validationErrorsStream = await (async () => {
 		if (config.mode.type === 'standalone') {
-			return config.mode.validationErrorStream
-				? await logStoreClient.getStream(config.mode.validationErrorStream)
+			return config.mode.validationErrorsStream
+				? await logStoreClient.getStream(config.mode.validationErrorsStream)
 				: null;
 		} else {
 			return await nodeManagerStream('/validation-errors');

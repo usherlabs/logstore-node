@@ -18,7 +18,7 @@ type StandaloneMode = {
 		id: string;
 		partitions: number;
 	}[];
-	validationErrorStream?: string;
+	validationErrorsStream?: string;
 	topicsStream?: string;
 };
 type Mode = StandaloneMode | NetworkParticipantMode;
