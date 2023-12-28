@@ -1,33 +1,33 @@
 import { EncryptionType, StreamMessage } from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
-import { Schema } from 'ajv';
+import { ValidateFunction } from 'ajv';
 
-import { getErrors } from '../../../config/validateConfig';
-
+import { getValidationErrors } from '../../../config/validateConfig';
 
 export const InvalidSchemaError = Symbol('Invalid schema');
 
-type SchemaValues = Schema | typeof InvalidSchemaError;
-export type ValidationSchemaMap = Map<string, SchemaValues>;
+type SchemaValues = ValidateFunction | typeof InvalidSchemaError;
+export type ValidationFunctionMap = Map<string, SchemaValues>;
 
 const logger = new Logger(module);
 
-const validateEventFromSchema = (schema: Schema) => (event: any) => {
-	const errors = getErrors(event, schema);
-	if (errors.length > 0) {
-		return { valid: false, errors } as const;
-	}
+const validateEventFromSchema =
+	(valitateFn: ValidateFunction) => (event: any) => {
+		const errors = getValidationErrors(event, valitateFn);
+		if (errors.length > 0) {
+			return { valid: false, errors } as const;
+		}
 
-	return { valid: true } as const;
-};
+		return { valid: true } as const;
+	};
 
 const getSchemaFromMetadata =
-	(schemaMap: ValidationSchemaMap) => (streamId: string) => {
+	(schemaMap: ValidationFunctionMap) => (streamId: string) => {
 		return schemaMap.get(streamId);
 	};
 
 export const createValidationHandler =
-	({ schemaMap }: { schemaMap: ValidationSchemaMap }) =>
+	({ schemaMap }: { schemaMap: ValidationFunctionMap }) =>
 	async (message: StreamMessage<unknown>) => {
 		const schema = getSchemaFromMetadata(schemaMap)(message.getStreamId());
 		const isEncrypted = message.encryptionType !== EncryptionType.NONE;

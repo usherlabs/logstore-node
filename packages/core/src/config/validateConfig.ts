@@ -1,12 +1,15 @@
 import Ajv, { ErrorObject, Schema } from 'ajv';
+import type { Options } from 'ajv';
 import addFormats from 'ajv-formats';
+import { ValidateFunction } from 'ajv';
 
 import { StrictConfig } from './config';
 
-export function getDefaultAjv(useDefaults = true) {
+export function getDefaultAjv(useDefaults = true, options?: Options) {
 	const ajv = new Ajv({
 		useDefaults,
 		discriminator: true,
+		...options,
 	});
 
 	addFormats(ajv);
@@ -21,30 +24,34 @@ export const validateConfig = (
 	contextName?: string,
 	useDefaults = true
 ): StrictConfig => {
-	const errors = getErrors(data, schema, useDefaults, contextName);
+	const errors = getValidationErrors(data, schema, useDefaults, contextName);
 	if (errors.length > 0) {
 		throw new Error(errors.join('\n'));
 	}
 	return data as StrictConfig;
 };
 
-export const getErrors = (
+export const getValidationErrors = (
 	data: unknown,
-	schema: Schema,
+	schemaOrValidateFn: Schema | ValidateFunction,
 	useDefaults = true,
 	contextName?: string
 ): string[] => {
 	const ajv = getDefaultAjv(useDefaults);
+	const validate =
+		typeof schemaOrValidateFn === 'function'
+			? schemaOrValidateFn
+			: ajv.compile(schemaOrValidateFn);
 
-	if (!ajv.validate(schema, data)) {
+	if (!validate(data)) {
 		const prefix = contextName !== undefined ? contextName + ': ' : '';
-		return ajv.errors!.map((e: ErrorObject) => {
+		return validate.errors?.map((e: ErrorObject) => {
 			let text = ajv.errorsText([e], { dataVar: '' }).trim();
 			if (e.params.additionalProperty) {
 				text += ` (${e.params.additionalProperty})`;
 			}
 			return prefix + text;
-		});
+		}) ?? [];
 	}
 	return [];
 };

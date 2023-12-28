@@ -1,20 +1,19 @@
 import { LogStoreClient, Stream, StreamID } from '@logsn/client';
 import { Logger } from '@streamr/utils';
-import {catchError, defer, EMPTY, from, mergeMap, of, Subscription, tap} from 'rxjs';
+import { catchError, EMPTY, mergeMap, of, Subscription } from 'rxjs';
 
 import { getDefaultAjv } from '../../../config/validateConfig';
 import { NodeStreamsRegistry } from '../NodeStreamsRegistry';
 import {
 	createValidationHandler,
 	InvalidSchemaError,
-	ValidationSchemaMap,
+	ValidationFunctionMap,
 } from './validationHandler';
-
 
 const logger = new Logger(module);
 
 export class ValidationSchemaManager {
-	private schemaMap: ValidationSchemaMap = new Map();
+	private schemaMap: ValidationFunctionMap = new Map();
 	private streamSubscriptionsMap = new Map<string, Subscription>();
 
 	public async handleStreamUnregister(stream: Stream) {
@@ -32,7 +31,14 @@ export class ValidationSchemaManager {
 	}
 
 	public async handleStreamRegister(stream: Stream) {
-		const ajv = getDefaultAjv();
+		/**
+		 * Creating an Ajv instance with 'strict' set to false. This means Ajv will not report or throw on non-critical issues.
+		 * This setting prioritizes the main validation process and ignores additional, non-affecting schema properties.
+		 * Users should ensure their schema is correctly defined and achieves the desired validation effect.
+		 *
+		 * Otherwise, if strict = true, we might be erroring on non-critical issues.
+		 */
+		const ajv = getDefaultAjv(true, { strict: false });
 		const { metadataObservable } = this.logStoreClient.createStreamObservable(
 			stream.id,
 			// polling every 60 sec. We currently don't have a way to subscribe to stream metadata changes on a push basis
@@ -56,11 +62,15 @@ export class ValidationSchemaManager {
 			})
 		);
 
-		const subscription = schema$.subscribe((schema) => {
+		const subscription = schema$.subscribe((schemaOrSymbol) => {
 			// a stream may or may not have a schema
-			if (schema) {
+			if (schemaOrSymbol) {
 				logger.info(`New schema for stream ${stream.id} was found`);
-				this.schemaMap.set(stream.id, schema);
+				const value =
+					typeof schemaOrSymbol === 'symbol'
+						? schemaOrSymbol
+						: ajv.compile(schemaOrSymbol);
+				this.schemaMap.set(stream.id, value);
 			} else {
 				// and in case it was deleted, we should delete as well
 				this.schemaMap.delete(stream.id);
