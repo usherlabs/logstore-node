@@ -94,10 +94,14 @@ export class ValidationSchemaManager {
 		schemaMap: this.schemaMap,
 	});
 
-	public async publishValidationErrors(streamId: StreamID, errors: any) {
+	public async publishValidationErrors(streamId: StreamID, errors: readonly string[]) {
 		if (!this.validationErrorsStream) {
-			// not configured, we won't enforce it
-			return;
+			// probably a standalone node that didn't configure where to send errors.
+			// by default, we will log it
+			const formattedErrors = errors.join('\n');
+			logger.warn(
+				`Got validation errors for stream ${streamId}:\n${formattedErrors}`
+			);
 		} else {
 			await this.logStoreClient.publish(this.validationErrorsStream.id, {
 				streamId,
