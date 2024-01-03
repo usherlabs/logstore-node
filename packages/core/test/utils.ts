@@ -20,6 +20,8 @@ import {
 	StreamrClient,
 	StreamrClientConfig,
 } from 'streamr-client';
+import {LogStorePluginConfig} from "../src/plugins/logStore/LogStorePlugin";
+
 
 import { Config } from '../src/config/config';
 import {
@@ -51,7 +53,8 @@ export const formLogStoreNetworkBrokerConfig = ({
 }: LogStoreBrokerTestConfig): Config => {
 	const plugins: Record<string, any> = { ...extraPlugins };
 	plugins['logStore'] = {
-		cassandra: {
+		db: {
+			type: 'cassandra',
 			hosts: [STREAMR_DOCKER_DEV_HOST],
 			datacenter: 'datacenter1',
 			username: '',
@@ -61,7 +64,7 @@ export const formLogStoreNetworkBrokerConfig = ({
 		logStoreConfig: {
 			refreshInterval: logStoreConfigRefreshInterval,
 		},
-	};
+	} satisfies Partial<LogStorePluginConfig>;
 
 	return {
 		logStoreClient: {
