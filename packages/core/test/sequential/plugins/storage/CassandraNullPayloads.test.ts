@@ -7,9 +7,10 @@ import toArray from 'stream-to-array';
 import { BucketId } from '../../../../src/plugins/logStore/Bucket';
 import {
 	LogStore,
-	startCassandraLogStore,
+	startLogStore,
 } from '../../../../src/plugins/logStore/LogStore';
 import { STREAMR_DOCKER_DEV_HOST } from '../../../utils';
+
 
 jest.setTimeout(30000);
 
@@ -95,16 +96,19 @@ describe('CassandraNullPayloads', () => {
 	});
 
 	beforeEach(async () => {
-		logStore = await startCassandraLogStore({
-			contactPoints,
-			localDataCenter,
-			keyspace,
-			opts: {
+		logStore = await startLogStore(
+			{
+				contactPoints,
+				localDataCenter,
+				keyspace,
+				type: 'cassandra',
+			},
+			{
 				checkFullBucketsTimeout: 100,
 				storeBucketsTimeout: 100,
 				bucketKeepAliveSeconds: 1,
-			},
-		});
+			}
+		);
 	});
 
 	afterEach(async () => {

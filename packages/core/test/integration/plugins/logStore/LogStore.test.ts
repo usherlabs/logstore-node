@@ -11,7 +11,7 @@ import toArray from 'stream-to-array';
 
 import {
 	LogStore,
-	startCassandraLogStore,
+	startLogStore,
 } from '../../../../src/plugins/logStore/LogStore';
 import { STREAMR_DOCKER_DEV_HOST } from '../../../utils';
 
@@ -140,16 +140,16 @@ describe('LogStore', () => {
 			localDataCenter,
 			keyspace,
 		});
-		logStore = await startCassandraLogStore({
+		logStore = await startLogStore({
+			type: 'cassandra',
 			contactPoints,
 			localDataCenter,
 			keyspace,
-			opts: {
-				maxBucketRecords: MAX_BUCKET_MESSAGE_COUNT,
-				checkFullBucketsTimeout: 100,
-				storeBucketsTimeout: 100,
-				bucketKeepAliveSeconds: 1,
-			},
+		}, {
+			maxBucketRecords: MAX_BUCKET_MESSAGE_COUNT,
+			checkFullBucketsTimeout: 100,
+			storeBucketsTimeout: 100,
+			bucketKeepAliveSeconds: 1,
 		});
 	});
 

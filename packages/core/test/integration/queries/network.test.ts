@@ -341,6 +341,7 @@ describe('Network Mode Queries', () => {
 				}
 			);
 
+
 			await expect(validationSchemaUpdatePromise).rejects.toThrow(
 				'schema is invalid'
 			);

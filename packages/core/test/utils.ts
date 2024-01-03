@@ -17,6 +17,7 @@ import _ from 'lodash';
 
 import { LogStoreNode, createLogStoreNode as createLogStoreBroker } from '../src/node';
 import { Config } from '../src/config/config';
+import {LogStorePluginConfig} from "../src/plugins/logStore/LogStorePlugin";
 
 export const STREAMR_DOCKER_DEV_HOST =
 	process.env.STREAMR_DOCKER_DEV_HOST || '127.0.0.1';
@@ -42,7 +43,8 @@ export const formLogStoreNetworkBrokerConfig = ({
 }: LogStoreBrokerTestConfig): Config => {
 	const plugins: Record<string, any> = { ...extraPlugins };
 	plugins['logStore'] = {
-		cassandra: {
+		db: {
+			type: 'cassandra',
 			hosts: [STREAMR_DOCKER_DEV_HOST],
 			datacenter: 'datacenter1',
 			username: '',
@@ -53,7 +55,7 @@ export const formLogStoreNetworkBrokerConfig = ({
 			refreshInterval: logStoreConfigRefreshInterval,
 			// logStoreManagerChainAddress,
 		},
-	};
+	} satisfies Partial<LogStorePluginConfig>;
 
 	return {
 		client: {

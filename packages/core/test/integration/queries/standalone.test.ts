@@ -1,16 +1,9 @@
 import {
 	CONFIG_TEST,
 	LogStoreClient,
-	NodeMetadata,
 	Stream,
 	StreamPermission,
 } from '@logsn/client';
-import {
-	LogStoreManager,
-	LogStoreNodeManager,
-	LogStoreQueryManager,
-	LSAN as LogStoreTokenManager,
-} from '@logsn/contracts';
 import { Tracker } from '@streamr/network-tracker';
 import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { waitForCondition } from '@streamr/utils';
