@@ -5,10 +5,11 @@ import { Readable } from 'stream';
 import { Stream } from 'streamr-client';
 
 import { Plugin, PluginOptions } from '../../Plugin';
+import { CassandraDBOptions } from './database/CassandraDBAdapter';
 import PLUGIN_CONFIG_SCHEMA from './config.schema.json';
 import { logStoreContext } from './context';
 import { createDataQueryEndpoint } from './http/dataQueryEndpoint';
-import { LogStore, startCassandraLogStore } from './LogStore';
+import { LogStore, startLogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
 import { MessageListener } from './MessageListener';
 import { MessageProcessor } from './MessageProcessor';
@@ -17,14 +18,17 @@ import { ValidationSchemaManager } from './validation-schema/ValidationSchemaMan
 
 const logger = new Logger(module);
 
+type CassandraConfig = {
+	type: 'cassandra';
+	hosts: string[];
+	username: string;
+	password: string;
+	keyspace: string;
+	datacenter: string;
+};
+
 export interface LogStorePluginConfig {
-	cassandra: {
-		hosts: string[];
-		username: string;
-		password: string;
-		keyspace: string;
-		datacenter: string;
-	};
+	db: CassandraConfig;
 	logStoreConfig: {
 		refreshInterval: number;
 	};
@@ -163,17 +167,30 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 	private async startCassandraStorage(
 		metricsContext: MetricsContext
 	): Promise<LogStore> {
-		const cassandraStorage = await startCassandraLogStore({
-			contactPoints: [...this.pluginConfig.cassandra.hosts],
-			localDataCenter: this.pluginConfig.cassandra.datacenter,
-			keyspace: this.pluginConfig.cassandra.keyspace,
-			username: this.pluginConfig.cassandra.username,
-			password: this.pluginConfig.cassandra.password,
-			opts: {
+		const dbOpts = this.pluginConfig.db;
+
+		// TODO - get for each kind of db
+		const cassandraStorage = await startLogStore(
+			cassandraConfigAdapter(dbOpts),
+			{
 				useTtl: false,
-			},
-		});
+			}
+		);
+
 		cassandraStorage.enableMetrics(metricsContext);
 		return cassandraStorage;
 	}
 }
+
+const cassandraConfigAdapter = (
+	config: CassandraConfig
+): CassandraDBOptions => {
+	return {
+		type: 'cassandra',
+		contactPoints: config.hosts,
+		localDataCenter: config.datacenter,
+		keyspace: config.keyspace,
+		username: config.username,
+		password: config.password,
+	};
+};
