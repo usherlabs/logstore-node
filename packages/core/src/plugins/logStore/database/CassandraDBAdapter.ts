@@ -10,13 +10,12 @@ import { sleep } from '../../../utils/sleep';
 import { BatchManager } from '../BatchManager';
 import { Bucket, BucketId } from '../Bucket';
 import { BucketManager } from '../BucketManager';
-import { DatabaseAdapter, QueryDebugInfo } from './DatabaseAdapter';
 import {
 	CommonDBOptions,
 	MAX_SEQUENCE_NUMBER_VALUE,
 	MIN_SEQUENCE_NUMBER_VALUE,
 } from '../LogStore';
-
+import { DatabaseAdapter, QueryDebugInfo } from './DatabaseAdapter';
 
 const logger = new Logger(module);
 
@@ -68,7 +67,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 			},
 		});
 
-		this.bucketManager = new BucketManager(this.cassandraClient, commonOpts);
+		this.bucketManager = new BucketManager(this, commonOpts);
 		this.batchManager = new BatchManager(this.cassandraClient, {
 			useTtl: commonOpts.useTtl,
 		});
@@ -201,8 +200,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 			msgChainId,
 		});
 
-		this.bucketManager
-			.getBucketsByTimestamp(streamId, partition, fromTimestamp, toTimestamp)
+		this.getBucketsByTimestamp(streamId, partition, fromTimestamp, toTimestamp)
 			.then((buckets: Bucket[]) => {
 				if (buckets.length === 0) {
 					resultStream.end();
@@ -684,6 +682,151 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 		throw new Error(
 			`Failed to connect to Cassandra after ${nbTrials} trials: ${lastError.toString()}`
 		);
+	}
+
+	// =============== BUCKETS ===============
+	private async getBucketsFromDatabase(
+		query: string,
+		params: any,
+		streamId: string,
+		partition: number
+	): Promise<Bucket[]> {
+		const buckets: Bucket[] = [];
+
+		const resultSet = await this.cassandraClient.execute(query, params, {
+			prepare: true,
+		});
+
+		resultSet.rows.forEach((row) => {
+			const { id, records, size, date_create: dateCreate } = row;
+
+			const bucket = this.bucketManager.createBucketWithManagerConfigs(
+				id.toString(),
+				streamId,
+				partition,
+				size,
+				records,
+				new Date(dateCreate)
+			);
+
+			buckets.push(bucket);
+		});
+
+		return buckets;
+	}
+
+	/**
+	 * Get buckets by timestamp range or all known from some timestamp or all buckets before some timestamp
+	 *
+	 * @param streamId
+	 * @param partition
+	 * @param fromTimestamp
+	 * @param toTimestamp
+	 * @returns {Promise<[]>}
+	 */
+	async getBucketsByTimestamp(
+		streamId: string,
+		partition: number,
+		fromTimestamp: number | undefined = undefined,
+		toTimestamp: number | undefined = undefined
+	): Promise<Bucket[]> {
+		const getExplicitFirst = () => {
+			// if fromTimestamp is defined, the first data point are in a some earlier bucket
+			// (bucket.dateCreated<=fromTimestamp as data within one millisecond won't be divided to multiple buckets)
+			const QUERY =
+				'SELECT * FROM bucket WHERE stream_id = ? and partition = ? AND date_create <= ? ORDER BY date_create DESC LIMIT 1';
+			const params = [streamId, partition, fromTimestamp];
+			return this.getBucketsFromDatabase(QUERY, params, streamId, partition);
+		};
+
+		const getRest = () => {
+			/* eslint-disable max-len */
+			const GET_LAST_BUCKETS_RANGE_TIMESTAMP =
+				'SELECT * FROM bucket WHERE stream_id = ? and partition = ? AND date_create > ? AND date_create <= ? ORDER BY date_create DESC';
+			const GET_LAST_BUCKETS_FROM_TIMESTAMP =
+				'SELECT * FROM bucket WHERE stream_id = ? and partition = ? AND date_create > ? ORDER BY date_create DESC';
+			const GET_LAST_BUCKETS_TO_TIMESTAMP =
+				'SELECT * FROM bucket WHERE stream_id = ? and partition = ? AND date_create <= ? ORDER BY date_create DESC';
+			let query;
+			let params;
+			if (fromTimestamp !== undefined && toTimestamp !== undefined) {
+				query = GET_LAST_BUCKETS_RANGE_TIMESTAMP;
+				params = [streamId, partition, fromTimestamp, toTimestamp];
+			} else if (fromTimestamp !== undefined && toTimestamp === undefined) {
+				query = GET_LAST_BUCKETS_FROM_TIMESTAMP;
+				params = [streamId, partition, fromTimestamp];
+			} else if (fromTimestamp === undefined && toTimestamp !== undefined) {
+				query = GET_LAST_BUCKETS_TO_TIMESTAMP;
+				params = [streamId, partition, toTimestamp];
+			} else {
+				throw TypeError(
+					`Not correct combination of fromTimestamp (${fromTimestamp}) and toTimestamp (${toTimestamp})`
+				);
+			}
+			return this.getBucketsFromDatabase(query, params, streamId, partition);
+		};
+
+		if (fromTimestamp !== undefined) {
+			return Promise.all([getExplicitFirst(), getRest()]).then(
+				([first, rest]) => rest.concat(first)
+			);
+		} else {
+			// eslint-disable-line no-else-return
+			return getRest();
+		}
+	}
+
+	/**
+	 * Get latest N buckets or get latest N buckets before some date (to check buckets in the past)
+	 *
+	 * @param streamId
+	 * @param partition
+	 * @param limit
+	 * @param timestamp
+	 * @returns {Promise<[]>}
+	 */
+	async getLastBuckets(
+		streamId: string,
+		partition: number,
+		limit = 1,
+		timestamp: number | undefined = undefined
+	): Promise<Bucket[]> {
+		const GET_LAST_BUCKETS =
+			'SELECT * FROM bucket WHERE stream_id = ? and partition = ?  ORDER BY date_create DESC LIMIT ?';
+		const GET_LAST_BUCKETS_TIMESTAMP =
+			'SELECT * FROM bucket WHERE stream_id = ? and partition = ? AND date_create <= ? ORDER BY date_create DESC LIMIT ?';
+
+		let query;
+		let params;
+
+		if (timestamp) {
+			query = GET_LAST_BUCKETS_TIMESTAMP;
+			params = [streamId, partition, timestamp, limit];
+		} else {
+			query = GET_LAST_BUCKETS;
+			params = [streamId, partition, limit];
+		}
+
+		return this.getBucketsFromDatabase(query, params, streamId, partition);
+	}
+
+	public async upsertBucket(
+		bucket: Bucket
+	): Promise<{ bucket: Bucket; records: number }> {
+		// for non-existing buckets UPDATE works as INSERT
+		const UPDATE_BUCKET =
+			'UPDATE bucket SET size = ?, records = ?, id = ? WHERE stream_id = ? AND partition = ? AND date_create = ?';
+
+		const { id, size, records, streamId, partition, dateCreate } = bucket;
+		const params = [size, records, id, streamId, partition, dateCreate];
+
+		await this.cassandraClient.execute(UPDATE_BUCKET, params, {
+			prepare: true,
+		});
+		return {
+			bucket,
+			records,
+		};
 	}
 
 	public async stop() {

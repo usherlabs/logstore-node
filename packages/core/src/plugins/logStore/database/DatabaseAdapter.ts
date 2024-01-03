@@ -3,6 +3,7 @@ import { Logger } from '@streamr/utils';
 import { Readable, Transform } from 'stream';
 
 import { ObservableEventEmitter } from '../../../utils/events';
+import { Bucket } from '../Bucket';
 
 const logger = new Logger(module);
 
@@ -78,6 +79,15 @@ export abstract class DatabaseAdapter
 
 	abstract store(streamMessage: StreamMessage): Promise<boolean>;
 
+	abstract getLastBuckets(
+		streamId: string,
+		partition: number,
+		limit?: number,
+		timestamp?: number
+	): Promise<Bucket[]>;
+
+	abstract upsertBucket(bucket: Bucket): Promise<{ bucket: Bucket; records: number }>;
+
 	abstract start(): Promise<void>;
 
 	abstract stop(): Promise<void>;
@@ -122,6 +132,15 @@ export type DatabaseAdapterInterface = {
 	getTotalBytesInStream(streamId: string, partition: number): Promise<number>;
 
 	store(streamMessage: StreamMessage): Promise<boolean>;
+
+	getLastBuckets(
+		streamId: string,
+		partition: number,
+		limit?: number,
+		timestamp?: number
+	): Promise<Bucket[]>;
+
+	upsertBucket(bucket: Bucket): Promise<{ bucket: Bucket; records: number }>;
 
 	start(): Promise<void>;
 
