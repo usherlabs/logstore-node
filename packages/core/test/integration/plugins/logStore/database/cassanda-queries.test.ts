@@ -10,6 +10,7 @@ import { PassThrough, Readable } from 'stream';
 
 import { CassandraDBAdapter } from '../../../../../src/plugins/logStore/database/CassandraDBAdapter';
 import { STREAMR_DOCKER_DEV_HOST } from '../../../../utils';
+import { expectDatabaseOutputConformity } from './conformityUtil';
 
 
 const contactPoints = [STREAMR_DOCKER_DEV_HOST];
@@ -115,19 +116,6 @@ class ProxyClient {
 		return this.errorQueryId !== undefined && query.includes(this.errorQueryId);
 	}
 }
-
-const expectDatabaseOutputConformity = async (
-	output: Readable,
-	expectedMessage: StreamMessage
-) => {
-	const messages = (await waitForStreamToEnd(output)) as StreamMessage[];
-	// conformity test should have one message
-	expect(messages).toHaveLength(1);
-	const message = messages[0];
-	expect(message).toBeInstanceOf(StreamMessage);
-	expect(message.getStreamId()).toEqual(expectedMessage.getStreamId());
-	expect(message.getContent()).toEqual(expectedMessage.getContent());
-};
 
 describe('cassanda-queries', () => {
 	let cassandraAdapter: CassandraDBAdapter;
