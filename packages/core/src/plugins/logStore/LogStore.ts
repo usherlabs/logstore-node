@@ -94,14 +94,14 @@ export class LogStore extends DatabaseEventEmitter {
 	/**
 	 * Requests data from the DB using the serialized message ID.
 	 */
-	requestByMessageId(messageIdSerialized: string): Transform {
+	requestByMessageId(messageIdSerialized: string): Readable {
 		return this.requestByMessageIds([messageIdSerialized]);
 	}
 
 	/**
 	 * Requests messages from DB by their serialized message IDs.
 	 */
-	requestByMessageIds(messageIdsSerialized: string[]): Transform {
+	requestByMessageIds(messageIdsSerialized: string[]): Readable {
 		const messageIds = messageIdsSerialized.map((messageId) =>
 			// @ts-expect-error Property 'fromArray' does not exist on type 'typeof MessageID'
 			MessageID.fromArray(JSON.parse(messageId))
