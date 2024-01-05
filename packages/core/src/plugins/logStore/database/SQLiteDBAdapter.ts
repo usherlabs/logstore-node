@@ -1,19 +1,33 @@
 import { MessageID, StreamMessage } from '@streamr/protocol';
 import Database from 'better-sqlite3';
-import { and, between, desc, eq, placeholder } from 'drizzle-orm';
+import {
+	and,
+	between,
+	desc,
+	eq,
+	gt,
+	gte,
+	lt,
+	lte,
+	or,
+	placeholder,
+} from 'drizzle-orm';
 import { BetterSQLite3Database, drizzle } from 'drizzle-orm/better-sqlite3';
 import { getTableName } from 'drizzle-orm/table';
 import fs from 'fs';
+import { concatAll, forkJoin, from, map, mergeAll } from 'rxjs';
 import { Readable } from 'stream';
 
+import {
+	MAX_SEQUENCE_NUMBER_VALUE,
+	MIN_SEQUENCE_NUMBER_VALUE,
+} from '../LogStore';
 import { DatabaseAdapter } from './DatabaseAdapter';
 import {
 	createTableStatement,
 	streamDataTable,
 	tableExists,
 } from './sqlite/tables';
-import {isPresent} from "../../../helpers/isPresent";
-
 
 export interface SQLiteDBOptions {
 	type: 'sqlite';
@@ -61,6 +75,35 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 		msgChainId?: string,
 		limit?: number
 	): Readable {
+		const getTemporalConditionSlices = () => {
+			//
+			switch (true) {
+				case fromSequenceNo === MIN_SEQUENCE_NUMBER_VALUE &&
+					toSequenceNo === MAX_SEQUENCE_NUMBER_VALUE:
+					return between(streamDataTable.ts, fromTimestamp, toTimestamp);
+				case fromTimestamp === toTimestamp:
+					return and(
+						eq(streamDataTable.ts, fromTimestamp),
+						between(streamDataTable.sequence_no, fromSequenceNo, toSequenceNo)
+					);
+				default:
+					return or(
+						and(
+							eq(streamDataTable.ts, fromTimestamp),
+							gte(streamDataTable.sequence_no, fromSequenceNo)
+						),
+						and(
+							gt(streamDataTable.ts, fromTimestamp),
+							lt(streamDataTable.ts, toTimestamp)
+						),
+						and(
+							eq(streamDataTable.ts, toTimestamp),
+							lte(streamDataTable.sequence_no, toSequenceNo)
+						)
+					);
+			}
+		};
+
 		let query = this.dbClient
 			.select({
 				payload: streamDataTable.payload,
@@ -70,14 +113,14 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 				and(
 					eq(streamDataTable.stream_id, streamId),
 					eq(streamDataTable.partition, partition),
-					between(streamDataTable.ts, fromTimestamp, toTimestamp),
-					between(streamDataTable.sequence_no, fromSequenceNo, toSequenceNo),
+					getTemporalConditionSlices(),
 					publisherId
 						? eq(streamDataTable.publisher_id, publisherId)
 						: undefined,
 					msgChainId ? eq(streamDataTable.msg_chain_id, msgChainId) : undefined
 				)
 			)
+			.orderBy(streamDataTable.ts, streamDataTable.sequence_no)
 			.$dynamic();
 
 		if (limit) {
@@ -86,7 +129,26 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 
 		const preparedQuery = query.prepare();
 
-		return Readable.from(preparedQuery.all().map((c) => c.payload));
+		// we do this to avoid blocking the event loop
+		// otherwise, when consuming using .all, .get, it's synchronous and blocks
+		const results$ = from(preparedQuery.execute()).pipe(
+			mergeAll(),
+			map(
+				this.parseRow({
+					streamId,
+					partition,
+					fromTimestamp,
+					fromSequenceNo,
+					toTimestamp,
+					toSequenceNo,
+					publisherId,
+					msgChainId,
+					limit,
+				})
+			)
+		);
+
+		return Readable.from(results$);
 	}
 
 	public queryLast(
@@ -94,7 +156,7 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 		partition: number,
 		requestCount: number
 	): Readable {
-		const query = this.dbClient
+		const preparedQuery = this.dbClient
 			.select({
 				payload: streamDataTable.payload,
 			})
@@ -106,11 +168,21 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 				)
 			)
 			.orderBy(desc(streamDataTable.ts))
-			.limit(requestCount);
+			.limit(requestCount)
+			.prepare();
 
-		const preparedQuery = query.prepare();
+		const results$ = from(preparedQuery.execute()).pipe(
+			mergeAll(), // array to values
+			map(
+				this.parseRow({
+					streamId,
+					partition,
+					limit: requestCount,
+				})
+			)
+		);
 
-		return Readable.from(preparedQuery.all().map((c) => c.payload));
+		return Readable.from(results$);
 	}
 
 	public queryByMessageIds(messageIds: MessageID[]): Readable {
@@ -133,20 +205,28 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 			)
 			.prepare();
 
-		const queries = messageIds
-			.map((messageId) =>
-				queryTemplate.get({
-					stream_id: messageId.streamId,
-					partition: messageId.streamPartition,
-					ts: messageId.timestamp,
-					sequence_no: messageId.sequenceNumber,
-					publisher_id: messageId.publisherId,
-					msg_chain_id: messageId.msgChainId,
+		const queries = messageIds.map((messageId) =>
+			queryTemplate.execute({
+				stream_id: messageId.streamId,
+				partition: messageId.streamPartition,
+				ts: messageId.timestamp,
+				sequence_no: messageId.sequenceNumber,
+				publisher_id: messageId.publisherId,
+				msg_chain_id: messageId.msgChainId,
+			})
+		);
+
+		const results$ = from(queries).pipe(
+			concatAll(), // promises to arrays, preserving the order
+			mergeAll(), // arrays to values
+			map(
+				this.parseRow({
+					messageIds: messageIds.map((m) => m.serialize()),
 				})
 			)
-			.filter(isPresent);
+		);
 
-		return Readable.from(queries.map((c) => c.payload));
+		return Readable.from(results$);
 	}
 
 	public store(streamMessage: StreamMessage): Promise<boolean> {
@@ -164,6 +244,8 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 			})
 			.prepare()
 			.run();
+
+		this.emit('write', streamMessage);
 
 		return Promise.resolve(true);
 	}
