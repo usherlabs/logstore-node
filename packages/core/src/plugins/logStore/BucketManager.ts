@@ -3,7 +3,7 @@ import { types as cassandraTypes } from 'cassandra-driver';
 import Heap from 'heap';
 
 import { Bucket, BucketId } from './Bucket';
-import { DatabaseAdapter } from './database/DatabaseAdapter';
+import { CassandraDBAdapter } from './database/CassandraDBAdapter';
 
 const { TimeUuid } = cassandraTypes;
 
@@ -43,7 +43,7 @@ export class BucketManager {
 	private storeBucketsTimeout?: NodeJS.Timeout;
 
 	constructor(
-		private db: DatabaseAdapter,
+		private db: CassandraDBAdapter,
 		opts: Partial<BucketManagerOptions> = {}
 	) {
 		const defaultOptions = {

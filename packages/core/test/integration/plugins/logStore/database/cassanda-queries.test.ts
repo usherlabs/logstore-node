@@ -8,12 +8,9 @@ import {
 import { Client } from 'cassandra-driver';
 import { PassThrough, Readable } from 'stream';
 
-import { CassandraDBAdapter } from '../../../../src/plugins/logStore/database/CassandraDBAdapter';
-import {
-	LogStore,
-	startLogStore,
-} from '../../../../src/plugins/logStore/LogStore';
-import { STREAMR_DOCKER_DEV_HOST } from '../../../utils';
+import { CassandraDBAdapter } from '../../../../../src/plugins/logStore/database/CassandraDBAdapter';
+import { STREAMR_DOCKER_DEV_HOST } from '../../../../utils';
+
 
 const contactPoints = [STREAMR_DOCKER_DEV_HOST];
 const localDataCenter = 'datacenter1';
@@ -119,6 +116,19 @@ class ProxyClient {
 	}
 }
 
+const expectDatabaseOutputConformity = async (
+	output: Readable,
+	expectedMessage: StreamMessage
+) => {
+	const messages = (await waitForStreamToEnd(output)) as StreamMessage[];
+	// conformity test should have one message
+	expect(messages).toHaveLength(1);
+	const message = messages[0];
+	expect(message).toBeInstanceOf(StreamMessage);
+	expect(message.getStreamId()).toEqual(expectedMessage.getStreamId());
+	expect(message.getContent()).toEqual(expectedMessage.getContent());
+};
+
 describe('cassanda-queries', () => {
 	let cassandraAdapter: CassandraDBAdapter;
 	let realClient: Client;
@@ -160,9 +170,28 @@ describe('cassanda-queries', () => {
 	beforeEach(async () => {
 		const proxyClient = new ProxyClient(realClient) as any;
 		cassandraAdapter.cassandraClient = proxyClient;
-		cassandraAdapter.bucketManager.cassandraClient = proxyClient;
 	});
 
+	test('conformity test', async () => {
+		const byMessageIdStream = cassandraAdapter.queryByMessageIds([
+			MOCK_MESSAGES[0].messageId,
+		]);
+		const requestLastStream = cassandraAdapter.queryLast(MOCK_STREAM_ID, 0, 1);
+		const requestRangeStream = cassandraAdapter.queryRange(
+			MOCK_STREAM_ID,
+			0,
+			1,
+			0,
+			1,
+			0,
+			MOCK_PUBLISHER_ID,
+			MOCK_MSG_CHAIN_ID
+		);
+
+		await expectDatabaseOutputConformity(byMessageIdStream, MOCK_MESSAGES[0]);
+		await expectDatabaseOutputConformity(requestLastStream, MOCK_MESSAGES[2]);
+		await expectDatabaseOutputConformity(requestRangeStream, MOCK_MESSAGES[0]);
+	});
 	describe('requestByMessageId', () => {
 		it('single happy path', async () => {
 			const resultStream = cassandraAdapter.queryByMessageIds([
@@ -290,7 +319,7 @@ describe('cassanda-queries', () => {
 						0,
 						maxMockTimestamp,
 						0,
-						publisherId,
+						publisherId
 					);
 				} else if (requestType === REQUEST_TYPE_RANGE) {
 					return cassandraAdapter.queryRange(
