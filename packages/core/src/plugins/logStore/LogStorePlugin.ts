@@ -5,9 +5,13 @@ import { Readable } from 'stream';
 import { Stream } from 'streamr-client';
 
 import { Plugin, PluginOptions } from '../../Plugin';
-import { CassandraDBOptions } from './database/CassandraDBAdapter';
 import PLUGIN_CONFIG_SCHEMA from './config.schema.json';
 import { logStoreContext } from './context';
+import {
+	CassandraDBOptions,
+	CassandraOptionsFromConfig,
+} from './database/CassandraDBAdapter';
+import { SQLiteDBOptions } from './database/SQLiteDBAdapter';
 import { createDataQueryEndpoint } from './http/dataQueryEndpoint';
 import { LogStore, startLogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
@@ -18,17 +22,8 @@ import { ValidationSchemaManager } from './validation-schema/ValidationSchemaMan
 
 const logger = new Logger(module);
 
-type CassandraConfig = {
-	type: 'cassandra';
-	hosts: string[];
-	username: string;
-	password: string;
-	keyspace: string;
-	datacenter: string;
-};
-
 export interface LogStorePluginConfig {
-	db: CassandraConfig;
+	db: CassandraOptionsFromConfig | SQLiteDBOptions;
 	logStoreConfig: {
 		refreshInterval: number;
 	};
@@ -167,23 +162,30 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 	private async startCassandraStorage(
 		metricsContext: MetricsContext
 	): Promise<LogStore> {
-		const dbOpts = this.pluginConfig.db;
+		const dbOpts = (() => {
+			const dbConfig = this.pluginConfig.db;
+			switch (dbConfig.type) {
+				case 'cassandra':
+					return cassandraConfigAdapter(dbConfig);
+				case 'sqlite':
+					return dbConfig;
+				default:
+					throw new Error(`Unknown database type: ${dbConfig}`);
+			}
+		})();
 
 		// TODO - get for each kind of db
-		const cassandraStorage = await startLogStore(
-			cassandraConfigAdapter(dbOpts),
-			{
-				useTtl: false,
-			}
-		);
+		const storage = await startLogStore(dbOpts, {
+			useTtl: false,
+		});
 
-		cassandraStorage.enableMetrics(metricsContext);
-		return cassandraStorage;
+		storage.enableMetrics(metricsContext);
+		return storage;
 	}
 }
 
 const cassandraConfigAdapter = (
-	config: CassandraConfig
+	config: CassandraOptionsFromConfig
 ): CassandraDBOptions => {
 	return {
 		type: 'cassandra',

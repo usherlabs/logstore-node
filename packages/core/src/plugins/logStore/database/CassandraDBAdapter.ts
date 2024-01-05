@@ -17,6 +17,7 @@ import {
 } from '../LogStore';
 import { DatabaseAdapter, QueryDebugInfo } from './DatabaseAdapter';
 
+
 const logger = new Logger(module);
 
 const MAX_RESEND_LAST = 10000;
@@ -29,6 +30,16 @@ export interface CassandraDBOptions {
 	username?: string;
 	password?: string;
 }
+
+// this is maintained for backwards compatibility
+export type CassandraOptionsFromConfig = {
+	type: 'cassandra';
+	hosts: string[];
+	username: string;
+	password: string;
+	keyspace: string;
+	datacenter: string;
+};
 
 export const bucketsToIds = (buckets: Bucket[]) =>
 	buckets.map((bucket: Bucket) => bucket.getId());
@@ -74,24 +85,6 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 		this.pendingStores = new Map();
 	}
 
-	protected parseRow(
-		row: types.Row,
-		debugInfo: QueryDebugInfo
-	): StreamMessage | null {
-		if (row.payload === null) {
-			logger.error(
-				`Found message with NULL payload on cassandra; debug info: ${JSON.stringify(
-					debugInfo
-				)}`
-			);
-			return null;
-		}
-
-		const streamMessage = StreamMessage.deserialize(row.payload.toString());
-		this.emit('read', streamMessage);
-		return streamMessage;
-	}
-
 	protected createResultStream(debugInfo: QueryDebugInfo) {
 		const self = this; // eslint-disable-line @typescript-eslint/no-this-alias
 		let last = Date.now();
@@ -100,7 +93,9 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 			objectMode: true,
 			transform(row: types.Row, _, done) {
 				const now = Date.now();
-				const message = self.parseRow(row, debugInfo);
+				const message = self.parseRow(debugInfo)(
+					row as unknown as { payload: Buffer | null }
+				);
 				if (message !== null) {
 					this.push(message);
 				}
@@ -229,6 +224,21 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 								bucketIds,
 								fromTimestamp,
 								toTimestamp,
+							],
+						},
+					];
+				} else if (fromTimestamp === toTimestamp) {
+					queries = [
+						{
+							queryStatement:
+								'WHERE stream_id = ? AND partition = ? AND bucket_id IN ? AND ts = ? AND sequence_no >= ? AND sequence_no <= ?',
+							params: [
+								streamId,
+								partition,
+								bucketIds,
+								fromTimestamp,
+								fromSequenceNo,
+								toSequenceNo,
 							],
 						},
 					];

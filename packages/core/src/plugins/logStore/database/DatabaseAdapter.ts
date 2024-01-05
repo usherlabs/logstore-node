@@ -1,9 +1,8 @@
 import { MessageID, StreamMessage } from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
-import { Readable, Transform } from 'stream';
+import { Readable } from 'stream';
 
 import { ObservableEventEmitter } from '../../../utils/events';
-import { Bucket } from '../Bucket';
 
 const logger = new Logger(module);
 
@@ -29,9 +28,7 @@ export type QueryDebugInfo =
 			messageIds: string[];
 	  };
 
-export abstract class DatabaseAdapter
-	extends DatabaseEventEmitter
-{
+export abstract class DatabaseAdapter extends DatabaseEventEmitter {
 	constructor() {
 		super();
 	}
@@ -75,6 +72,29 @@ export abstract class DatabaseAdapter
 		streamId: string,
 		partition: number
 	): Promise<number>;
+
+	protected parseRow(debugInfo: QueryDebugInfo) {
+		return (row: {
+			payload: Buffer | string | null | any[] | unknown;
+		}): StreamMessage | null => {
+			if (row.payload == null) {
+				logger.error(
+					`Found message with NULL payload on cassandra; debug info: ${JSON.stringify(
+						debugInfo
+					)}`
+				);
+				return null;
+			}
+
+			const serializedPayload = Array.isArray(row.payload)
+				? row.payload
+				: row.payload.toString();
+
+			const streamMessage = StreamMessage.deserialize(serializedPayload);
+			this.emit('read', streamMessage);
+			return streamMessage;
+		};
+	}
 
 	abstract store(streamMessage: StreamMessage): Promise<boolean>;
 

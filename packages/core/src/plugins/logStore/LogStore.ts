@@ -1,14 +1,19 @@
 import { MessageID, StreamMessage } from '@streamr/protocol';
 import { Logger, MetricsContext, RateMetric } from '@streamr/utils';
-import { Readable, Transform } from 'stream';
+import { Readable } from 'stream';
 
 import { BucketManagerOptions } from './BucketManager';
-import { CassandraDBAdapter, CassandraDBOptions } from './database/CassandraDBAdapter';
+import {
+	CassandraDBAdapter,
+	CassandraDBOptions,
+} from './database/CassandraDBAdapter';
 import {
 	DatabaseAdapter,
 	DatabaseEventEmitter,
 } from './database/DatabaseAdapter';
+import { SQLiteDBOptions } from './database/SQLiteDBAdapter';
 import { MessageLimitTransform } from './http/dataTransformers';
+
 
 const logger = new Logger(module);
 
@@ -17,7 +22,7 @@ export const MIN_SEQUENCE_NUMBER_VALUE = 0;
 export const MAX_SEQUENCE_NUMBER_VALUE = 2147483647;
 const MAX_TIMESTAMP_VALUE = 8640000000000000; // https://262.ecma-international.org/5.1/#sec-15.9.1.1
 
-export type DatabaseOptions = CassandraDBOptions;
+export type DatabaseOptions = CassandraDBOptions | SQLiteDBOptions;
 
 export type CommonDBOptions = Partial<BucketManagerOptions> & {
 	useTtl?: boolean;
