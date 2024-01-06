@@ -3,6 +3,7 @@ import Database from 'better-sqlite3';
 import {
 	and,
 	between,
+	count,
 	desc,
 	eq,
 	gt,
@@ -11,11 +12,13 @@ import {
 	lte,
 	or,
 	placeholder,
+	sum,
 } from 'drizzle-orm';
 import { BetterSQLite3Database, drizzle } from 'drizzle-orm/better-sqlite3';
 import { getTableName } from 'drizzle-orm/table';
 import fs from 'fs';
-import { concatAll, forkJoin, from, map, mergeAll } from 'rxjs';
+import path from 'path';
+import { concatAll, firstValueFrom, from, map, mergeAll } from 'rxjs';
 import { Readable } from 'stream';
 
 import {
@@ -29,6 +32,7 @@ import {
 	tableExists,
 } from './sqlite/tables';
 
+
 export interface SQLiteDBOptions {
 	type: 'sqlite';
 	dataPath: string;
@@ -41,27 +45,33 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 	constructor(opts: SQLiteDBOptions) {
 		super();
 
+		// 2 options:
+		// user define data path starting with /, treat as absolute
+		// e.g.:  /home/node/.logstore/data.db
+		// otherwise, without /, treat as relative from currently working directory
+		// e.g.: .logstore/data.db -> cwd + .logstore/data.db
+		const absolutePath = opts.dataPath.startsWith('/')
+			? opts.dataPath
+			: path.resolve(process.cwd(), opts.dataPath);
+
 		// otherwise could be :memory:
-		if (!fs.existsSync(opts.dataPath) && !opts.dataPath.startsWith(':')) {
-			createDirIfNotExists(opts.dataPath);
+		if (!fs.existsSync(absolutePath) && !absolutePath.startsWith(':')) {
+			createDirIfNotExists(absolutePath);
 		}
 
-		this.dbInstance = new Database(opts.dataPath);
+		this.dbInstance = new Database(absolutePath);
 		this.dbInstance.pragma('journal_mode = WAL');
 
 		this.dbClient = drizzle(this.dbInstance);
 
-		this.checkDatabase(opts.dataPath);
+		this.ensureTablesExist();
 	}
 
-	private checkDatabase(filePath: string) {
+	// check if defined database has all tables already created, and creates if needed
+	private ensureTablesExist() {
 		if (!tableExists(getTableName(streamDataTable), this.dbClient)) {
-			this.initializeDatabase();
+			this.dbClient.run(createTableStatement);
 		}
-	}
-
-	private initializeDatabase() {
-		this.dbClient.run(createTableStatement);
 	}
 
 	public queryRange(
@@ -251,28 +261,104 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 	}
 
 	getTotalBytesInStream(streamId: string, partition: number): Promise<number> {
-		throw new Error('Method not implemented.');
+		const preparedQuery = this.dbClient
+			.select({
+				totalBytes: sum(streamDataTable.content_bytes).mapWith(Number),
+			})
+			.from(streamDataTable)
+			.having(
+				and(
+					eq(streamDataTable.stream_id, streamId),
+					eq(streamDataTable.partition, partition)
+				)
+			)
+			.prepare();
+
+		const results$ = from(preparedQuery.execute()).pipe(
+			mergeAll(),
+			map((c) => c.totalBytes)
+		);
+
+		return firstValueFrom(results$);
 	}
 
 	getLastMessageDateInStream(
 		streamId: string,
 		partition: number
 	): Promise<number | null> {
-		throw new Error('Method not implemented.');
+		const preparedQuery = this.dbClient
+			.select({
+				ts: streamDataTable.ts,
+			})
+			.from(streamDataTable)
+			.where(
+				and(
+					eq(streamDataTable.stream_id, streamId),
+					eq(streamDataTable.partition, partition)
+				)
+			)
+			.orderBy(desc(streamDataTable.ts))
+			.limit(1)
+			.prepare();
+
+		const results$ = from(preparedQuery.execute()).pipe(
+			mergeAll(),
+			map((m) => m.ts)
+		);
+
+		return firstValueFrom(results$);
 	}
 
 	getFirstMessageDateInStream(
 		streamId: string,
 		partition: number
 	): Promise<number | null> {
-		throw new Error('Method not implemented.');
+		const preparedQuery = this.dbClient
+			.select({
+				ts: streamDataTable.ts,
+			})
+			.from(streamDataTable)
+			.where(
+				and(
+					eq(streamDataTable.stream_id, streamId),
+					eq(streamDataTable.partition, partition)
+				)
+			)
+			.orderBy(streamDataTable.ts)
+			.limit(1)
+			.prepare();
+
+		const results$ = from(preparedQuery.execute()).pipe(
+			mergeAll(),
+			map((m) => m.ts)
+		);
+
+		return firstValueFrom(results$);
 	}
 
 	getNumberOfMessagesInStream(
 		streamId: string,
 		partition: number
 	): Promise<number> {
-		throw new Error('Method not implemented.');
+		const preparedQuery = this.dbClient
+			.select({
+				count: count(streamDataTable),
+			})
+			.from(streamDataTable)
+			.having(
+				and(
+					eq(streamDataTable.stream_id, streamId),
+					eq(streamDataTable.partition, partition)
+				)
+			)
+			.prepare();
+
+		const results$ = from(preparedQuery.execute()).pipe(
+			mergeAll(),
+			map((c) => c.count)
+		);
+
+		return firstValueFrom(results$);
 	}
 
 	async start(): Promise<void> {}
