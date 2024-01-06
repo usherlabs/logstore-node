@@ -12,11 +12,36 @@
 			},
 			"type": "object",
 			"required": ["type"],
+			"default": {
+				"type": "sqlite"
+			},
 			"oneOf": [
 				{
 					"type": "object",
+					"description": "SQLite configuration",
+					"additionalProperties": false,
+					"properties": {
+						"type": {
+							"type": "string",
+							"enum": ["sqlite"]
+						},
+						"dataPath": {
+							"type": "string",
+							"default": ".data/logstore-data.db",
+							"description": "Path to SQLite database file, absolute or relative to cwd"
+						}
+					}
+				},
+				{
+					"type": "object",
 					"description": "Apache Cassandra configuration",
-					"required": ["hosts", "username", "password", "keyspace", "datacenter"],
+					"required": [
+						"hosts",
+						"username",
+						"password",
+						"keyspace",
+						"datacenter"
+					],
 					"additionalProperties": false,
 					"properties": {
 						"type": {
