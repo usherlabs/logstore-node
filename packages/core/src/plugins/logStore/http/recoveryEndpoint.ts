@@ -1,11 +1,11 @@
-import { Stream } from '@logsn/client';
 import { RecoveryRequest } from '@logsn/protocol';
 import { Logger, MetricsContext, RateMetric } from '@streamr/utils';
 import express, { Request, RequestHandler, Response } from 'express';
+import { Stream } from 'streamr-client';
 
 import { HttpServerEndpoint } from '../../../Plugin';
-import { createBasicAuthenticatorMiddleware } from './authentication';
 import { Heartbeat } from '../network/Heartbeat';
+import { createBasicAuthenticatorMiddleware } from './authentication';
 
 const logger = new Logger(module);
 
@@ -22,10 +22,9 @@ const createHandler = (
 			to,
 		});
 		await systemStream.publish(recoveryRequest.serialize());
-		logger.debug(
-			'Published RecoveryRequest: %s',
-			JSON.stringify(recoveryRequest)
-		);
+		logger.debug('Published RecoveryRequest', {
+			recoveryRequest,
+		});
 
 		res.json(heartbeat.onlineNodes);
 	};

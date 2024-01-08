@@ -1,9 +1,4 @@
-import {
-	CONFIG_TEST,
-	LogStoreClient,
-	NodeMetadata,
-	Stream,
-} from '@logsn/client';
+import { NodeMetadata } from '@logsn/client';
 import { LogStoreManager, LogStoreNodeManager, LSAN } from '@logsn/contracts';
 import {
 	getNodeManagerContract,
@@ -18,10 +13,15 @@ import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { waitForCondition } from '@streamr/utils';
 import cassandra, { Client } from 'cassandra-driver';
 import { providers, Wallet } from 'ethers';
+import {
+	Stream,
+	CONFIG_TEST as STREAMR_CLIENT_CONFIG_TEST,
+	StreamrClient,
+} from 'streamr-client';
 
 import { LogStoreNode } from '../../../../src/node';
 import {
-	createLogStoreClient,
+	createStreamrClient,
 	createTestStream,
 	sleep,
 	startLogStoreBroker,
@@ -41,8 +41,8 @@ const TRACKER_PORT = 17772;
 
 describe('LogStoreConfig', () => {
 	const provider = new providers.JsonRpcProvider(
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
+		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
+		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
 	);
 
 	// Accounts
@@ -55,7 +55,7 @@ describe('LogStoreConfig', () => {
 	let logStoreBroker: LogStoreNode;
 
 	// Clients
-	let publisherClient: LogStoreClient;
+	let publisherClient: StreamrClient;
 	let cassandraClient: Client;
 
 	// Contracts
@@ -125,7 +125,7 @@ describe('LogStoreConfig', () => {
 			keyspace,
 		});
 
-		publisherClient = await createLogStoreClient(
+		publisherClient = await createStreamrClient(
 			tracker,
 			publisherAccount.privateKey
 		);
@@ -137,7 +137,7 @@ describe('LogStoreConfig', () => {
 	});
 
 	afterEach(async () => {
-		await publisherClient.destroy();
+		await publisherClient?.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
 			nodeManager.leave(),

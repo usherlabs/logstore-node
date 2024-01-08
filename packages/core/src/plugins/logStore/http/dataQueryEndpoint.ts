@@ -19,6 +19,7 @@ import { getForRangeQueryRequest } from './getDataForRequest/getForRangeQueryReq
 import { sendError, sendSuccess } from './httpHelpers';
 import { FromRequest, LastRequest, RangeRequest } from './requestTypes';
 
+
 // TODO: move this to protocol-js
 export const MIN_SEQUENCE_NUMBER_VALUE = 0;
 export const MAX_SEQUENCE_NUMBER_VALUE = 2147483647;
