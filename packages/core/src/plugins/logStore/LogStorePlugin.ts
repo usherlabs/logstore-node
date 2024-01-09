@@ -1,8 +1,8 @@
-import { Stream } from 'streamr-client';
 import { QueryRequest } from '@logsn/protocol';
 import { EthereumAddress, Logger, MetricsContext } from '@streamr/utils';
 import { Schema } from 'ajv';
 import { Readable } from 'stream';
+import { Stream } from 'streamr-client';
 
 import { Plugin, PluginOptions } from '../../Plugin';
 import PLUGIN_CONFIG_SCHEMA from './config.schema.json';
@@ -12,6 +12,8 @@ import { LogStore, startCassandraLogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
 import { MessageListener } from './MessageListener';
 import { MessageProcessor } from './MessageProcessor';
+import { NodeStreamsRegistry } from './NodeStreamsRegistry';
+import { ValidationSchemaManager } from './validation-schema/ValidationSchemaManager';
 
 const logger = new Logger(module);
 
@@ -49,12 +51,26 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 	private _metricsContext?: MetricsContext;
 	protected readonly messageListener: MessageListener;
 	protected readonly topicsStream: Stream | null;
+	protected readonly validationErrorsStream: Stream | null;
+	protected readonly validationManager: ValidationSchemaManager;
+	protected readonly nodeStreamsRegistry: NodeStreamsRegistry;
 	private readonly messageProcessor?: MessageProcessor;
 
 	constructor(options: PluginOptions) {
 		super(options);
-		this.messageListener = new MessageListener(this.streamrClient);
+		this.validationErrorsStream = options.validationErrorsStream;
 		this.topicsStream = options.topicsStream;
+		this.nodeStreamsRegistry = new NodeStreamsRegistry(this.streamrClient);
+		this.validationManager = new ValidationSchemaManager(
+			this.nodeStreamsRegistry,
+			this.logStoreClient,
+			this.streamrClient,
+			this.validationErrorsStream
+		);
+		this.messageListener = new MessageListener(
+			this.streamrClient,
+			this.validationManager
+		);
 
 		if (this.topicsStream) {
 			this.messageProcessor = new MessageProcessor(
@@ -112,6 +128,8 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 			await this.streamrClient.getNode()
 		).getMetricsContext();
 
+		await this.validationManager.start();
+
 		this.maybeLogStore = await this.startCassandraStorage(this.metricsContext);
 
 		await this.messageListener.start(this.maybeLogStore, this.logStoreConfig);
@@ -123,6 +141,7 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 		await Promise.all([
 			this.messageListener.stop(),
 			this.maybeLogStore?.close(),
+			this.validationManager.stop(),
 			this.maybeLogStoreConfig?.destroy(),
 		]);
 	}

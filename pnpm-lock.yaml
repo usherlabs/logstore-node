@@ -102,20 +102,20 @@ importers:
         specifier: ^5.7.1
         version: 5.7.1
       '@logsn/client':
-        specifier: 0.0.10
-        version: 0.0.10(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3)
+        specifier: 0.0.11
+        version: 0.0.11(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3)
       '@logsn/contracts':
-        specifier: 0.0.10
-        version: 0.0.10
+        specifier: 0.0.11
+        version: 0.0.11
       '@logsn/program':
         specifier: workspace:*
         version: link:../program
       '@logsn/protocol':
-        specifier: 0.0.10
-        version: 0.0.10
+        specifier: 0.0.11
+        version: 0.0.11
       '@logsn/shared':
-        specifier: 0.0.10
-        version: 0.0.10
+        specifier: 0.0.11
+        version: 0.0.11
       '@streamr/protocol':
         specifier: ^8.5.5
         version: 8.5.5
@@ -2090,8 +2090,8 @@ packages:
       '@lit-labs/ssr-dom-shim': 1.1.2
     dev: false
 
-  /@logsn/client@0.0.10(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3):
-    resolution: {integrity: sha512-MXcZUL+Y17/9DMsgVRsVayAROW+/mQlawx4yBxCEoWGjh28jAV5vPiFq/Z/uBDPQB+/vfd3asZqHCG4Y80q9pg==}
+  /@logsn/client@0.0.11(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3):
+    resolution: {integrity: sha512-U0HpNahTN3axkpIGTPeVppzvZcv2IGWqXxMnCQm9ZuyfUi7DDWucomOc/z7lv4oU3vVbPc9oPzTo+TPlzdokrQ==}
     dependencies:
       '@babel/runtime': 7.23.5
       '@babel/runtime-corejs3': 7.23.5
@@ -2106,9 +2106,9 @@ packages:
       '@ethersproject/web': 5.7.1
       '@ethersproject/wordlists': 5.7.0
       '@lit-protocol/lit-node-client': 2.2.61(@ethersproject/contracts@5.7.0)(@ethersproject/hash@5.7.0)(@ethersproject/providers@5.7.2)(@ethersproject/wallet@5.7.0)(react@18.2.0)
-      '@logsn/contracts': 0.0.10
-      '@logsn/protocol': 0.0.10
-      '@logsn/shared': 0.0.10
+      '@logsn/contracts': 0.0.11
+      '@logsn/protocol': 0.0.11
+      '@logsn/shared': 0.0.11
       '@streamr/network-contracts': 7.0.7
       '@streamr/network-node': 8.5.5
       '@streamr/protocol': 8.5.5
@@ -2175,14 +2175,14 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@logsn/contracts@0.0.10:
-    resolution: {integrity: sha512-vianYY0j2OQgkYRCRcMqsFiGAwBpU0fXGVghVULkVC8NKcm2o6lUYBOvfUOIjSDe2vT46QksBxAAj4w2hn7LOQ==}
+  /@logsn/contracts@0.0.11:
+    resolution: {integrity: sha512-iCIxQ/6NLe14aJypHXmGJCF+WX/x0p0hNwx8btSR9EGyAEo0GDb0SBSJDTRvvYAPAGv/gaZ01idYgdLL4yFIzw==}
     dependencies:
       '@openzeppelin/contracts-upgradeable': 4.9.5
     dev: false
 
-  /@logsn/protocol@0.0.10:
-    resolution: {integrity: sha512-HiCy5l+HkJnIDsp0DM8UaSvqHxGiyOM9xA2PLNDvZ979GJ6+6wbtmXyT+DzZYWT4mwTO1clbb+t42WvGpjDbzg==}
+  /@logsn/protocol@0.0.11:
+    resolution: {integrity: sha512-11Qud09xRh0CBSOKMSsDoNWT6AXFScQYHWp/tgKwKIk9TYcbtShPo9w+vvTIBF/WHmkvSv4zZcgZq5+LW/0oQg==}
     dependencies:
       '@ethersproject/abstract-signer': 5.7.0
       '@ethersproject/bignumber': 5.7.0
@@ -2190,12 +2190,12 @@ packages:
       '@ethersproject/solidity': 5.7.0
     dev: false
 
-  /@logsn/shared@0.0.10:
-    resolution: {integrity: sha512-H9vXvaVrPinjZKhU1qQemqdtm/rgu/ZQcJk2ilgO0FvNu8Mv57UPDzkbhnqKHW3M4b34VHQ9Y6EgZtikmnCMJw==}
+  /@logsn/shared@0.0.11:
+    resolution: {integrity: sha512-S0XV4SiMHRiaciEMoV+vluSuBEiKxriIyCJAZ3igXFOi1ztoZdoKwgp0p8dhbvE7zjf9l3cOa/VQE5pl8lzkwA==}
     dependencies:
       '@ethersproject/providers': 5.7.2(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-      '@logsn/contracts': 0.0.10
-      '@logsn/protocol': 0.0.10
+      '@logsn/contracts': 0.0.11
+      '@logsn/protocol': 0.0.11
       ethers: 5.7.2(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       inquirer: 8.1.1
       redstone-api: 0.4.11

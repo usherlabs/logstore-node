@@ -8,6 +8,7 @@ import { Logger, toEthereumAddress } from '@streamr/utils';
 import { Server as HttpServer } from 'http';
 import { Server as HttpsServer } from 'https';
 import _ from 'lodash';
+import { NetworkNodeStub, StreamrClient } from 'streamr-client';
 
 import { version as CURRENT_VERSION } from '../package.json';
 import { Config } from './config/config';
@@ -17,7 +18,6 @@ import { generateMnemonicFromAddress } from './helpers/generateMnemonicFromAddre
 import { startServer as startHttpServer, stopServer } from './httpServer';
 import { HttpServerEndpoint, Plugin, PluginOptions } from './Plugin';
 import { createPlugin } from './pluginRegistry';
-import { NetworkNodeStub, StreamrClient } from 'streamr-client';
 
 
 const logger = new Logger(module);
@@ -72,6 +72,17 @@ export const createLogStoreNode = async (
 		}
 	})();
 
+	// same as topics stream comment
+	const validationErrorsStream = await (async () => {
+		if (config.mode.type === 'standalone') {
+			return config.mode.validationErrorsStream
+				? await streamrClient.getStream(config.mode.validationErrorsStream)
+				: null;
+		} else {
+			return await nodeManagerStream('/validation-errors');
+		}
+	})();
+
 	const modeConfig: PluginOptions['mode'] =
 		config.mode.type === 'network'
 			? {
@@ -91,6 +102,7 @@ export const createLogStoreNode = async (
 			mode: modeConfig,
 			nodeConfig: config,
 			topicsStream,
+			validationErrorsStream,
 			signer,
 		};
 		return createPlugin(name, pluginOptions);

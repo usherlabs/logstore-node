@@ -29,6 +29,7 @@ export interface PluginOptions {
 	streamrClient: StreamrClient;
 	mode: PluginModeConfig;
 	topicsStream: Stream | null;
+	validationErrorsStream: Stream | null;
 	nodeConfig: StrictConfig;
 	signer: Signer;
 }

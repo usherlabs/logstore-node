@@ -1,5 +1,6 @@
 import { QueryRequest } from '@logsn/protocol';
 import { getQueryManagerContract } from '@logsn/shared';
+import { StreamPartIDUtils } from '@streamr/protocol';
 import { EthereumAddress, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
 import { ethers } from 'ethers';
@@ -223,6 +224,9 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 				onStreamPartAdded: async (streamPart) => {
 					try {
 						await node.subscribeAndWaitForJoin(streamPart); // best-effort, can time out
+						await this.nodeStreamsRegistry.registerStreamId(
+							StreamPartIDUtils.getStreamID(streamPart)
+						);
 					} catch (_e) {
 						// no-op
 					}
@@ -244,8 +248,11 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 						});
 					}
 				},
-				onStreamPartRemoved: (streamPart) => {
+				onStreamPartRemoved: async (streamPart) => {
 					node.unsubscribe(streamPart);
+					await this.nodeStreamsRegistry.unregisterStreamId(
+						StreamPartIDUtils.getStreamID(streamPart)
+					);
 				},
 			}
 		);

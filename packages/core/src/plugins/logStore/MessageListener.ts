@@ -4,6 +4,8 @@ import StreamrClient from 'streamr-client';
 import { ObservableEventEmitter } from '../../utils/events';
 import { LogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
+import { ValidationSchemaManager } from './validation-schema/ValidationSchemaManager';
+
 
 /**
  * Represents a message listener for storing messages in a log store.
@@ -16,7 +18,10 @@ export class MessageListener extends ObservableEventEmitter<{
 
 	private cleanupTimer?: NodeJS.Timer;
 
-	constructor(private readonly streamrClient: StreamrClient) {
+	constructor(
+		private readonly streamrClient: StreamrClient,
+		private readonly validationManager: ValidationSchemaManager
+	) {
 		super();
 	}
 
@@ -48,6 +53,16 @@ export class MessageListener extends ObservableEventEmitter<{
 			this.isStorableMessage(msg) &&
 			this.logStoreConfig!.hasStreamPart(msg.getStreamPartID())
 		) {
+			const validationResult = await this.validationManager.validateMessage(msg);
+
+			if (!validationResult.valid) {
+				await this.validationManager.publishValidationErrors(
+					msg.getStreamId(),
+					validationResult.errors
+				);
+				return;
+			}
+
 			await this.logStore!.store(msg);
 			this.emit('message', msg);
 		}

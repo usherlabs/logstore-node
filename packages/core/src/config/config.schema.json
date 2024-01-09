@@ -65,7 +65,10 @@
 							"type": "string",
 							"enum": ["standalone"]
 						},
-						"topicsStreamId": {
+						"topicsStream": {
+							"type": "string"
+						},
+						"validationErrorsStream": {
 							"type": "string"
 						},
 						"trackedStreams": {

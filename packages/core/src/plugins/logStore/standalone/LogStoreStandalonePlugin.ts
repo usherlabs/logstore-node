@@ -1,12 +1,17 @@
 import { QueryRequest } from '@logsn/protocol';
-import { toStreamID, toStreamPartID } from '@streamr/protocol';
+import {
+	StreamPartIDUtils,
+	toStreamID,
+	toStreamPartID,
+} from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
 import _ from 'lodash';
 
 import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
+import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
 import { LogStorePlugin } from '../LogStorePlugin';
-import {LogStoreStandaloneConfig} from "./LogStoreStandaloneConfig";
-import {BaseQueryRequestManager} from "../BaseQueryRequestManager";
+import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
+
 
 const logger = new Logger(module);
 
@@ -66,12 +71,18 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 			onStreamPartAdded: async (streamPart) => {
 				try {
 					await node.subscribeAndWaitForJoin(streamPart); // best-effort, can time out
+					await this.nodeStreamsRegistry.registerStreamId(
+						StreamPartIDUtils.getStreamID(streamPart)
+					);
 				} catch (_e) {
 					// no-op
 				}
 			},
-			onStreamPartRemoved: (streamPart) => {
+			onStreamPartRemoved: async (streamPart) => {
 				node.unsubscribe(streamPart);
+				await this.nodeStreamsRegistry.unregisterStreamId(
+					StreamPartIDUtils.getStreamID(streamPart)
+				);
 			},
 		});
 		return logStoreConfig;
