@@ -355,7 +355,7 @@ describe('Network Mode Queries', () => {
 
 			// string schema
 			// @ts-ignore
-			await publisherClient.setValidationSchema({
+			await publisherLogStoreClient.setValidationSchema({
 				streamId: testStream.id,
 				schemaOrHash: 'foo',
 				protocol: 'RAW',
