@@ -1,4 +1,4 @@
-import { Stream } from '@logsn/client';
+import { Stream } from 'streamr-client';
 import { QueryRequest } from '@logsn/protocol';
 import { EthereumAddress, Logger, MetricsContext } from '@streamr/utils';
 import { Schema } from 'ajv';
@@ -53,13 +53,13 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 
 	constructor(options: PluginOptions) {
 		super(options);
-		this.messageListener = new MessageListener(this.logStoreClient);
+		this.messageListener = new MessageListener(this.streamrClient);
 		this.topicsStream = options.topicsStream;
 
 		if (this.topicsStream) {
 			this.messageProcessor = new MessageProcessor(
 				this.pluginConfig,
-				this.logStoreClient,
+				this.streamrClient,
 				this.topicsStream
 			);
 
@@ -99,7 +99,7 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 	 * IMPORTANT: Start after logStoreConfig is initialized
 	 */
 	async start(): Promise<void> {
-		const clientId = await this.logStoreClient.getAddress();
+		const clientId = await this.streamrClient.getAddress();
 
 		// Context permits usage of this object in the current execution context
 		// i.e. getting the queryRequestManager inside our http endpoint handlers
@@ -109,7 +109,7 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 		});
 
 		this._metricsContext = (
-			await this.logStoreClient.getNode()
+			await this.streamrClient.getNode()
 		).getMetricsContext();
 
 		this.maybeLogStore = await this.startCassandraStorage(this.metricsContext);

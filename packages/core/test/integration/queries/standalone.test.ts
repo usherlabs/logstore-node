@@ -1,29 +1,24 @@
-import {
-	CONFIG_TEST,
-	LogStoreClient,
-	NodeMetadata,
-	Stream,
-	StreamPermission,
-} from '@logsn/client';
-import {
-	LogStoreManager,
-	LogStoreNodeManager,
-	LogStoreQueryManager,
-	LSAN as LogStoreTokenManager,
-} from '@logsn/contracts';
+import { LogStoreClient } from '@logsn/client';
 import { Tracker } from '@streamr/network-tracker';
 import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { waitForCondition } from '@streamr/utils';
 import { providers, Wallet } from 'ethers';
+import StreamrClient, {
+	Stream,
+	StreamPermission,
+	CONFIG_TEST as STREAMR_CONFIG_TEST,
+} from 'streamr-client';
 
 import { LogStoreNode } from '../../../src/node';
 import {
 	createLogStoreClient,
+	createStreamrClient,
 	createTestStream,
 	sleep,
 	startLogStoreBroker,
 	startTestTracker,
 } from '../../utils';
+
 
 jest.setTimeout(60000);
 
@@ -37,8 +32,8 @@ const TRACKER_PORT = undefined;
 
 describe('Standalone Mode Queries', () => {
 	const provider = new providers.JsonRpcProvider(
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
+		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
+		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
 	);
 
 	// Accounts
@@ -50,8 +45,9 @@ describe('Standalone Mode Queries', () => {
 	let logStoreBroker: LogStoreNode;
 
 	// Clients
-	let publisherClient: LogStoreClient;
-	let consumerClient: LogStoreClient;
+	let publisherStreamrClient: StreamrClient;
+	let consumerStreamrClient: StreamrClient;
+	let consumerLogStoreClient: LogStoreClient;
 
 	let tracker: Tracker;
 	let testStream: Stream;
@@ -82,20 +78,20 @@ describe('Standalone Mode Queries', () => {
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
 
-		publisherClient = await createLogStoreClient(
+		publisherStreamrClient = await createStreamrClient(
 			tracker,
 			publisherAccount.privateKey
 		);
 
-		consumerClient = await createLogStoreClient(
+		consumerStreamrClient = await createStreamrClient(
 			tracker,
-			storeConsumerAccount.privateKey,
-			{
-				nodeUrl: 'http://127.0.0.1:7171',
-			}
+			storeConsumerAccount.privateKey
 		);
+		consumerLogStoreClient = await createLogStoreClient(consumerStreamrClient, {
+			nodeUrl: 'http://127.0.0.1:7171',
+		});
 
-		testStream = await createTestStream(publisherClient, module);
+		testStream = await createTestStream(publisherStreamrClient, module);
 
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
@@ -113,25 +109,26 @@ describe('Standalone Mode Queries', () => {
 	});
 
 	afterEach(async () => {
-		await publisherClient.destroy();
-		await consumerClient.destroy();
+		await publisherStreamrClient.destroy();
 		await Promise.allSettled([logStoreBroker?.stop(), tracker?.stop()]);
 	});
 
 	it('when client publishes a message, it is written to the store', async () => {
 		// TODO: the consumer must have permission to subscribe to the stream or the strem have to be public
 		await testStream.grantPermissions({
-			user: await consumerClient.getAddress(),
+			user: await consumerLogStoreClient
+				.getSigner()
+				.then((c) => c.getAddress()),
 			permissions: [StreamPermission.SUBSCRIBE],
 		});
 
-		await publisherClient.publish(testStream.id, {
+		await publisherStreamrClient.publish(testStream.id, {
 			foo: 'bar 1',
 		});
-		await publisherClient.publish(testStream.id, {
+		await publisherStreamrClient.publish(testStream.id, {
 			foo: 'bar 2',
 		});
-		await publisherClient.publish(testStream.id, {
+		await publisherStreamrClient.publish(testStream.id, {
 			foo: 'bar 3',
 		});
 
@@ -139,7 +136,7 @@ describe('Standalone Mode Queries', () => {
 
 		const messages = [];
 
-		const messageStream = await consumerClient.query(testStream.id, {
+		const messageStream = await consumerLogStoreClient.query(testStream.id, {
 			last: 2,
 		});
 

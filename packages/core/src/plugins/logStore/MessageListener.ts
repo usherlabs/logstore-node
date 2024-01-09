@@ -1,5 +1,5 @@
-import { LogStoreClient } from '@logsn/client';
 import { StreamMessage, StreamMessageType } from '@streamr/protocol';
+import StreamrClient from 'streamr-client';
 
 import { ObservableEventEmitter } from '../../utils/events';
 import { LogStore } from './LogStore';
@@ -16,7 +16,7 @@ export class MessageListener extends ObservableEventEmitter<{
 
 	private cleanupTimer?: NodeJS.Timer;
 
-	constructor(private readonly logStoreClient: LogStoreClient) {
+	constructor(private readonly streamrClient: StreamrClient) {
 		super();
 	}
 
@@ -24,14 +24,14 @@ export class MessageListener extends ObservableEventEmitter<{
 		this.logStore = logStore;
 		this.logStoreConfig = logStoreConfig;
 
-		const node = await this.logStoreClient.getNode();
+		const node = await this.streamrClient.getNode();
 		// Subscribe to all stream partitions at logstore registry
 		node.addMessageListener(this.onStreamMessage.bind(this));
 	}
 
 	public async stop() {
 		clearInterval(this.cleanupTimer);
-		const node = await this.logStoreClient.getNode();
+		const node = await this.streamrClient.getNode();
 		this.removeAllListeners();
 		node.removeMessageListener(this.onStreamMessage);
 		this.logStoreConfig?.getStreamParts().forEach((streamPart) => {

@@ -1,10 +1,4 @@
-import {
-	CONFIG_TEST,
-	LogStoreClient,
-	NodeMetadata,
-	Stream,
-	StreamPermission,
-} from '@logsn/client';
+import { NodeMetadata } from '@logsn/client';
 import {
 	LogStoreManager,
 	LogStoreNodeManager,
@@ -25,16 +19,20 @@ import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { providers, Wallet } from 'ethers';
 import { defer, firstValueFrom, switchAll } from 'rxjs';
 import { switchMap } from 'rxjs/internal/operators/switchMap';
+import StreamrClient, {
+	Stream,
+	StreamPermission,
+	CONFIG_TEST as STREAMR_CONFIG_TEST,
+} from 'streamr-client';
 
 import { LogStoreNode } from '../../../../../src/node';
 import {
-	createLogStoreClient,
+	createStreamrClient,
 	createTestStream,
 	sleep,
 	startLogStoreBroker,
 	startTestTracker,
 } from '../../../../utils';
-
 
 jest.setTimeout(60000);
 
@@ -48,8 +46,8 @@ const TRACKER_PORT = undefined;
 
 describe('Network Mode Programs', () => {
 	const provider = new providers.JsonRpcProvider(
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
+		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
+		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
 	);
 
 	// Accounts
@@ -63,8 +61,8 @@ describe('Network Mode Programs', () => {
 	let logStoreBroker: LogStoreNode;
 
 	// Clients
-	let publisherClient: LogStoreClient;
-	let consumerClient: LogStoreClient;
+	let publisherClient: StreamrClient;
+	let consumerClient: StreamrClient;
 
 	// Contracts
 	let nodeAdminManager: LogStoreNodeManager;
@@ -130,12 +128,12 @@ describe('Network Mode Programs', () => {
 			trackerPort: TRACKER_PORT,
 		});
 
-		publisherClient = await createLogStoreClient(
+		publisherClient = await createStreamrClient(
 			tracker,
 			publisherAccount.privateKey
 		);
 
-		consumerClient = await createLogStoreClient(
+		consumerClient = await createStreamrClient(
 			tracker,
 			storeConsumerAccount.privateKey
 		);
