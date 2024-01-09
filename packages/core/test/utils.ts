@@ -136,17 +136,16 @@ export const createStreamrClient = async (
 		trackers: tracker
 			? [tracker.getConfigRecord()]
 			: STREAMR_CLIENT_CONFIG_TEST.network?.trackers,
-	};
-	const config = merge<StreamrClientConfig>(
-		{ logLevel: 'trace' },
-		STREAMR_CLIENT_CONFIG_TEST,
-		{
-			auth: {
-				privateKey,
-			},
-			network: networkOptions,
-		}
-	);
+	} satisfies StreamrClientConfig['network'];
+
+	const config = {
+		...STREAMR_CLIENT_CONFIG_TEST,
+		logLevel: 'trace',
+		auth: {
+			privateKey,
+		},
+		network: networkOptions,
+	} satisfies StreamrClientConfig;
 
 	return new StreamrClient(config);
 };
