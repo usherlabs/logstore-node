@@ -1,10 +1,4 @@
-import {
-	CONFIG_TEST,
-	LogStoreClient,
-	NodeMetadata,
-	Stream,
-	StreamPermission,
-} from '@logsn/client';
+import { LogStoreClient, NodeMetadata } from '@logsn/client';
 import {
 	LogStoreManager,
 	LogStoreNodeManager,
@@ -25,16 +19,21 @@ import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { waitForCondition } from '@streamr/utils';
 import { providers, Wallet } from 'ethers';
 import { defer, firstValueFrom, map, mergeAll, toArray } from 'rxjs';
+import StreamrClient, {
+	Stream,
+	StreamPermission,
+	CONFIG_TEST as STREAMR_CLIENT_CONFIG_TEST,
+} from 'streamr-client';
 
 import { LogStoreNode } from '../../../src/node';
 import {
 	createLogStoreClient,
+	createStreamrClient,
 	createTestStream,
 	sleep,
 	startLogStoreBroker,
 	startTestTracker,
 } from '../../utils';
-
 
 jest.setTimeout(60000);
 jest.useFakeTimers({
@@ -51,8 +50,8 @@ const TRACKER_PORT = undefined;
 
 describe('Network Mode Queries', () => {
 	const provider = new providers.JsonRpcProvider(
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
+		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
+		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
 	);
 
 	// Accounts
@@ -66,8 +65,10 @@ describe('Network Mode Queries', () => {
 	let logStoreBroker: LogStoreNode;
 
 	// Clients
-	let publisherClient: LogStoreClient;
-	let consumerClient: LogStoreClient;
+	let publisherStreamrClient: StreamrClient;
+	let publisherLogStoreClient: LogStoreClient;
+	let consumerStreamrClient: StreamrClient;
+	let consumerLogStoreClient: LogStoreClient;
 
 	// Contracts
 	let nodeAdminManager: LogStoreNodeManager;
@@ -133,17 +134,22 @@ describe('Network Mode Queries', () => {
 			trackerPort: TRACKER_PORT,
 		});
 
-		publisherClient = await createLogStoreClient(
+		publisherStreamrClient = await createStreamrClient(
 			tracker,
 			publisherAccount.privateKey
 		);
 
-		consumerClient = await createLogStoreClient(
+		publisherLogStoreClient = await createLogStoreClient(
+			publisherStreamrClient
+		);
+
+		consumerStreamrClient = await createStreamrClient(
 			tracker,
 			storeConsumerAccount.privateKey
 		);
+		consumerLogStoreClient = await createLogStoreClient(consumerStreamrClient);
 
-		testStream = await createTestStream(publisherClient, module);
+		testStream = await createTestStream(publisherStreamrClient, module);
 
 		// debug easier
 		// @ts-ignore
@@ -157,8 +163,8 @@ describe('Network Mode Queries', () => {
 	});
 
 	afterEach(async () => {
-		await publisherClient.destroy();
-		await consumerClient.destroy();
+		await publisherStreamrClient?.destroy();
+		await consumerStreamrClient?.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
 			nodeManager.leave(),
@@ -169,7 +175,7 @@ describe('Network Mode Queries', () => {
 	it('when client publishes a message, it is written to the store', async () => {
 		// TODO: the consumer must have permission to subscribe to the stream or the strem have to be public
 		await testStream.grantPermissions({
-			user: await consumerClient.getAddress(),
+			user: await consumerStreamrClient.getAddress(),
 			permissions: [StreamPermission.SUBSCRIBE],
 		});
 		// await testStream.grantPermissions({
@@ -177,13 +183,13 @@ describe('Network Mode Queries', () => {
 		// 	permissions: [StreamPermission.SUBSCRIBE],
 		// });
 
-		await publisherClient.publish(testStream.id, {
+		await publisherStreamrClient.publish(testStream.id, {
 			foo: 'bar 1',
 		});
-		await publisherClient.publish(testStream.id, {
+		await publisherStreamrClient.publish(testStream.id, {
 			foo: 'bar 2',
 		});
-		await publisherClient.publish(testStream.id, {
+		await publisherStreamrClient.publish(testStream.id, {
 			foo: 'bar 3',
 		});
 
@@ -191,7 +197,7 @@ describe('Network Mode Queries', () => {
 
 		const messages = [];
 
-		const messageStream = await consumerClient.query(testStream.id, {
+		const messageStream = await consumerLogStoreClient.query(testStream.id, {
 			last: 2,
 		});
 
@@ -218,7 +224,9 @@ describe('Network Mode Queries', () => {
 			},
 		};
 		const errorsStream$ = defer(() =>
-			consumerClient.subscribe(nodeManager.address + '/validation-errors')
+			consumerStreamrClient.subscribe(
+				nodeManager.address + '/validation-errors'
+			)
 		).pipe(mergeAll());
 		const errorMessage$ = errorsStream$.pipe(map((s) => s.content));
 
@@ -229,7 +237,7 @@ describe('Network Mode Queries', () => {
 				permissions: [StreamPermission.SUBSCRIBE],
 			});
 
-			await publisherClient.setValidationSchema({
+			await publisherLogStoreClient.setValidationSchema({
 				streamId: testStream.id,
 				schemaOrHash: schema,
 				protocol: 'RAW',
@@ -246,13 +254,13 @@ describe('Network Mode Queries', () => {
 		});
 
 		it('when client publishes a valid message message, it is written to the store', async () => {
-			await publisherClient.publish(testStream.id, {
+			await publisherStreamrClient.publish(testStream.id, {
 				foo: 'bar 1',
 			});
 
 			await sleep(5000);
 
-			const messageStream = await consumerClient.query(testStream.id, {
+			const messageStream = await consumerLogStoreClient.query(testStream.id, {
 				last: 2,
 			});
 
@@ -267,13 +275,13 @@ describe('Network Mode Queries', () => {
 		it('when client publishes an invalid message message, it is not written to the store', async () => {
 			const firstErrorMessage = firstValueFrom(errorMessage$);
 
-			await publisherClient.publish(testStream.id, {
+			await publisherStreamrClient.publish(testStream.id, {
 				foo: 1,
 			});
 
 			await sleep(5000);
 
-			const messageStream = await consumerClient.query(testStream.id, {
+			const messageStream = await consumerLogStoreClient.query(testStream.id, {
 				last: 2,
 			});
 
@@ -294,11 +302,11 @@ describe('Network Mode Queries', () => {
 				permissions: [StreamPermission.SUBSCRIBE],
 			});
 			await testStream.grantPermissions({
-				user: await consumerClient.getAddress(),
+				user: await consumerStreamrClient.getAddress(),
 				permissions: [StreamPermission.SUBSCRIBE],
 			});
 
-			await publisherClient.setValidationSchema({
+			await publisherLogStoreClient.setValidationSchema({
 				streamId: testStream.id,
 				schemaOrHash: schema,
 				protocol: 'RAW',
@@ -308,13 +316,13 @@ describe('Network Mode Queries', () => {
 			// schemas to be picked up
 			await sleep(1_000);
 
-			await publisherClient.publish(testStream.id, {
+			await publisherStreamrClient.publish(testStream.id, {
 				foo: 'bar 1',
 			});
 
 			await sleep(5000);
 
-			const messageStream = await consumerClient.query(testStream.id, {
+			const messageStream = await consumerLogStoreClient.query(testStream.id, {
 				last: 2,
 			});
 
@@ -327,7 +335,7 @@ describe('Network Mode Queries', () => {
 		});
 
 		it('creating a bad schema will NOT break the feature', async () => {
-			const validationSchemaUpdatePromise = publisherClient.setValidationSchema(
+			const validationSchemaUpdatePromise = publisherLogStoreClient.setValidationSchema(
 				{
 					streamId: testStream.id,
 					schemaOrHash: {
@@ -358,13 +366,13 @@ describe('Network Mode Queries', () => {
 
 			const firstErrorMessage = firstValueFrom(errorMessage$);
 
-			await publisherClient.publish(testStream.id, {
+			await publisherStreamrClient.publish(testStream.id, {
 				foo: 'bar 1',
 			});
 
 			await sleep(500);
 
-			const messageStream = await consumerClient.query(testStream.id, {
+			const messageStream = await consumerLogStoreClient.query(testStream.id, {
 				last: 2,
 			});
 
@@ -380,7 +388,7 @@ describe('Network Mode Queries', () => {
 
 			// now we create a good one to see if now it's ok
 
-			await publisherClient.setValidationSchema({
+			await publisherLogStoreClient.setValidationSchema({
 				streamId: testStream.id,
 				schemaOrHash: schema,
 				protocol: 'RAW',
@@ -391,13 +399,13 @@ describe('Network Mode Queries', () => {
 			// schemas to be picked up
 			await sleep(500);
 
-			await publisherClient.publish(testStream.id, {
+			await publisherStreamrClient.publish(testStream.id, {
 				bad: 'bar 1',
 			});
 
 			await sleep(5000);
 
-			const messageStream2 = await consumerClient.query(testStream.id, {
+			const messageStream2 = await consumerLogStoreClient.query(testStream.id, {
 				last: 2,
 			});
 

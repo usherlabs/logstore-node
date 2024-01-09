@@ -1,16 +1,14 @@
 import {
 	LogStoreClient,
-	NetworkNodeStub,
-	PrivateKeyAuthConfig,
-	validateConfig as validateClientConfig,
+	validateConfig as validateLogStoreClientConfig,
 } from '@logsn/client';
 import { getNodeManagerContract } from '@logsn/shared';
 import { toStreamID } from '@streamr/protocol';
 import { Logger, toEthereumAddress } from '@streamr/utils';
-import { ethers } from 'ethers';
 import { Server as HttpServer } from 'http';
 import { Server as HttpsServer } from 'https';
 import _ from 'lodash';
+import { NetworkNodeStub, StreamrClient } from 'streamr-client';
 
 import { version as CURRENT_VERSION } from '../package.json';
 import { Config } from './config/config';
@@ -34,29 +32,32 @@ export const createLogStoreNode = async (
 	configWithoutDefaults: Config
 ): Promise<LogStoreNode> => {
 	const config = validateConfig(configWithoutDefaults, NODE_CONFIG_SCHEMA);
-	validateClientConfig(config.client);
+	validateLogStoreClientConfig(config.logStoreClient);
 
 	// Tweaks suggested by the Streamr Team
-	config.client.network!.webrtcSendBufferMaxMessageCount = 5000;
-	config.client.gapFill = true;
-	config.client.gapFillTimeout = 30 * 1000;
+	config.streamrClient.network = {
+		...config.streamrClient.network,
+		webrtcSendBufferMaxMessageCount: 5000,
+	};
+	config.streamrClient.gapFill = true;
+	config.streamrClient.gapFillTimeout = 30 * 1000;
 
-	const logStoreClient = new LogStoreClient(config.client);
+	const streamrClientConfig = config.streamrClient;
+	const streamrClient = new StreamrClient(streamrClientConfig);
+	const logStoreClient = new LogStoreClient(
+		streamrClient,
+		config.logStoreClient
+	);
 
 	const nodeManagerAddress = toEthereumAddress(
-		config.client.contracts!.logStoreNodeManagerChainAddress!
+		config.logStoreClient.contracts!.logStoreNodeManagerChainAddress!
 	);
 
-	const privateKey = (config.client!.auth as PrivateKeyAuthConfig).privateKey;
-
-	const provider = new ethers.providers.JsonRpcProvider(
-		config.client!.contracts?.streamRegistryChainRPCs!.rpcs[0]
-	);
-	const signer = new ethers.Wallet(privateKey, provider);
+	const signer = await logStoreClient.getSigner();
 
 	const nodeManagerStream = _.flow(
 		_.partial(toStreamID, _, nodeManagerAddress),
-		(v) => logStoreClient.getStream(v)
+		(v) => streamrClient.getStream(v)
 	);
 
 	// `topicsStream` may be defined directly by the config if in 'standalone' mode, or it could be null if not configured.
@@ -64,7 +65,7 @@ export const createLogStoreNode = async (
 	const topicsStream = await (async () => {
 		if (config.mode.type === 'standalone') {
 			return config.mode.topicsStream
-				? await logStoreClient.getStream(config.mode.topicsStream)
+				? await streamrClient.getStream(config.mode.topicsStream)
 				: null;
 		} else {
 			return await nodeManagerStream('/topics');
@@ -75,12 +76,12 @@ export const createLogStoreNode = async (
 	const validationErrorsStream = await (async () => {
 		if (config.mode.type === 'standalone') {
 			return config.mode.validationErrorsStream
-				? await logStoreClient.getStream(config.mode.validationErrorsStream)
+				? await streamrClient.getStream(config.mode.validationErrorsStream)
 				: null;
 		} else {
 			return await nodeManagerStream('/validation-errors');
 		}
-	})()
+	})();
 
 	const modeConfig: PluginOptions['mode'] =
 		config.mode.type === 'network'
@@ -97,6 +98,7 @@ export const createLogStoreNode = async (
 		const pluginOptions: PluginOptions = {
 			name,
 			logStoreClient,
+			streamrClient,
 			mode: modeConfig,
 			nodeConfig: config,
 			topicsStream,
@@ -113,7 +115,7 @@ export const createLogStoreNode = async (
 		if (!started) {
 			throw new Error('cannot invoke on non-started logStore node');
 		}
-		return logStoreClient.getNode();
+		return streamrClient.getNode();
 	};
 
 	return {
@@ -137,8 +139,8 @@ export const createLogStoreNode = async (
 				);
 			}
 
-			const nodeId = (await logStoreClient.getNode()).getNodeId();
-			const nodeAddress = await logStoreClient.getAddress();
+			const nodeId = (await streamrClient.getNode()).getNodeId();
+			const nodeAddress = await streamrClient.getAddress();
 			const mnemonic = generateMnemonicFromAddress(
 				toEthereumAddress(nodeAddress)
 			);
@@ -161,8 +163,8 @@ export const createLogStoreNode = async (
 			logger.info(`Ethereum address ${nodeAddress}`);
 			logger.info(
 				`Tracker Configuration: ${
-					config.client.network?.trackers
-						? JSON.stringify(config.client.network?.trackers)
+					config.streamrClient.network?.trackers
+						? JSON.stringify(config.streamrClient.network?.trackers)
 						: 'default'
 				}`
 			);
@@ -170,8 +172,9 @@ export const createLogStoreNode = async (
 			logger.info(`Plugins: ${JSON.stringify(plugins.map((p) => p.name))}`);
 
 			if (
-				config.client.network?.webrtcDisallowPrivateAddresses === undefined ||
-				config.client.network.webrtcDisallowPrivateAddresses
+				config.streamrClient.network?.webrtcDisallowPrivateAddresses ===
+					undefined ||
+				config.streamrClient.network.webrtcDisallowPrivateAddresses
 			) {
 				logger.warn(
 					'WebRTC private address probing is disabled. ' +
@@ -186,17 +189,17 @@ export const createLogStoreNode = async (
 				await stopServer(httpServer);
 			}
 			await Promise.all(plugins.map((plugin) => plugin.stop()));
-			await logStoreClient.destroy();
+			await streamrClient.destroy();
 		},
 	};
 };
 
 process.on('uncaughtException', (err) => {
-	logger.getFinalLogger().error(err, 'uncaughtException');
+	logger.fatal('Encountered uncaughtException', { err });
 	process.exit(1);
 });
 
 process.on('unhandledRejection', (err) => {
-	logger.getFinalLogger().error(err, 'unhandledRejection');
+	logger.fatal('Encountered unhandledRejection', { err });
 	process.exit(1);
 });

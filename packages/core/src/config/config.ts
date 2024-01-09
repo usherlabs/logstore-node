@@ -2,6 +2,7 @@ import { LogStoreClientConfig } from '@logsn/client';
 import { camelCase, set } from 'lodash';
 import * as os from 'os';
 import path from 'path';
+import { StreamrClientConfig } from 'streamr-client';
 import { DeepRequired } from 'ts-essentials';
 
 export type NetworkParticipantMode = {
@@ -24,7 +25,8 @@ type StandaloneMode = {
 type Mode = StandaloneMode | NetworkParticipantMode;
 
 export interface Config {
-	client?: LogStoreClientConfig;
+	logStoreClient?: LogStoreClientConfig;
+	streamrClient?: StreamrClientConfig;
 	mode?: Mode;
 	httpServer?: {
 		port: number;
@@ -39,7 +41,8 @@ export interface Config {
 // StrictConfig is a config object to which some default values have been applied
 // (see `default` definitions in config.schema.json)
 export type StrictConfig = Config & {
-	client: Exclude<Config['client'], undefined>;
+	logStoreClient: Exclude<Config['logStoreClient'], undefined>;
+	streamrClient: Exclude<Config['streamrClient'], undefined>;
 	plugins: Exclude<Config['plugins'], undefined>;
 	httpServer: Exclude<Config['httpServer'], undefined>;
 	mode: NonNullable<DeepRequired<Config['mode']>>;

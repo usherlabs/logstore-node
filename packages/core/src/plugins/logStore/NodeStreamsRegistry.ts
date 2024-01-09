@@ -1,7 +1,7 @@
-import { LogStoreClient, Stream } from '@logsn/client';
+import { LogStoreClient } from '@logsn/client';
+import StreamrClient, { Stream } from 'streamr-client';
 
 import { ObservableEventEmitter } from '../../utils/events';
-
 
 export class NodeStreamsRegistry extends ObservableEventEmitter<{
 	registerStream: (stream: Stream) => void;
@@ -9,19 +9,19 @@ export class NodeStreamsRegistry extends ObservableEventEmitter<{
 }> {
 	private registeredStreams = new Map<string, Stream>();
 
-	constructor(private readonly logStoreClient: LogStoreClient) {
+	constructor(private readonly streamrClient: StreamrClient) {
 		super();
 	}
 
 	public getRegisteredStreams() {
-		return Array.from( this.registeredStreams.values() );
+		return Array.from(this.registeredStreams.values());
 	}
 
 	public async registerStreamId(streamId: string) {
 		if (this.registeredStreams.has(streamId)) {
 			return;
 		}
-		const stream = await this.logStoreClient.getStream(streamId);
+		const stream = await this.streamrClient.getStream(streamId);
 		this.registeredStreams.set(streamId, stream);
 
 		this.emit('registerStream', stream);
@@ -33,7 +33,6 @@ export class NodeStreamsRegistry extends ObservableEventEmitter<{
 			return;
 		}
 		this.registeredStreams.delete(streamId);
-
 
 		this.emit('unregisterStream', stream);
 	}

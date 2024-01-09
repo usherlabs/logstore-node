@@ -46,7 +46,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 	public async processQueryRequest(queryRequest: QueryRequest) {
 		const data =
 			this.standaloneQueryRequestManager.getDataForQueryRequest(queryRequest);
-		const nodeId = await this.logStoreClient.getAddress();
+		const nodeId = await this.streamrClient.getAddress();
 		return {
 			participatingNodes: [nodeId],
 			data,
@@ -65,7 +65,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 				)
 		);
 
-		const node = await this.logStoreClient.getNode();
+		const node = await this.streamrClient.getNode();
 
 		const logStoreConfig = new LogStoreStandaloneConfig(streamPartIds, {
 			onStreamPartAdded: async (streamPart) => {

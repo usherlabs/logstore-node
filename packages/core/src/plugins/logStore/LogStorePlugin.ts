@@ -1,8 +1,8 @@
-import { Stream } from '@logsn/client';
 import { QueryRequest } from '@logsn/protocol';
 import { EthereumAddress, Logger, MetricsContext } from '@streamr/utils';
 import { Schema } from 'ajv';
 import { Readable } from 'stream';
+import { Stream } from 'streamr-client';
 
 import { Plugin, PluginOptions } from '../../Plugin';
 import PLUGIN_CONFIG_SCHEMA from './config.schema.json';
@@ -14,7 +14,6 @@ import { MessageListener } from './MessageListener';
 import { MessageProcessor } from './MessageProcessor';
 import { NodeStreamsRegistry } from './NodeStreamsRegistry';
 import { ValidationSchemaManager } from './validation-schema/ValidationSchemaManager';
-
 
 const logger = new Logger(module);
 
@@ -61,21 +60,22 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 		super(options);
 		this.validationErrorsStream = options.validationErrorsStream;
 		this.topicsStream = options.topicsStream;
-		this.nodeStreamsRegistry = new NodeStreamsRegistry(this.logStoreClient);
+		this.nodeStreamsRegistry = new NodeStreamsRegistry(this.streamrClient);
 		this.validationManager = new ValidationSchemaManager(
 			this.nodeStreamsRegistry,
 			this.logStoreClient,
+			this.streamrClient,
 			this.validationErrorsStream
 		);
 		this.messageListener = new MessageListener(
-			this.logStoreClient,
+			this.streamrClient,
 			this.validationManager
 		);
 
 		if (this.topicsStream) {
 			this.messageProcessor = new MessageProcessor(
 				this.pluginConfig,
-				this.logStoreClient,
+				this.streamrClient,
 				this.topicsStream
 			);
 
@@ -115,7 +115,7 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 	 * IMPORTANT: Start after logStoreConfig is initialized
 	 */
 	async start(): Promise<void> {
-		const clientId = await this.logStoreClient.getAddress();
+		const clientId = await this.streamrClient.getAddress();
 
 		// Context permits usage of this object in the current execution context
 		// i.e. getting the queryRequestManager inside our http endpoint handlers
@@ -125,7 +125,7 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 		});
 
 		this._metricsContext = (
-			await this.logStoreClient.getNode()
+			await this.streamrClient.getNode()
 		).getMetricsContext();
 
 		await this.validationManager.start();

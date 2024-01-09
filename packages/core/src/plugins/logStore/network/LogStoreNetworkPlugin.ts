@@ -1,10 +1,10 @@
-import { Stream } from '@logsn/client';
 import { QueryRequest } from '@logsn/protocol';
 import { getQueryManagerContract } from '@logsn/shared';
 import { StreamPartIDUtils } from '@streamr/protocol';
 import { EthereumAddress, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
 import { ethers } from 'ethers';
+import { Stream } from 'streamr-client';
 
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
@@ -23,6 +23,7 @@ import { QueryResponseManager } from './QueryResponseManager';
 import { ReportPoller } from './ReportPoller';
 import { SystemCache } from './SystemCache';
 import { SystemRecovery } from './SystemRecovery';
+
 
 const METRICS_INTERVAL = 60 * 1000;
 
@@ -59,12 +60,12 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		}
 
 		this.systemPublisher = new BroadbandPublisher(
-			this.logStoreClient,
+			this.streamrClient,
 			this.networkConfig.systemStream
 		);
 
 		this.systemSubscriber = new BroadbandSubscriber(
-			this.logStoreClient,
+			this.streamrClient,
 			this.networkConfig.systemStream
 		);
 
@@ -74,12 +75,12 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		);
 
 		this.heartbeatSubscriber = new BroadbandSubscriber(
-			this.logStoreClient,
+			this.streamrClient,
 			this.networkConfig.heartbeatStream
 		);
 
 		this.heartbeatPublisher = new BroadbandPublisher(
-			this.logStoreClient,
+			this.streamrClient,
 			this.networkConfig.heartbeatStream
 		);
 
@@ -89,7 +90,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		);
 
 		this.messageMetricsCollector = new MessageMetricsCollector(
-			this.logStoreClient,
+			this.streamrClient,
 			this.systemSubscriber,
 			this.networkConfig.recoveryStream
 		);
@@ -97,7 +98,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		this.systemCache = new SystemCache(this.systemSubscriber, this.kyvePool);
 
 		this.systemRecovery = new SystemRecovery(
-			this.logStoreClient,
+			this.streamrClient,
 			this.networkConfig.recoveryStream,
 			this.networkConfig.systemStream,
 			this.systemCache
@@ -150,7 +151,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		// this should be called after the logStoreConfig is initialized
 		await super.start();
 
-		const clientId = await this.logStoreClient.getAddress();
+		const clientId = await this.streamrClient.getAddress();
 
 		await this.heartbeat.start(clientId);
 		await this.propagationResolver.start(this.logStore);
@@ -211,13 +212,14 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private async startNetworkLogStoreConfig(
 		systemStream: Stream
 	): Promise<LogStoreNetworkConfig> {
-		const node = await this.logStoreClient.getNode();
+		const node = await this.streamrClient.getNode();
 
 		const logStoreConfig = new LogStoreNetworkConfig(
 			this.pluginConfig.cluster.clusterSize,
 			this.pluginConfig.cluster.myIndexInCluster,
 			this.pluginConfig.logStoreConfig.refreshInterval,
 			this.logStoreClient,
+			this.streamrClient,
 			{
 				onStreamPartAdded: async (streamPart) => {
 					try {
@@ -236,16 +238,14 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 						// await systemStream.publish({
 						// 	streamPart,
 						// });
-						logger.debug(
-							'published Assignment message to system stream %s',
-							systemStream.id
-						);
+						logger.debug('published Assignment message to system stream', {
+							streamrId: systemStream.id,
+						});
 					} catch (e) {
-						logger.warn(
-							'failed to publish to system stream %s, reason: %s',
-							systemStream.id,
-							e
-						);
+						logger.warn('failed to publish to system stream', {
+							streamId: systemStream.id,
+							error: e,
+						});
 					}
 				},
 				onStreamPartRemoved: async (streamPart) => {
@@ -277,7 +277,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 
 	public async validateUserQueryAccess(address: EthereumAddress) {
 		const provider = new ethers.providers.JsonRpcProvider(
-			this.nodeConfig.client.contracts?.streamRegistryChainRPCs!.rpcs[0]
+			this.nodeConfig.streamrClient.contracts?.streamRegistryChainRPCs!.rpcs[0]
 		);
 		const queryManager = await getQueryManagerContract(provider);
 		const balance = await queryManager.balanceOf(address);

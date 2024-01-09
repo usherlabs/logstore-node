@@ -1,4 +1,3 @@
-import { LogStoreClient, Stream, StreamID } from '@logsn/client';
 import { Logger } from '@streamr/utils';
 import { catchError, EMPTY, mergeMap, of, Subscription } from 'rxjs';
 
@@ -9,6 +8,8 @@ import {
 	InvalidSchemaError,
 	ValidationFunctionMap,
 } from './validationHandler';
+import StreamrClient, {Stream, StreamID} from "streamr-client";
+import {LogStoreClient} from "@logsn/client";
 
 const logger = new Logger(module);
 
@@ -83,6 +84,7 @@ export class ValidationSchemaManager {
 	constructor(
 		private registry: NodeStreamsRegistry,
 		private readonly logStoreClient: LogStoreClient,
+		private readonly streamrClient: StreamrClient,
 		private readonly validationErrorsStream: Stream | null
 	) {
 		this.handleStreamRegister = this.handleStreamRegister.bind(this);
@@ -103,7 +105,7 @@ export class ValidationSchemaManager {
 				`Got validation errors for stream ${streamId}:\n${formattedErrors}`
 			);
 		} else {
-			await this.logStoreClient.publish(this.validationErrorsStream.id, {
+			await this.streamrClient.publish(this.validationErrorsStream.id, {
 				streamId,
 				errors,
 			});

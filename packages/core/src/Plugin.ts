@@ -1,7 +1,8 @@
-import { LogStoreClient, Stream } from '@logsn/client';
+import { LogStoreClient } from '@logsn/client';
 import { LogStoreNodeManager } from '@logsn/contracts';
 import { Schema } from 'ajv';
 import { Signer } from 'ethers';
+import StreamrClient, { Stream } from 'streamr-client';
 
 import { StrictConfig } from './config/config';
 import { validateConfig } from './config/validateConfig';
@@ -25,6 +26,7 @@ type PluginModeConfig = NetworkModeConfig | StandaloneModeConfig;
 export interface PluginOptions {
 	name: string;
 	logStoreClient: LogStoreClient;
+	streamrClient: StreamrClient;
 	mode: PluginModeConfig;
 	topicsStream: Stream | null;
 	validationErrorsStream: Stream | null;
@@ -36,6 +38,7 @@ export type HttpServerEndpoint = Omit<Endpoint, 'apiAuthentication'>;
 
 export abstract class Plugin<T extends object> {
 	readonly name: string;
+	readonly streamrClient: StreamrClient;
 	readonly logStoreClient: LogStoreClient;
 	readonly modeConfig: PluginModeConfig;
 	readonly nodeConfig: StrictConfig;
@@ -45,6 +48,7 @@ export abstract class Plugin<T extends object> {
 
 	constructor(options: PluginOptions) {
 		this.name = options.name;
+		this.streamrClient = options.streamrClient;
 		this.logStoreClient = options.logStoreClient;
 		this.modeConfig = options.mode;
 		this.nodeConfig = options.nodeConfig;

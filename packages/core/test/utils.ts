@@ -1,22 +1,31 @@
 import {
-	CONFIG_TEST,
+	CONFIG_TEST as LOGSTORE_CLIENT_CONFIG_TEST,
 	LogStoreClient,
 	LogStoreClientConfig,
-	Stream,
-	StreamMetadata,
 } from '@logsn/client';
 import { TEST_CONFIG } from '@streamr/network-node';
 import { startTracker, Tracker } from '@streamr/network-tracker';
 import {
 	EthereumAddress,
+	merge,
 	MetricsContext,
 	toEthereumAddress,
 } from '@streamr/utils';
 import { Wallet } from 'ethers';
 import _ from 'lodash';
+import {
+	Stream,
+	StreamMetadata,
+	CONFIG_TEST as STREAMR_CLIENT_CONFIG_TEST,
+	StreamrClient,
+	StreamrClientConfig,
+} from 'streamr-client';
 
-import { LogStoreNode, createLogStoreNode as createLogStoreBroker } from '../src/node';
 import { Config } from '../src/config/config';
+import {
+	createLogStoreNode as createLogStoreBroker,
+	LogStoreNode,
+} from '../src/node';
 
 export const STREAMR_DOCKER_DEV_HOST =
 	process.env.STREAMR_DOCKER_DEV_HOST || '127.0.0.1';
@@ -38,7 +47,7 @@ export const formLogStoreNetworkBrokerConfig = ({
 	keyspace = 'logstore_test',
 	logStoreConfigRefreshInterval = 0,
 	httpServerPort = 7171,
-	mode
+	mode,
 }: LogStoreBrokerTestConfig): Config => {
 	const plugins: Record<string, any> = { ...extraPlugins };
 	plugins['logStore'] = {
@@ -51,13 +60,15 @@ export const formLogStoreNetworkBrokerConfig = ({
 		},
 		logStoreConfig: {
 			refreshInterval: logStoreConfigRefreshInterval,
-			// logStoreManagerChainAddress,
 		},
 	};
 
 	return {
-		client: {
-			...CONFIG_TEST,
+		logStoreClient: {
+			...LOGSTORE_CLIENT_CONFIG_TEST,
+		},
+		streamrClient: {
+			...STREAMR_CLIENT_CONFIG_TEST,
 			logLevel: 'trace',
 			auth: {
 				privateKey,
@@ -72,7 +83,7 @@ export const formLogStoreNetworkBrokerConfig = ({
 								http: `http://127.0.0.1:${trackerPort}`,
 							},
 					  ]
-					: CONFIG_TEST.network?.trackers,
+					: STREAMR_CLIENT_CONFIG_TEST.network?.trackers,
 				location: {
 					latitude: 60.19,
 					longitude: 24.95,
@@ -116,28 +127,40 @@ export const createEthereumAddress = (id: number): EthereumAddress => {
 	return toEthereumAddress('0x' + _.padEnd(String(id), 40, '0'));
 };
 
-export const createLogStoreClient = async (
+export const createStreamrClient = async (
 	tracker: Tracker,
-	privateKey: string,
-	clientOptions?: LogStoreClientConfig
-): Promise<LogStoreClient> => {
+	privateKey: string
+): Promise<StreamrClient> => {
 	const networkOptions = {
-		...CONFIG_TEST?.network,
+		...STREAMR_CLIENT_CONFIG_TEST?.network,
 		trackers: tracker
 			? [tracker.getConfigRecord()]
-			: CONFIG_TEST.network?.trackers,
-		...clientOptions?.network,
+			: STREAMR_CLIENT_CONFIG_TEST.network?.trackers,
 	};
+	const config = merge<StreamrClientConfig>(
+		{ logLevel: 'trace' },
+		STREAMR_CLIENT_CONFIG_TEST,
+		{
+			auth: {
+				privateKey,
+			},
+			network: networkOptions,
+		}
+	);
 
-	return new LogStoreClient({
-		...CONFIG_TEST,
-		logLevel: 'trace',
-		auth: {
-			privateKey,
-		},
-		network: networkOptions,
-		...clientOptions,
-	});
+	return new StreamrClient(config);
+};
+
+export const createLogStoreClient = async (
+	streamrClient: StreamrClient,
+	clientOptions?: LogStoreClientConfig
+): Promise<LogStoreClient> => {
+	const config = merge<LogStoreClientConfig>(
+		{ logLevel: 'trace' },
+		LOGSTORE_CLIENT_CONFIG_TEST,
+		clientOptions
+	);
+	return new LogStoreClient(streamrClient, config);
 };
 
 export const getTestName = (module: NodeModule): string => {
@@ -147,17 +170,17 @@ export const getTestName = (module: NodeModule): string => {
 };
 
 export const createTestStream = async (
-	logStoreClient: LogStoreClient,
+	streamrClient: StreamrClient,
 	module: NodeModule,
 	props?: Partial<StreamMetadata>
 ): Promise<Stream> => {
 	const id =
-		(await logStoreClient.getAddress()) +
+		(await streamrClient.getAddress()) +
 		'/test/' +
 		getTestName(module) +
 		'/' +
 		Date.now();
-	const stream = await logStoreClient.createStream({
+	const stream = await streamrClient.createStream({
 		id,
 		...props,
 	});
