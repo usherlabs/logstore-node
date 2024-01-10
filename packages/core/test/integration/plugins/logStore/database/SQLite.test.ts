@@ -62,10 +62,10 @@ describe('SQLite', () => {
 		beforeEach(() => {
 			db = new SQLiteDBAdapter({
 				type: 'sqlite',
-				// dataPath: ':memory:'
+				dataPath: ':memory:',
 				// if you wish to debug, uncomment to change it
 				// to file mode, instead of memory
-				dataPath: dbPath,
+				// dataPath: dbPath,
 			});
 		});
 
@@ -90,11 +90,7 @@ describe('SQLite', () => {
 			const stream = db.queryLast(streamId, partition, requestCount);
 			const result = await streamToSerializedMsg(stream);
 
-			expect(result).toEqual(
-				messages
-					.slice(1)
-					.map((s) => s.serialize())
-			);
+			expect(result).toEqual(messages.slice(1).map((s) => s.serialize()));
 		});
 
 		test('queryRange works', async () => {
@@ -217,6 +213,36 @@ describe('SQLite', () => {
 			];
 
 			await testConformity(db, msgs);
+		});
+
+		test('details', async () => {
+			const streamId = MOCK_STREAM_ID;
+			const messages = [
+				getMockMessage(streamId, 1),
+				getMockMessage(streamId, 2),
+				getMockMessage(streamId, 3),
+				getMockMessage(streamId, 4),
+			];
+
+			for (const message of messages) {
+				db.store(message);
+			}
+
+			const firstMessageDate = await db.getFirstMessageDateInStream(
+				streamId,
+				0
+			);
+			const numberOfMessages = await db.getNumberOfMessagesInStream(
+				streamId,
+				0
+			);
+			const lastMessageDate = await db.getLastMessageDateInStream(streamId, 0);
+			const totalBytes = await db.getTotalBytesInStream(streamId, 0);
+
+			expect(firstMessageDate).toBe(1);
+			expect(numberOfMessages).toBe(4);
+			expect(lastMessageDate).toBe(4);
+			expect(totalBytes).toBe(124);
 		});
 	});
 });

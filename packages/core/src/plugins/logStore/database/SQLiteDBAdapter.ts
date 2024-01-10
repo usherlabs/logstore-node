@@ -332,7 +332,7 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 					eq(streamDataTable.partition, partition)
 				)
 			)
-			.orderBy(streamDataTable.ts)
+			.orderBy(asc(streamDataTable.ts))
 			.limit(1)
 			.prepare();
 
@@ -350,7 +350,7 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 	): Promise<number> {
 		const preparedQuery = this.dbClient
 			.select({
-				count: count(streamDataTable),
+				count: count(streamDataTable.stream_id),
 			})
 			.from(streamDataTable)
 			.having(
