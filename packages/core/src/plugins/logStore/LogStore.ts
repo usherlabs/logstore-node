@@ -11,9 +11,8 @@ import {
 	DatabaseAdapter,
 	DatabaseEventEmitter,
 } from './database/DatabaseAdapter';
-import { SQLiteDBOptions } from './database/SQLiteDBAdapter';
+import { SQLiteDBAdapter, SQLiteDBOptions } from './database/SQLiteDBAdapter';
 import { MessageLimitTransform } from './http/dataTransformers';
-
 
 const logger = new Logger(module);
 
@@ -79,8 +78,6 @@ export class LogStore extends DatabaseEventEmitter {
 			limit,
 		});
 
-		const messageLimitTransform = new MessageLimitTransform(limit || Infinity);
-
 		return this.db
 			.queryRange(
 				streamId,
@@ -93,7 +90,7 @@ export class LogStore extends DatabaseEventEmitter {
 				undefined,
 				limit
 			)
-			.pipe(messageLimitTransform);
+			.pipe(new MessageLimitTransform(limit || Infinity));
 	}
 
 	/**
@@ -146,17 +143,19 @@ export class LogStore extends DatabaseEventEmitter {
 		if (!isValidRequest) {
 			throw new Error('Invalid combination of requestFrom arguments');
 		}
-		return this.db.queryRange(
-			streamId,
-			partition,
-			fromTimestamp,
-			fromSequenceNo,
-			toTimestamp,
-			toSequenceNo,
-			publisherId,
-			msgChainId,
-			limit
-		);
+		return this.db
+			.queryRange(
+				streamId,
+				partition,
+				fromTimestamp,
+				fromSequenceNo,
+				toTimestamp,
+				toSequenceNo,
+				publisherId,
+				msgChainId,
+				limit
+			)
+			.pipe(new MessageLimitTransform(limit || Infinity));
 	}
 
 	enableMetrics(metricsContext: MetricsContext): void {
@@ -232,7 +231,10 @@ const getDbFromOpts = (
 	switch (dbOpts.type) {
 		case 'cassandra':
 			return new CassandraDBAdapter(dbOpts, commonOptsWithDefaults);
+		case 'sqlite':
+			return new SQLiteDBAdapter(dbOpts);
 		default:
+			// @ts-expect-error is expected to be never, however we want to be sure
 			throw new Error(`Unknown database type: ${dbOpts.type}`);
 	}
 };

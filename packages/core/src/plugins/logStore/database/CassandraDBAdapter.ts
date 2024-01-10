@@ -17,7 +17,6 @@ import {
 } from '../LogStore';
 import { DatabaseAdapter, QueryDebugInfo } from './DatabaseAdapter';
 
-
 const logger = new Logger(module);
 
 const MAX_RESEND_LAST = 10000;
@@ -309,7 +308,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 
 				const streams = queries.map((q) => {
 					const select = `SELECT payload
-													FROM stream_data ${q.queryStatement} ALLOW FILTERING`;
+																		FROM stream_data ${q.queryStatement} ALLOW FILTERING`;
 
 					return this.queryWithStreamingResults(select, q.params);
 				});

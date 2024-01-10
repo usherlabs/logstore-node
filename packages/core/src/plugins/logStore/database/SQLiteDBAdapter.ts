@@ -1,7 +1,9 @@
 import { MessageID, StreamMessage } from '@streamr/protocol';
+import { Logger } from '@streamr/utils';
 import Database from 'better-sqlite3';
 import {
 	and,
+	asc,
 	between,
 	count,
 	desc,
@@ -32,6 +34,7 @@ import {
 	tableExists,
 } from './sqlite/tables';
 
+const logger = new Logger(module);
 
 export interface SQLiteDBOptions {
 	type: 'sqlite';
@@ -54,6 +57,8 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 			? opts.dataPath
 			: path.resolve(process.cwd(), opts.dataPath);
 
+		logger.info(`Setting up SQLite database at ${absolutePath}`);
+
 		// otherwise could be :memory:
 		if (!fs.existsSync(absolutePath) && !absolutePath.startsWith(':')) {
 			createDirIfNotExists(absolutePath);
@@ -69,7 +74,9 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 
 	// check if defined database has all tables already created, and creates if needed
 	private ensureTablesExist() {
-		if (!tableExists(getTableName(streamDataTable), this.dbClient)) {
+		const tableName = getTableName(streamDataTable);
+		if (!tableExists(tableName, this.dbClient)) {
+			logger.info(`Creating table ${tableName} in SQLite database`);
 			this.dbClient.run(createTableStatement);
 		}
 	}
@@ -130,7 +137,7 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 					msgChainId ? eq(streamDataTable.msg_chain_id, msgChainId) : undefined
 				)
 			)
-			.orderBy(streamDataTable.ts, streamDataTable.sequence_no)
+			.orderBy(asc(streamDataTable.ts), asc(streamDataTable.sequence_no))
 			.$dynamic();
 
 		if (limit) {
@@ -177,11 +184,12 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 					eq(streamDataTable.partition, partition)
 				)
 			)
-			.orderBy(desc(streamDataTable.ts))
+			.orderBy(desc(streamDataTable.ts), desc(streamDataTable.sequence_no))
 			.limit(requestCount)
 			.prepare();
 
 		const results$ = from(preparedQuery.execute()).pipe(
+			map((c) => c.reverse()),
 			mergeAll(), // array to values
 			map(
 				this.parseRow({
@@ -297,7 +305,7 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 					eq(streamDataTable.partition, partition)
 				)
 			)
-			.orderBy(desc(streamDataTable.ts))
+			.orderBy(desc(streamDataTable.ts), desc(streamDataTable.sequence_no))
 			.limit(1)
 			.prepare();
 
