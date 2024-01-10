@@ -131,7 +131,7 @@ describe('Network Mode Queries', () => {
 
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: TRACKER_PORT,
+			trackerPort: TRACKER_PORT
 		});
 
 		publisherStreamrClient = await createStreamrClient(

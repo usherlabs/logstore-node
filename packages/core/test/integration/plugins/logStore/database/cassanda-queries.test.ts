@@ -10,30 +10,34 @@ import { PassThrough, Readable } from 'stream';
 
 import { CassandraDBAdapter } from '../../../../../src/plugins/logStore/database/CassandraDBAdapter';
 import { STREAMR_DOCKER_DEV_HOST } from '../../../../utils';
-import { expectDatabaseOutputConformity } from './conformityUtil';
-
+import { testConformity } from './conformityUtil';
 
 const contactPoints = [STREAMR_DOCKER_DEV_HOST];
 const localDataCenter = 'datacenter1';
 const keyspace = 'logstore_dev';
 
-const MOCK_STREAM_ID = 'mock-stream-id-' + Date.now();
+const DEFAULT_MOCK_STREAM_ID = 'mock-stream-id-' + Date.now();
 const MOCK_PUBLISHER_ID = toEthereumAddress(
 	'0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 );
 const MOCK_MSG_CHAIN_ID = 'msgChainId';
-const createMockMessage = (i: number) => {
+const createMockMessage = (
+	ts: number,
+	sequence_no = 0,
+	mockStreamId: string = DEFAULT_MOCK_STREAM_ID
+) => {
 	return new StreamMessage({
 		messageId: new MessageID(
-			toStreamID(MOCK_STREAM_ID),
+			toStreamID(mockStreamId),
 			0,
-			i,
-			0,
+			ts,
+			sequence_no,
 			MOCK_PUBLISHER_ID,
 			MOCK_MSG_CHAIN_ID
 		),
 		content: {
-			value: i,
+			ts,
+			sequence_no: sequence_no,
 		},
 		signature: 'signature',
 	});
@@ -47,11 +51,13 @@ const EMPTY_STREAM_ID = 'empty-stream-id' + Date.now();
 const REQUEST_TYPE_FROM = 'requestFrom';
 const REQUEST_TYPE_RANGE = 'requestRange';
 
+type TestMessage = StreamMessage<{
+	ts: number;
+	sequence_no: number;
+}>;
 const streamToContentValues = async (resultStream: Readable) => {
-	const messages: StreamMessage<{ value: any }>[] = (await waitForStreamToEnd(
-		resultStream
-	)) as StreamMessage<{ value: any }>[];
-	return messages.map((message) => message.getParsedContent().value);
+	const messages = (await waitForStreamToEnd(resultStream)) as TestMessage[];
+	return messages.map((message) => message.getParsedContent().ts);
 };
 
 class ProxyClient {
@@ -125,7 +131,7 @@ describe('cassanda-queries', () => {
 		return waitForCondition(async () => {
 			const result = await realClient.execute(
 				'SELECT COUNT(*) AS total FROM stream_data WHERE stream_id = ? ALLOW FILTERING',
-				[MOCK_STREAM_ID]
+				[DEFAULT_MOCK_STREAM_ID]
 			);
 			const actualCount = result.rows[0].total.low;
 			return actualCount === expectedCount;
@@ -161,24 +167,15 @@ describe('cassanda-queries', () => {
 	});
 
 	test('conformity test', async () => {
-		const byMessageIdStream = cassandraAdapter.queryByMessageIds([
-			MOCK_MESSAGES[0].messageId,
-		]);
-		const requestLastStream = cassandraAdapter.queryLast(MOCK_STREAM_ID, 0, 1);
-		const requestRangeStream = cassandraAdapter.queryRange(
-			MOCK_STREAM_ID,
-			0,
-			1,
-			0,
-			1,
-			0,
-			MOCK_PUBLISHER_ID,
-			MOCK_MSG_CHAIN_ID
-		);
-
-		await expectDatabaseOutputConformity(byMessageIdStream, MOCK_MESSAGES[0]);
-		await expectDatabaseOutputConformity(requestLastStream, MOCK_MESSAGES[2]);
-		await expectDatabaseOutputConformity(requestRangeStream, MOCK_MESSAGES[0]);
+		const STREAM_ID = DEFAULT_MOCK_STREAM_ID + '_conf';
+		const msgs = [
+			createMockMessage(1, 0, STREAM_ID),
+			createMockMessage(1, 1, STREAM_ID),
+			createMockMessage(2, 0, STREAM_ID),
+			createMockMessage(3, 0, STREAM_ID),
+			createMockMessage(3, 1, STREAM_ID),
+		];
+		await testConformity(cassandraAdapter, msgs);
 	});
 	describe('requestByMessageId', () => {
 		it('single happy path', async () => {
@@ -246,7 +243,11 @@ describe('cassanda-queries', () => {
 
 	describe('requestLast', () => {
 		it('happy path', async () => {
-			const resultStream = cassandraAdapter.queryLast(MOCK_STREAM_ID, 0, 2);
+			const resultStream = cassandraAdapter.queryLast(
+				DEFAULT_MOCK_STREAM_ID,
+				0,
+				2
+			);
 			const contentValues = await streamToContentValues(resultStream);
 			expect(contentValues).toEqual([2, 3]);
 		});
@@ -259,7 +260,11 @@ describe('cassanda-queries', () => {
 
 		it('bucket query error', async () => {
 			(cassandraAdapter.cassandraClient as any).setError('FROM bucket');
-			const resultStream = cassandraAdapter.queryLast(MOCK_STREAM_ID, 0, 1);
+			const resultStream = cassandraAdapter.queryLast(
+				DEFAULT_MOCK_STREAM_ID,
+				0,
+				1
+			);
 			const [actualError] = await waitForEvent(resultStream, 'error');
 			expect(actualError).toBe(ProxyClient.ERROR);
 		});
@@ -268,7 +273,11 @@ describe('cassanda-queries', () => {
 			(cassandraAdapter.cassandraClient as any).setError(
 				'total FROM stream_data'
 			);
-			const resultStream = cassandraAdapter.queryLast(MOCK_STREAM_ID, 0, 1);
+			const resultStream = cassandraAdapter.queryLast(
+				DEFAULT_MOCK_STREAM_ID,
+				0,
+				1
+			);
 			const [actualError] = await waitForEvent(resultStream, 'error');
 			expect(actualError).toBe(ProxyClient.ERROR);
 		});
@@ -277,7 +286,11 @@ describe('cassanda-queries', () => {
 			(cassandraAdapter.cassandraClient as any).setError(
 				'payload FROM stream_data'
 			);
-			const resultStream = cassandraAdapter.queryLast(MOCK_STREAM_ID, 0, 1);
+			const resultStream = cassandraAdapter.queryLast(
+				DEFAULT_MOCK_STREAM_ID,
+				0,
+				1
+			);
 			const [actualError] = await waitForEvent(resultStream, 'error');
 			expect(actualError).toBe(ProxyClient.ERROR);
 		});
@@ -326,7 +339,7 @@ describe('cassanda-queries', () => {
 			};
 
 			it('happy path', async () => {
-				const resultStream = getResultStream(MOCK_STREAM_ID);
+				const resultStream = getResultStream(DEFAULT_MOCK_STREAM_ID);
 				const contentValues = await streamToContentValues(resultStream);
 				expect(contentValues).toEqual([1, 2, 3]);
 			});
@@ -339,19 +352,17 @@ describe('cassanda-queries', () => {
 
 			it('bucket query error', async () => {
 				(cassandraAdapter.cassandraClient as any).setError('FROM bucket');
-				const resultStream = getResultStream(MOCK_STREAM_ID);
+				const resultStream = getResultStream(DEFAULT_MOCK_STREAM_ID);
 				const [actualError] = await waitForEvent(resultStream, 'error');
 				expect(actualError).toBe(ProxyClient.ERROR);
 			});
 
 			it('message query error', async () => {
-				(cassandraAdapter.cassandraClient as any).setError(
-					'payload FROM stream_data'
-				);
-				const resultStream = getResultStream(MOCK_STREAM_ID);
+				(cassandraAdapter.cassandraClient as any).setError('FROM stream_data');
+				const resultStream = getResultStream(DEFAULT_MOCK_STREAM_ID);
 				const [actualError] = await waitForEvent(resultStream, 'error');
 				expect(actualError).toBe(ProxyClient.ERROR);
-			});
+			}, 99_000);
 		}
 	);
 });

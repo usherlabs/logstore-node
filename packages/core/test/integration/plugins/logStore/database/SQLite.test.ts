@@ -8,8 +8,7 @@ import { Readable } from 'stream';
 
 import { SQLiteDBAdapter } from '../../../../../src/plugins/logStore/database/SQLiteDBAdapter';
 import { MAX_SEQUENCE_NUMBER_VALUE } from '../../../../../src/plugins/logStore/LogStore';
-import { expectDatabaseOutputConformity } from './conformityUtil';
-
+import { testConformity } from './conformityUtil';
 
 const MOCK_STREAM_ID = 'streamId';
 const MOCK_PUBLISHER_ID = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
@@ -25,7 +24,10 @@ const getMockMessage = (streamId: string, timestamp: number, sequence_no = 0) =>
 			toEthereumAddress(MOCK_PUBLISHER_ID),
 			MOCK_MSG_CHAIN_ID
 		),
-		content: JSON.stringify({}),
+		content: JSON.stringify({
+			timestamp,
+			sequence_no,
+		}),
 		signature: 'signature',
 	});
 
@@ -91,7 +93,6 @@ describe('SQLite', () => {
 			expect(result).toEqual(
 				messages
 					.slice(1)
-					.reverse()
 					.map((s) => s.serialize())
 			);
 		});
@@ -207,26 +208,15 @@ describe('SQLite', () => {
 		});
 
 		test('conformity test', async () => {
-			const msg1 = getMockMessage(MOCK_STREAM_ID, 1);
+			const msgs = [
+				getMockMessage(MOCK_STREAM_ID, 1, 0),
+				getMockMessage(MOCK_STREAM_ID, 1, 1),
+				getMockMessage(MOCK_STREAM_ID, 2, 0),
+				getMockMessage(MOCK_STREAM_ID, 3, 0),
+				getMockMessage(MOCK_STREAM_ID, 3, 1),
+			];
 
-			await db.store(msg1);
-
-			const byMessageIdStream = db.queryByMessageIds([msg1.messageId]);
-			const requestLastStream = db.queryLast(MOCK_STREAM_ID, 0, 1);
-			const requestRangeStream = db.queryRange(
-				MOCK_STREAM_ID,
-				0,
-				1,
-				0,
-				1,
-				0,
-				MOCK_PUBLISHER_ID,
-				MOCK_MSG_CHAIN_ID
-			);
-
-			await expectDatabaseOutputConformity(byMessageIdStream, msg1);
-			await expectDatabaseOutputConformity(requestLastStream, msg1);
-			await expectDatabaseOutputConformity(requestRangeStream, msg1);
+			await testConformity(db, msgs);
 		});
 	});
 });

@@ -21,7 +21,7 @@ describe('LogStoreNode', () => {
 		logStoreBrokerAccount = new Wallet(await fetchPrivateKeyWithGas());
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: 1234,
+			trackerPort: 1234
 		});
 	}, 30 * 1000);
 

@@ -20,14 +20,13 @@ import {
 	StreamrClient,
 	StreamrClientConfig,
 } from 'streamr-client';
-import {LogStorePluginConfig} from "../src/plugins/logStore/LogStorePlugin";
-
 
 import { Config } from '../src/config/config';
 import {
 	createLogStoreNode as createLogStoreBroker,
 	LogStoreNode,
 } from '../src/node';
+import { LogStorePluginConfig } from '../src/plugins/logStore/LogStorePlugin';
 
 export const STREAMR_DOCKER_DEV_HOST =
 	process.env.STREAMR_DOCKER_DEV_HOST || '127.0.0.1';
@@ -36,7 +35,15 @@ interface LogStoreBrokerTestConfig {
 	trackerPort?: number;
 	privateKey: string;
 	extraPlugins?: Record<string, unknown>;
-	keyspace?: string;
+	db?:
+		| {
+				type: 'cassandra';
+				keyspace?: string;
+		  }
+		| {
+				type: 'sqlite';
+				dbPath?: string;
+		  };
 	logStoreConfigRefreshInterval?: number;
 	httpServerPort?: number;
 	mode?: Config['mode'];
@@ -46,21 +53,27 @@ export const formLogStoreNetworkBrokerConfig = ({
 	trackerPort,
 	privateKey,
 	extraPlugins = {},
-	keyspace = 'logstore_test',
+	db = { type: 'sqlite' },
 	logStoreConfigRefreshInterval = 0,
 	httpServerPort = 7171,
 	mode,
 }: LogStoreBrokerTestConfig): Config => {
 	const plugins: Record<string, any> = { ...extraPlugins };
 	plugins['logStore'] = {
-		db: {
-			type: 'cassandra',
-			hosts: [STREAMR_DOCKER_DEV_HOST],
-			datacenter: 'datacenter1',
-			username: '',
-			password: '',
-			keyspace,
-		},
+		db:
+			db.type === 'cassandra'
+				? {
+						type: 'cassandra',
+						hosts: [STREAMR_DOCKER_DEV_HOST],
+						datacenter: 'datacenter1',
+						username: '',
+						password: '',
+						keyspace: db.keyspace ?? 'logstore_test',
+				  }
+				: {
+						type: 'sqlite',
+						dataPath: db.dbPath ?? ':memory:',
+				  },
 		logStoreConfig: {
 			refreshInterval: logStoreConfigRefreshInterval,
 		},
