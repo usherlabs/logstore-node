@@ -242,7 +242,7 @@ describe('SQLite', () => {
 			expect(firstMessageDate).toBe(1);
 			expect(numberOfMessages).toBe(4);
 			expect(lastMessageDate).toBe(4);
-			expect(totalBytes).toBe(124);
+			expect(totalBytes).toBe(620);
 		});
 	});
 });

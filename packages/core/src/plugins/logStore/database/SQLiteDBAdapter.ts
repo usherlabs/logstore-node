@@ -53,9 +53,10 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 		// e.g.:  /home/node/.logstore/data.db
 		// otherwise, without /, treat as relative from currently working directory
 		// e.g.: .logstore/data.db -> cwd + .logstore/data.db
-		const absolutePath = opts.dataPath.startsWith('/')
-			? opts.dataPath
-			: path.resolve(process.cwd(), opts.dataPath);
+		const absolutePath =
+			opts.dataPath.startsWith('/') || opts.dataPath.startsWith(':')
+				? opts.dataPath
+				: path.resolve(process.cwd(), opts.dataPath);
 
 		logger.info(`Setting up SQLite database at ${absolutePath}`);
 
