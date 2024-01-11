@@ -248,25 +248,21 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 		return Readable.from(results$);
 	}
 
-	public store(streamMessage: StreamMessage): Promise<boolean> {
-		this.dbClient
-			.insert(streamDataTable)
-			.values({
-				stream_id: streamMessage.getStreamId(),
-				partition: streamMessage.getStreamPartition(),
-				ts: streamMessage.getTimestamp(),
-				sequence_no: streamMessage.getSequenceNumber(),
-				publisher_id: streamMessage.getPublisherId(),
-				msg_chain_id: streamMessage.getMsgChainId(),
-				payload: JSON.parse(streamMessage.serialize()),
-				content_bytes: Buffer.byteLength(streamMessage.serialize()),
-			})
-			.prepare()
-			.run();
+	public async store(streamMessage: StreamMessage): Promise<boolean> {
+		await this.dbClient.insert(streamDataTable).values({
+			stream_id: streamMessage.getStreamId(),
+			partition: streamMessage.getStreamPartition(),
+			ts: streamMessage.getTimestamp(),
+			sequence_no: streamMessage.getSequenceNumber(),
+			publisher_id: streamMessage.getPublisherId(),
+			msg_chain_id: streamMessage.getMsgChainId(),
+			payload: JSON.parse(streamMessage.serialize()),
+			content_bytes: Buffer.byteLength(streamMessage.serialize()),
+		});
 
 		this.emit('write', streamMessage);
 
-		return Promise.resolve(true);
+		return true;
 	}
 
 	getTotalBytesInStream(streamId: string, partition: number): Promise<number> {

@@ -212,7 +212,7 @@ describe('SQLite', () => {
 			];
 
 			for (const message of messages) {
-				db.store(message);
+				await db.store(message);
 			}
 
 			const firstMessageDate = await db.getFirstMessageDateInStream(
