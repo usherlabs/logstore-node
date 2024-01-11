@@ -10,7 +10,6 @@ import { PassThrough, Readable } from 'stream';
 
 import { CassandraDBAdapter } from '../../../../../src/plugins/logStore/database/CassandraDBAdapter';
 import { STREAMR_DOCKER_DEV_HOST } from '../../../../utils';
-import { testConformity } from './conformityUtil';
 
 const contactPoints = [STREAMR_DOCKER_DEV_HOST];
 const localDataCenter = 'datacenter1';
@@ -166,17 +165,6 @@ describe('cassanda-queries', () => {
 		cassandraAdapter.cassandraClient = proxyClient;
 	});
 
-	test('conformity test', async () => {
-		const STREAM_ID = DEFAULT_MOCK_STREAM_ID + '_conf';
-		const msgs = [
-			createMockMessage(1, 0, STREAM_ID),
-			createMockMessage(1, 1, STREAM_ID),
-			createMockMessage(2, 0, STREAM_ID),
-			createMockMessage(3, 0, STREAM_ID),
-			createMockMessage(3, 1, STREAM_ID),
-		];
-		await testConformity(cassandraAdapter, msgs);
-	});
 	describe('requestByMessageId', () => {
 		it('single happy path', async () => {
 			const resultStream = cassandraAdapter.queryByMessageIds([

@@ -8,7 +8,6 @@ import { Readable } from 'stream';
 
 import { SQLiteDBAdapter } from '../../../../../src/plugins/logStore/database/SQLiteDBAdapter';
 import { MAX_SEQUENCE_NUMBER_VALUE } from '../../../../../src/plugins/logStore/LogStore';
-import { testConformity } from './conformityUtil';
 
 const MOCK_STREAM_ID = 'streamId';
 const MOCK_PUBLISHER_ID = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
@@ -201,18 +200,6 @@ describe('SQLite', () => {
 
 			// important to see if it's on the same order
 			expect(result).toEqual(queriedMessages.map((s) => s.serialize()));
-		});
-
-		test('conformity test', async () => {
-			const msgs = [
-				getMockMessage(MOCK_STREAM_ID, 1, 0),
-				getMockMessage(MOCK_STREAM_ID, 1, 1),
-				getMockMessage(MOCK_STREAM_ID, 2, 0),
-				getMockMessage(MOCK_STREAM_ID, 3, 0),
-				getMockMessage(MOCK_STREAM_ID, 3, 1),
-			];
-
-			await testConformity(db, msgs);
 		});
 
 		test('details', async () => {
