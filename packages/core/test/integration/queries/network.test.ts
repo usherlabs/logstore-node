@@ -131,7 +131,7 @@ describe('Network Mode Queries', () => {
 
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: TRACKER_PORT,
+			trackerPort: TRACKER_PORT
 		});
 
 		publisherStreamrClient = await createStreamrClient(
@@ -348,6 +348,7 @@ describe('Network Mode Queries', () => {
 					protocol: 'RAW',
 				}
 			);
+
 
 			await expect(validationSchemaUpdatePromise).rejects.toThrow(
 				'schema is invalid'

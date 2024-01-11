@@ -122,7 +122,10 @@ describe('LogStoreConfig', () => {
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
 			trackerPort: TRACKER_PORT,
-			keyspace,
+			db: {
+				type: 'cassandra',
+				keyspace
+			}
 		});
 
 		publisherClient = await createStreamrClient(

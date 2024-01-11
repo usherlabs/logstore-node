@@ -169,7 +169,7 @@ describe('http works', () => {
 			await Promise.all([
 			startLogStoreBroker({
 				privateKey: logStoreBrokerAccount.privateKey,
-				trackerPort: TRACKER_PORT,
+				trackerPort: TRACKER_PORT
 			}),
 				createStreamrClient(tracker, publisherAccount.privateKey),
 				createStreamrClient(tracker, storeConsumerAccount.privateKey),

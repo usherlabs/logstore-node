@@ -7,8 +7,13 @@ import { Stream } from 'streamr-client';
 import { Plugin, PluginOptions } from '../../Plugin';
 import PLUGIN_CONFIG_SCHEMA from './config.schema.json';
 import { logStoreContext } from './context';
+import {
+	CassandraDBOptions,
+	CassandraOptionsFromConfig,
+} from './database/CassandraDBAdapter';
+import { SQLiteDBOptions } from './database/SQLiteDBAdapter';
 import { createDataQueryEndpoint } from './http/dataQueryEndpoint';
-import { LogStore, startCassandraLogStore } from './LogStore';
+import { LogStore, startLogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
 import { MessageListener } from './MessageListener';
 import { MessageProcessor } from './MessageProcessor';
@@ -18,13 +23,7 @@ import { ValidationSchemaManager } from './validation-schema/ValidationSchemaMan
 const logger = new Logger(module);
 
 export interface LogStorePluginConfig {
-	cassandra: {
-		hosts: string[];
-		username: string;
-		password: string;
-		keyspace: string;
-		datacenter: string;
-	};
+	db: CassandraOptionsFromConfig | SQLiteDBOptions;
 	logStoreConfig: {
 		refreshInterval: number;
 	};
@@ -130,7 +129,7 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 
 		await this.validationManager.start();
 
-		this.maybeLogStore = await this.startCassandraStorage(this.metricsContext);
+		this.maybeLogStore = await this.startStorage(this.metricsContext);
 
 		await this.messageListener.start(this.maybeLogStore, this.logStoreConfig);
 
@@ -160,20 +159,40 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 		address: EthereumAddress
 	): Promise<{ valid: true } | { valid: false; message: string }>;
 
-	private async startCassandraStorage(
+	private async startStorage(
 		metricsContext: MetricsContext
 	): Promise<LogStore> {
-		const cassandraStorage = await startCassandraLogStore({
-			contactPoints: [...this.pluginConfig.cassandra.hosts],
-			localDataCenter: this.pluginConfig.cassandra.datacenter,
-			keyspace: this.pluginConfig.cassandra.keyspace,
-			username: this.pluginConfig.cassandra.username,
-			password: this.pluginConfig.cassandra.password,
-			opts: {
-				useTtl: false,
-			},
+		const dbOpts = (() => {
+			const dbConfig = this.pluginConfig.db;
+			switch (dbConfig.type) {
+				case 'cassandra':
+					return cassandraConfigAdapter(dbConfig);
+				case 'sqlite':
+					return dbConfig;
+				default:
+					throw new Error(`Unknown database type: ${dbConfig}`);
+			}
+		})();
+
+		// TODO - get for each kind of db
+		const storage = await startLogStore(dbOpts, {
+			useTtl: false,
 		});
-		cassandraStorage.enableMetrics(metricsContext);
-		return cassandraStorage;
+
+		storage.enableMetrics(metricsContext);
+		return storage;
 	}
 }
+
+const cassandraConfigAdapter = (
+	config: CassandraOptionsFromConfig
+): CassandraDBOptions => {
+	return {
+		type: 'cassandra',
+		contactPoints: config.hosts,
+		localDataCenter: config.datacenter,
+		keyspace: config.keyspace,
+		username: config.username,
+		password: config.password,
+	};
+};
