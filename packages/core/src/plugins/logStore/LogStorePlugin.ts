@@ -129,7 +129,7 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 
 		await this.validationManager.start();
 
-		this.maybeLogStore = await this.startCassandraStorage(this.metricsContext);
+		this.maybeLogStore = await this.startStorage(this.metricsContext);
 
 		await this.messageListener.start(this.maybeLogStore, this.logStoreConfig);
 
@@ -159,7 +159,7 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 		address: EthereumAddress
 	): Promise<{ valid: true } | { valid: false; message: string }>;
 
-	private async startCassandraStorage(
+	private async startStorage(
 		metricsContext: MetricsContext
 	): Promise<LogStore> {
 		const dbOpts = (() => {
