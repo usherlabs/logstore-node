@@ -21,7 +21,7 @@ import {
 	StreamrClientConfig,
 } from 'streamr-client';
 
-import { Config } from '../src/config/config';
+import { Config, PluginConfigs } from '../src/config/config';
 import {
 	createLogStoreNode as createLogStoreBroker,
 	LogStoreNode,
@@ -34,7 +34,8 @@ export const STREAMR_DOCKER_DEV_HOST =
 interface LogStoreBrokerTestConfig {
 	trackerPort?: number;
 	privateKey: string;
-	extraPlugins?: Record<string, unknown>;
+	extraPlugins?: Omit<PluginConfigs, 'logStore'>;
+	enableLogStorePlugin?: boolean;
 	db?:
 		| {
 				type: 'cassandra';
@@ -56,28 +57,32 @@ export const formLogStoreNetworkBrokerConfig = ({
 	db = { type: 'sqlite' },
 	logStoreConfigRefreshInterval = 0,
 	httpServerPort = 7171,
+	enableLogStorePlugin = true,
 	mode,
 }: LogStoreBrokerTestConfig): Config => {
-	const plugins: Record<string, any> = { ...extraPlugins };
-	plugins['logStore'] = {
-		db:
-			db.type === 'cassandra'
-				? {
-						type: 'cassandra',
-						hosts: [STREAMR_DOCKER_DEV_HOST],
-						datacenter: 'datacenter1',
-						username: '',
-						password: '',
-						keyspace: db.keyspace ?? 'logstore_test',
-				  }
-				: {
-						type: 'sqlite',
-						dataPath: db.dbPath ?? ':memory:',
-				  },
-		logStoreConfig: {
-			refreshInterval: logStoreConfigRefreshInterval,
-		},
-	} satisfies Partial<LogStorePluginConfig>;
+	const plugins: PluginConfigs = { ...extraPlugins };
+	if (enableLogStorePlugin) {
+		// @ts-expect-error cluster and programs aren't needed here
+		plugins['logStore'] = {
+			db:
+				db.type === 'cassandra'
+					? {
+							type: 'cassandra',
+							hosts: [STREAMR_DOCKER_DEV_HOST],
+							datacenter: 'datacenter1',
+							username: '',
+							password: '',
+							keyspace: db.keyspace ?? 'logstore_test',
+					  }
+					: {
+							type: 'sqlite',
+							dataPath: db.dbPath ?? ':memory:',
+					  },
+			logStoreConfig: {
+				refreshInterval: logStoreConfigRefreshInterval,
+			},
+		} satisfies Partial<LogStorePluginConfig>;
+	}
 
 	return {
 		logStoreClient: {
