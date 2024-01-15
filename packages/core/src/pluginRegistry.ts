@@ -5,6 +5,7 @@ import { Plugin, PluginOptions } from './Plugin';
 // import { MqttPlugin } from './plugins/mqtt/MqttPlugin'
 import { LogStoreNetworkPlugin } from './plugins/logStore/network/LogStoreNetworkPlugin';
 import { LogStoreStandalonePlugin } from './plugins/logStore/standalone/LogStoreStandalonePlugin';
+import { StorageProxyPlugin } from './plugins/storageProxy/StorageProxyPlugin';
 
 // import { BrubeckMinerPlugin } from './plugins/brubeckMiner/BrubeckMinerPlugin'
 // import { SubscriberPlugin } from './plugins/subscriber/SubscriberPlugin'
@@ -36,6 +37,8 @@ export const createPlugin = (
 		//     return new InfoPlugin(pluginOptions)
 		// case 'logStore':
 		//     return new LogStorePlugin(pluginOptions)
+		case 'storageProxy':
+			return new StorageProxyPlugin(pluginOptions);
 		default:
 			throw new Error(`Unknown plugin: ${name}`);
 	}
