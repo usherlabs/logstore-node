@@ -36,9 +36,6 @@ import {
 } from '../../utils';
 
 jest.setTimeout(60000);
-jest.useFakeTimers({
-	advanceTimers: true,
-});
 
 const STAKE_AMOUNT = BigInt('1000000000000000000');
 
@@ -49,6 +46,10 @@ const STAKE_AMOUNT = BigInt('1000000000000000000');
 const TRACKER_PORT = undefined;
 
 describe('Network Mode Queries', () => {
+	jest.useFakeTimers({
+		advanceTimers: true,
+	});
+
 	const provider = new providers.JsonRpcProvider(
 		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
 		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
@@ -230,6 +231,14 @@ describe('Network Mode Queries', () => {
 		).pipe(mergeAll());
 		const errorMessage$ = errorsStream$.pipe(map((s) => s.content));
 
+		beforeAll(async () => {
+			// this only works on the broker running this same process. Other ones won't pick it up.
+			// to execute this test you should ensure there are no other brokers running.
+			expect(
+				await nodeManager.totalNodes().then((bn) => bn.toNumber())
+			).toEqual(1);
+		})
+
 		beforeEach(async () => {
 			// validation schema is only supported for public streams
 			await testStream.grantPermissions({
@@ -244,11 +253,6 @@ describe('Network Mode Queries', () => {
 			});
 			// to ensure that the new schema is picked up
 			jest.advanceTimersByTime(300_000);
-			// this only works on the broker running this same process. Other ones won't pick it up.
-			// to execute this test you should ensure there are no other brokers running.
-			expect(
-				await nodeManager.totalNodes().then((bn) => bn.toNumber())
-			).toEqual(1);
 			// schemas to be picked up
 			await sleep(1_000);
 		});
