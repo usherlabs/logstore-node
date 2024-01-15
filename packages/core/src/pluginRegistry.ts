@@ -1,9 +1,9 @@
 import { Plugin, PluginOptions } from './Plugin';
-import { HttpPlugin } from './plugins/logStore/HttpPlugin';
-import { MqttPlugin } from './plugins/logStore/MqttPlugin';
+import { HttpPlugin } from './plugins/http/HttpPlugin';
+import { MqttPlugin } from './plugins/mqtt/MqttPlugin';
 import { LogStoreNetworkPlugin } from './plugins/logStore/network/LogStoreNetworkPlugin';
 import { LogStoreStandalonePlugin } from './plugins/logStore/standalone/LogStoreStandalonePlugin';
-import { WebsocketPlugin } from './plugins/logStore/WebSocketPlugin';
+import { WebsocketPlugin } from './plugins/websocket/WebSocketPlugin';
 
 export const createPlugin = (
 	name: string,

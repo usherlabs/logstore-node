@@ -8,8 +8,8 @@ import { StreamrClientConfig } from 'streamr-client';
 import { DeepRequired } from 'ts-essentials';
 
 import { LogStorePluginConfig } from '../plugins/logStore/LogStorePlugin';
-import { MqttPluginConfig } from '../plugins/logStore/MqttPlugin';
-import { WebsocketPluginConfig } from '../plugins/logStore/WebSocketPlugin';
+import { MqttPluginConfig } from '../plugins/mqtt/MqttPlugin';
+import { WebsocketPluginConfig } from '../plugins/websocket/WebSocketPlugin';
 
 export type NetworkParticipantMode = {
 	type: 'network';
