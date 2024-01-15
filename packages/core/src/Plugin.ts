@@ -2,6 +2,7 @@ import { LogStoreClient } from '@logsn/client';
 import { LogStoreNodeManager } from '@logsn/contracts';
 import { Schema } from 'ajv';
 import { Signer } from 'ethers';
+import { ApiAuthentication } from 'streamr-broker/dist/src/apiAuthentication';
 import StreamrClient, { Stream } from 'streamr-client';
 
 import { StrictConfig } from './config/config';
@@ -24,7 +25,7 @@ export type StandaloneModeConfig = {
 type PluginModeConfig = NetworkModeConfig | StandaloneModeConfig;
 
 export interface PluginOptions {
-	name: string;
+	name: keyof StrictConfig['plugins'];
 	logStoreClient: LogStoreClient;
 	streamrClient: StreamrClient;
 	mode: PluginModeConfig;
@@ -34,7 +35,7 @@ export interface PluginOptions {
 	signer: Signer;
 }
 
-export type HttpServerEndpoint = Omit<Endpoint, 'apiAuthentication'>;
+export type HttpServerEndpoint = Endpoint;
 
 export abstract class Plugin<T extends object> {
 	readonly name: string;
@@ -66,6 +67,17 @@ export abstract class Plugin<T extends object> {
 
 	getHttpServerEndpoints(): HttpServerEndpoint[] {
 		return this.httpServerEndpoints;
+	}
+
+	getApiAuthentication(): ApiAuthentication | undefined {
+		if ('apiAuthentication' in this.pluginConfig) {
+			return (
+				(this.pluginConfig.apiAuthentication as ApiAuthentication | null) ??
+				undefined
+			);
+		} else {
+			return this.nodeConfig.apiAuthentication;
+		}
 	}
 
 	/**

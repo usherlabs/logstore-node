@@ -16,9 +16,8 @@ import NODE_CONFIG_SCHEMA from './config/config.schema.json';
 import { validateConfig } from './config/validateConfig';
 import { generateMnemonicFromAddress } from './helpers/generateMnemonicFromAddress';
 import { startServer as startHttpServer, stopServer } from './httpServer';
-import { HttpServerEndpoint, Plugin, PluginOptions } from './Plugin';
+import { HttpServerEndpoint, PluginOptions } from './Plugin';
 import { createPlugin } from './pluginRegistry';
-
 
 const logger = new Logger(module);
 
@@ -94,9 +93,9 @@ export const createLogStoreNode = async (
 			  }
 			: config.mode;
 
-	const plugins: Plugin<any>[] = Object.keys(config.plugins).map((name) => {
+	const plugins = Object.keys(config.plugins).map((name) => {
 		const pluginOptions: PluginOptions = {
-			name,
+			name: name as any,
 			logStoreClient,
 			streamrClient,
 			mode: modeConfig,
@@ -123,7 +122,7 @@ export const createLogStoreNode = async (
 		start: async () => {
 			logger.info(`Starting LogStore node version ${CURRENT_VERSION}`);
 			await Promise.all(plugins.map((plugin) => plugin.start()));
-			const httpServerEndpoints = plugins.flatMap((plugin: Plugin<any>) => {
+			const httpServerEndpoints = plugins.flatMap((plugin) => {
 				return plugin
 					.getHttpServerEndpoints()
 					.map((endpoint: HttpServerEndpoint) => {

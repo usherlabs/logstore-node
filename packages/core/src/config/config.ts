@@ -2,8 +2,14 @@ import { LogStoreClientConfig } from '@logsn/client';
 import { camelCase, set } from 'lodash';
 import * as os from 'os';
 import path from 'path';
+import { ApiAuthentication } from 'streamr-broker/dist/src/apiAuthentication';
+import { ApiPluginConfig } from 'streamr-broker/dist/src/Plugin';
 import { StreamrClientConfig } from 'streamr-client';
 import { DeepRequired } from 'ts-essentials';
+
+import { LogStorePluginConfig } from '../plugins/logStore/LogStorePlugin';
+import { MqttPluginConfig } from '../plugins/logStore/MqttPlugin';
+import { WebsocketPluginConfig } from '../plugins/logStore/WebSocketPlugin';
 
 export type NetworkParticipantMode = {
 	type: 'network';
@@ -24,6 +30,13 @@ type StandaloneMode = {
 };
 type Mode = StandaloneMode | NetworkParticipantMode;
 
+export type PluginConfigs = {
+	logStore?: LogStorePluginConfig;
+	mqtt?: MqttPluginConfig;
+	http?: ApiPluginConfig;
+	websocket?: WebsocketPluginConfig;
+};
+
 export interface Config {
 	logStoreClient?: LogStoreClientConfig;
 	streamrClient?: StreamrClientConfig;
@@ -35,7 +48,7 @@ export interface Config {
 			certFileName: string;
 		};
 	};
-	plugins?: Record<string, any>;
+	plugins?: PluginConfigs & Record<string, any>;
 }
 
 // StrictConfig is a config object to which some default values have been applied
@@ -46,6 +59,7 @@ export type StrictConfig = Config & {
 	plugins: Exclude<Config['plugins'], undefined>;
 	httpServer: Exclude<Config['httpServer'], undefined>;
 	mode: NonNullable<DeepRequired<Config['mode']>>;
+	apiAuthentication: ApiAuthentication | undefined;
 };
 
 export interface ConfigFile extends Config {

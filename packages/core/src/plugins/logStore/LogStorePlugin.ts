@@ -106,7 +106,7 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 		return this.maybeLogStoreConfig;
 	}
 
-	getApiAuthentication(): undefined {
+	override getApiAuthentication(): undefined {
 		return undefined;
 	}
 
