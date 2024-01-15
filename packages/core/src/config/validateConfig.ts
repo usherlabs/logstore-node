@@ -1,7 +1,7 @@
-import Ajv, { ErrorObject, Schema } from 'ajv';
 import type { Options } from 'ajv';
+import Ajv, { ErrorObject, Schema, ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
-import { ValidateFunction } from 'ajv';
+import DEFINITION_SCHEMA from 'streamr-broker/dist/src/config/definitions.schema.json';
 
 import { StrictConfig } from './config';
 
@@ -14,6 +14,7 @@ export function getDefaultAjv(useDefaults = true, options?: Options) {
 
 	addFormats(ajv);
 	ajv.addFormat('ethereum-address', /^0x[a-zA-Z0-9]{40}$/);
+	ajv.addSchema(DEFINITION_SCHEMA);
 
 	return ajv;
 }
@@ -45,13 +46,15 @@ export const getValidationErrors = (
 
 	if (!validate(data)) {
 		const prefix = contextName !== undefined ? contextName + ': ' : '';
-		return validate.errors?.map((e: ErrorObject) => {
-			let text = ajv.errorsText([e], { dataVar: '' }).trim();
-			if (e.params.additionalProperty) {
-				text += ` (${e.params.additionalProperty})`;
-			}
-			return prefix + text;
-		}) ?? [];
+		return (
+			validate.errors?.map((e: ErrorObject) => {
+				let text = ajv.errorsText([e], { dataVar: '' }).trim();
+				if (e.params.additionalProperty) {
+					text += ` (${e.params.additionalProperty})`;
+				}
+				return prefix + text;
+			}) ?? []
+		);
 	}
 	return [];
 };

@@ -29,6 +29,7 @@ import { toEthereumAddress, wait } from '@streamr/utils';
 import axios from 'axios';
 import { providers, Wallet } from 'ethers';
 import { range } from 'lodash';
+import { firstValueFrom, toArray } from 'rxjs';
 import { Readable } from 'stream';
 import StreamrClient, {
 	Stream,
@@ -38,6 +39,7 @@ import StreamrClient, {
 
 import { LogStoreNode } from '../../../../../src/node';
 import { toObject } from '../../../../../src/plugins/logStore/http/DataQueryFormat';
+import { LogStore } from '../../../../../src/plugins/logStore/LogStore';
 import {
 	createLogStoreClient,
 	createStreamrClient,
@@ -167,13 +169,16 @@ describe('http works', () => {
 
 		[logStoreBroker, publisherStreamrClient, consumerStreamrClient] =
 			await Promise.all([
-			startLogStoreBroker({
-				privateKey: logStoreBrokerAccount.privateKey,
-				trackerPort: TRACKER_PORT
-			}),
+				startLogStoreBroker({
+					privateKey: logStoreBrokerAccount.privateKey,
+					trackerPort: TRACKER_PORT,
+					extraPlugins: {
+						http: {},
+					},
+				}),
 				createStreamrClient(tracker, publisherAccount.privateKey),
 				createStreamrClient(tracker, storeConsumerAccount.privateKey),
-		]);
+			]);
 
 		consumerLogStoreClient = await createLogStoreClient(consumerStreamrClient);
 
@@ -594,6 +599,46 @@ describe('http works', () => {
 			});
 			expectAllItemsToBeEqual(queryResponses);
 		});
+	});
+
+	it('publishing through http interface also stores on logstore', async () => {
+		const storeSpy = jest.spyOn(LogStore.prototype, 'store');
+		await sleep(5000);
+		// Creates a stream
+		const testStream2 = await createTestStream(publisherStreamrClient, module);
+		// Stakes for storage
+		await prepareStakeForStoreManager(storeOwnerAccount, STAKE_AMOUNT);
+		await storeManager
+			.stake(testStream2.id, STAKE_AMOUNT)
+			.then((tx) => tx.wait());
+
+		// permit logStore node to publish on this stream
+		await publisherStreamrClient.grantPermissions(testStream2.id, {
+			user: logStoreBrokerAccount.address,
+			permissions: [StreamPermission.PUBLISH, StreamPermission.SUBSCRIBE],
+		});
+
+		// Creates a message
+		const message = {
+			foo: 'bar',
+		};
+
+		// Publishes the message
+		const response = await axios.post(
+			`${BROKER_URL}/streams/${encodeURIComponent(testStream2.id)}`,
+			message
+		);
+
+		expect(response.status).toEqual(200);
+
+		expect(storeSpy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				messageId: expect.objectContaining({
+					streamId: testStream2.id,
+					publisherId: logStoreBrokerAccount.address.toLowerCase(),
+				}),
+			})
+		);
 	});
 });
 
