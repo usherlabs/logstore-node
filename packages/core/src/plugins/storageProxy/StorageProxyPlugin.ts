@@ -1,5 +1,5 @@
 import { toStreamPartID } from '@streamr/protocol';
-import { Logger } from '@streamr/utils';
+import { Logger, MetricsContext } from '@streamr/utils';
 import { Schema } from 'ajv';
 import {
 	EthereumAddress,
@@ -9,6 +9,7 @@ import {
 
 import { Plugin } from '../../Plugin';
 import PLUGIN_CONFIG_SCHEMA from './config.schema.json';
+import { createDataQueryEndpoint } from './dataQueryEndpoint';
 import { StorageConfig } from './StorageConfig';
 import { StorageProxyPluginConfig } from './StorageProxyPluginConfig';
 
@@ -16,6 +17,14 @@ const logger = new Logger(module);
 
 export class StorageProxyPlugin extends Plugin<StorageProxyPluginConfig> {
 	private storageConfig?: StorageConfig;
+	private _metricsContext?: MetricsContext;
+
+	protected get metricsContext(): MetricsContext {
+		if (!this._metricsContext) {
+			throw new Error('MetricsContext not initialized');
+		}
+		return this._metricsContext;
+	}
 
 	async start(): Promise<void> {
 		const clusterId = this.pluginConfig.cluster.clusterAddress;
@@ -25,6 +34,14 @@ export class StorageProxyPlugin extends Plugin<StorageProxyPluginConfig> {
 		this.storageConfig = await this.startStorageConfig(
 			clusterId,
 			assignmentStream
+		);
+
+		this._metricsContext = (
+			await this.streamrClient.getNode()
+		).getMetricsContext();
+
+		this.addHttpServerEndpoint(
+			createDataQueryEndpoint(this.logStoreClient, this.metricsContext)
 		);
 	}
 

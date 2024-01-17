@@ -10,15 +10,14 @@ import {
 import { Request, RequestHandler, Response } from 'express';
 
 import { HttpServerEndpoint } from '../../../Plugin';
-import { createBasicAuthenticatorMiddleware } from './authentication';
 import { LogStoreContext, logStoreContext } from '../context';
+import { createBasicAuthenticatorMiddleware } from './authentication';
 import { getFormat } from './DataQueryFormat';
 import { getForFromQueryRequest } from './getDataForRequest/getForFromQueryRequest';
 import { getForLastQueryRequest } from './getDataForRequest/getForLastQueryRequest';
 import { getForRangeQueryRequest } from './getDataForRequest/getForRangeQueryRequest';
 import { sendError, sendSuccess } from './httpHelpers';
 import { FromRequest, LastRequest, RangeRequest } from './requestTypes';
-
 
 // TODO: move this to protocol-js
 export const MIN_SEQUENCE_NUMBER_VALUE = 0;
@@ -179,7 +178,7 @@ export const createDataQueryEndpoint = (
 	};
 	metricsContext.addMetrics('broker.plugin.logstore', metrics);
 	return {
-		path: `/streams/:id/data/partitions/:partition/:queryType`,
+		path: `/stores/:id/data/partitions/:partition/:queryType`,
 		method: 'get',
 		requestHandlers: [
 			// We need to inject it here, because the execution context from
