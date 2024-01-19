@@ -1,4 +1,5 @@
 import { QueryPropagate, QueryResponse } from '@logsn/protocol';
+import { StreamMessage } from '@streamr/protocol';
 
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { LogStore } from '../LogStore';
@@ -72,9 +73,10 @@ export class PropagationDispatcher {
 
 		// Read the messages from the LogStore
 		const messages: [string, string][] = [];
-		for (const messageId of messageIds) {
-			const message = this.logStore.requestByMessageId(messageId).read();
-			messages.push([messageId, message]);
+		for await (const messageId of messageIds) {
+			for await (const message of this.logStore.requestByMessageId(messageId)) {
+				messages.push([messageId, (message as StreamMessage).serialize()]);
+			}
 		}
 
 		const queryPropagate = new QueryPropagate({
