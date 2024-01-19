@@ -460,25 +460,39 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 		});
 
 		const getStatementForMessageId = (messageId: MessageID) => {
-			const bucketId = this.bucketManager.getBucketId(
-				messageId.streamId,
-				messageId.streamPartition,
-				messageId.timestamp
-			);
+			// TODO: uncomment the following block of code to include buckedId in the query params
+			// Preferred way to get a proper bucket from the database
+			// const [bucket] = this.getBucketsByTimestamp(
+			// 	messageId.streamId,
+			// 	messageId.streamPartition,
+			// 	messageId.timestamp,
+			// 	messageId.timestamp
+			// );
 
-			if (!bucketId) {
-				// With this we decide not to stop execution on missing bucket id, but just skip the message
-				return undefined;
-			}
+			// Obsolete approacy that always returns undefined
+			// const bucketId = this.bucketManager.getBucketId(
+			// 	messageId.streamId,
+			// 	messageId.streamPartition,
+			// 	messageId.timestamp
+			// );
+
+			// if (!bucketId) {
+			// 	// With this we decide not to stop execution on missing bucket id, but just skip the message
+			// 	return undefined;
+			// }
 
 			return {
+				// query:
+				// 	'SELECT payload FROM stream_data WHERE ' +
+				// 	'stream_id = ? AND partition = ? AND bucket_id = ? AND ts = ? AND sequence_no = ? AND publisher_id = ? AND msg_chain_id = ?',
 				query:
 					'SELECT payload FROM stream_data WHERE ' +
-					'stream_id = ? AND partition = ? AND bucket_id = ? AND ts = ? AND sequence_no = ? AND publisher_id = ? AND msg_chain_id = ?',
+					'stream_id = ? AND partition = ? AND ts = ? AND sequence_no = ? AND publisher_id = ? AND msg_chain_id = ? ' +
+					'ALLOW FILTERING',
 				params: [
 					messageId.streamId,
 					messageId.streamPartition,
-					bucketId,
+					// bucketId,
 					messageId.timestamp,
 					messageId.sequenceNumber,
 					messageId.publisherId,
