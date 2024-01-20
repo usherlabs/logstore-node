@@ -70,7 +70,8 @@
 		"uuid": "^9.0.0",
 		"better-sqlite3": "^9.2.2",
 		"drizzle-orm": "^0.29.3",
-		"zlib": "^1.0.5"
+		"zlib": "^1.0.5",
+		"get-port-please": "^3.1.2"
 	},
 	"devDependencies": {
 		"@streamr/network-node": "^8.5.5",
