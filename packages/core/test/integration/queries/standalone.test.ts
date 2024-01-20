@@ -3,6 +3,7 @@ import { Tracker } from '@streamr/network-tracker';
 import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { waitForCondition } from '@streamr/utils';
 import { providers, Wallet } from 'ethers';
+import fetch from 'node-fetch';
 import StreamrClient, {
 	Stream,
 	StreamPermission,
@@ -19,10 +20,7 @@ import {
 	startTestTracker,
 } from '../../utils';
 
-
 jest.setTimeout(60000);
-
-const STAKE_AMOUNT = BigInt('1000000000000000000');
 
 // There are two options to run the test managed by a value of the TRACKER_PORT constant:
 // 1. TRACKER_PORT = undefined - run the test against the brokers running in dev-env and brokers run by the test script.
@@ -68,6 +66,7 @@ describe('Standalone Mode Queries', () => {
 	afterAll(async () => {
 		// TODO: Setup global tear-down
 		await KeyServer.stopIfRunning();
+		await logStoreBroker.stop();
 	});
 
 	beforeEach(async () => {
@@ -148,5 +147,18 @@ describe('Standalone Mode Queries', () => {
 		await waitForCondition(async () => {
 			return messages.length === 2;
 		});
+	});
+
+	it('Temporary test: prover is ok on standalone mode', async () => {
+		await sleep(5000);
+		const result = await fetch('http://127.0.0.1:7171/prover/wiejew').catch(
+			(e) => {
+				console.log(e);
+				throw e;
+			}
+		);
+
+		expect(result.status).toEqual(200);
+		expect(await result.text()).toContain('Path: /wiejew');
 	});
 });
