@@ -4,6 +4,7 @@ import { StreamPartIDUtils } from '@streamr/protocol';
 import { EthereumAddress, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
 import { ethers } from 'ethers';
+import path from 'path';
 import { Stream } from 'streamr-client';
 
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
@@ -12,6 +13,7 @@ import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
 import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
+import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { Heartbeat } from './Heartbeat';
 import { KyvePool } from './KyvePool';
 import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
@@ -44,11 +46,20 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private readonly propagationResolver: PropagationResolver;
 	private readonly propagationDispatcher: PropagationDispatcher;
 	private readonly reportPoller: ReportPoller;
+	private readonly notaryServer: ProxiedWebServerProcess;
 
 	private metricsTimer?: NodeJS.Timer;
 
 	constructor(options: PluginOptions) {
 		super(options);
+
+		this.notaryServer = new ProxiedWebServerProcess(
+			'notary',
+			path.join(process.cwd(), './bin/notary-webserver'),
+			({ port }) => [`-p`, port.toString()],
+			'/notary/',
+			this.reverseProxy
+		);
 
 		const networkStrictNodeConfig =
 			this.nodeConfig.mode?.type === 'network'
@@ -179,6 +190,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			);
 		}
 
+		await this.notaryServer.start();
+
 		this.metricsTimer = setInterval(
 			this.logMetrics.bind(this),
 			METRICS_INTERVAL
@@ -193,6 +206,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		};
 
 		await Promise.all([
+			super.stop(),
 			this.messageMetricsCollector.stop(),
 			this.heartbeat.stop(),
 			this.propagationResolver.stop(),

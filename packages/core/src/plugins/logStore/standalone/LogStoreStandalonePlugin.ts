@@ -6,9 +6,11 @@ import {
 } from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
 import _ from 'lodash';
+import path from 'path';
 
 import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
 import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
+import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
 
@@ -17,9 +19,19 @@ const logger = new Logger(module);
 
 export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
+	private proverServer: ProxiedWebServerProcess;
 
 	constructor(options: PluginOptions) {
 		super(options);
+
+		this.proverServer = new ProxiedWebServerProcess(
+			'prover',
+			path.join(process.cwd(), './bin/prover-webserver'),
+			({ port }) => [`-p`, port.toString()],
+			'/prover/',
+			this.reverseProxy
+		);
+
 		this.standaloneQueryRequestManager = new BaseQueryRequestManager();
 	}
 
@@ -37,10 +49,15 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		// this should be called after the logStoreConfig is initialized
 		await super.start();
 		await this.standaloneQueryRequestManager.start(this.logStore);
+		await this.proverServer.start();
 	}
 
 	override async stop(): Promise<void> {
-		await this.maybeLogStoreConfig?.destroy();
+		await Promise.all([
+			super.stop(),
+			this.maybeLogStoreConfig?.destroy(),
+			this.proverServer.stop(),
+		]);
 	}
 
 	public async processQueryRequest(queryRequest: QueryRequest) {
