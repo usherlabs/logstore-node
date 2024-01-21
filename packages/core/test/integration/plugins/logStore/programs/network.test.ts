@@ -27,6 +27,7 @@ import StreamrClient, {
 
 import { LogStoreNode } from '../../../../../src/node';
 import {
+	CONTRACT_OWNER_PRIVATE_KEY,
 	createStreamrClient,
 	createTestStream,
 	sleep,
@@ -81,10 +82,7 @@ describe('Network Mode Programs', () => {
 		);
 
 		// Accounts
-		adminAccount = new Wallet(
-			process.env.CONTRACT_OWNER_PRIVATE_KEY!,
-			provider
-		);
+		adminAccount = new Wallet(CONTRACT_OWNER_PRIVATE_KEY, provider);
 		publisherAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeOwnerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeConsumerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
@@ -125,7 +123,14 @@ describe('Network Mode Programs', () => {
 
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: TRACKER_PORT
+			trackerPort: TRACKER_PORT,
+			plugins: {
+				logStore: {
+					db: {
+						type: 'cassandra',
+					},
+				},
+			},
 		});
 
 		publisherClient = await createStreamrClient(

@@ -21,6 +21,7 @@ import {
 
 import { LogStoreNode } from '../../../../src/node';
 import {
+	CONTRACT_OWNER_PRIVATE_KEY,
 	createStreamrClient,
 	createTestStream,
 	sleep,
@@ -75,10 +76,7 @@ describe('LogStoreConfig', () => {
 		);
 		publisherAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeOwnerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
-		adminAccount = new Wallet(
-			process.env.CONTRACT_OWNER_PRIVATE_KEY!,
-			provider
-		);
+		adminAccount = new Wallet(CONTRACT_OWNER_PRIVATE_KEY, provider);
 
 		// Contracts
 		nodeManager = await getNodeManagerContract(logStoreBrokerAccount);
@@ -122,10 +120,14 @@ describe('LogStoreConfig', () => {
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
 			trackerPort: TRACKER_PORT,
-			db: {
-				type: 'cassandra',
-				keyspace
-			}
+			plugins: {
+				logStore: {
+					db: {
+						type: 'cassandra',
+						keyspace,
+					},
+				},
+			},
 		});
 
 		publisherClient = await createStreamrClient(

@@ -19,7 +19,6 @@ import {
 	startTestTracker,
 } from '../../utils';
 
-
 jest.setTimeout(60000);
 
 const STAKE_AMOUNT = BigInt('1000000000000000000');
@@ -96,6 +95,13 @@ describe('Standalone Mode Queries', () => {
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
 			trackerPort: TRACKER_PORT,
+			plugins: {
+				logStore: {
+					db: {
+						type: 'cassandra',
+					},
+				},
+			},
 			mode: {
 				type: 'standalone',
 				trackedStreams: [

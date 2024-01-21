@@ -142,17 +142,20 @@ describe('LogStore', () => {
 			localDataCenter,
 			keyspace,
 		});
-		logStore = await startLogStore({
-			type: 'cassandra',
-			contactPoints,
-			localDataCenter,
-			keyspace,
-		}, {
-			maxBucketRecords: MAX_BUCKET_MESSAGE_COUNT,
-			checkFullBucketsTimeout: 100,
-			storeBucketsTimeout: 100,
-			bucketKeepAliveSeconds: 1,
-		});
+		logStore = await startLogStore(
+			{
+				type: 'cassandra',
+				contactPoints,
+				localDataCenter,
+				keyspace,
+			},
+			{
+				maxBucketRecords: MAX_BUCKET_MESSAGE_COUNT,
+				checkFullBucketsTimeout: 100,
+				storeBucketsTimeout: 100,
+				bucketKeepAliveSeconds: 1,
+			}
+		);
 	});
 
 	afterAll(async () => {

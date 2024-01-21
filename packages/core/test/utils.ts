@@ -27,15 +27,27 @@ import {
 	LogStoreNode,
 } from '../src/node';
 import { LogStorePluginConfig } from '../src/plugins/logStore/LogStorePlugin';
+import { StorageProxyPluginConfig } from '../src/plugins/storageProxy/StorageProxyPluginConfig';
 
 export const STREAMR_DOCKER_DEV_HOST =
 	process.env.STREAMR_DOCKER_DEV_HOST || '127.0.0.1';
 
-interface LogStoreBrokerTestConfig {
+export const CONTRACT_OWNER_PRIVATE_KEY =
+	'0x633a182fb8975f22aaad41e9008cb49a432e9fdfef37f151e9e7c54e96258ef9';
+
+export interface LogStoreBrokerTestConfig {
 	trackerPort?: number;
 	privateKey: string;
-	extraPlugins?: Record<string, unknown>;
-	db?:
+	plugins: {
+		logStore?: LogStorePluginTestConfig;
+		storageProxy?: StorageProxyPluginTestConfig;
+	} & Record<string, unknown>;
+	httpServerPort?: number;
+	mode?: Config['mode'];
+}
+
+export interface LogStorePluginTestConfig {
+	db:
 		| {
 				type: 'cassandra';
 				keyspace?: string;
@@ -44,42 +56,21 @@ interface LogStoreBrokerTestConfig {
 				type: 'sqlite';
 				dbPath?: string;
 		  };
-	logStoreConfigRefreshInterval?: number;
-	httpServerPort?: number;
-	mode?: Config['mode'];
+	refreshInterval?: number;
+}
+
+export interface StorageProxyPluginTestConfig {
+	clusterAddress: string;
 }
 
 export const formLogStoreNetworkBrokerConfig = ({
 	trackerPort,
 	privateKey,
-	extraPlugins = {},
-	db = { type: 'sqlite' },
-	logStoreConfigRefreshInterval = 0,
+	plugins,
 	httpServerPort = 7171,
 	mode,
 }: LogStoreBrokerTestConfig): Config => {
-	const plugins: Record<string, any> = { ...extraPlugins };
-	plugins['logStore'] = {
-		db:
-			db.type === 'cassandra'
-				? {
-						type: 'cassandra',
-						hosts: [STREAMR_DOCKER_DEV_HOST],
-						datacenter: 'datacenter1',
-						username: '',
-						password: '',
-						keyspace: db.keyspace ?? 'logstore_test',
-				  }
-				: {
-						type: 'sqlite',
-						dataPath: db.dbPath ?? ':memory:',
-				  },
-		logStoreConfig: {
-			refreshInterval: logStoreConfigRefreshInterval,
-		},
-	} satisfies Partial<LogStorePluginConfig>;
-
-	return {
+	const config: Config = {
 		logStoreClient: {
 			...LOGSTORE_CLIENT_CONFIG_TEST,
 		},
@@ -109,10 +100,61 @@ export const formLogStoreNetworkBrokerConfig = ({
 				webrtcDisallowPrivateAddresses: false,
 			},
 		},
-		plugins,
+		plugins: {},
 		mode,
 		httpServer: {
 			port: httpServerPort,
+		},
+	};
+
+	if (plugins.logStore) {
+		config.plugins!.logStore = formLogStorePluginConfig(plugins.logStore);
+	}
+
+	if (plugins.storageProxy) {
+		config.plugins!.storageProxy = formStorageProxyPluginConfig(
+			plugins.storageProxy
+		);
+	}
+
+	return config;
+};
+
+export const formLogStorePluginConfig = ({
+	db,
+	refreshInterval = 0,
+}: LogStorePluginTestConfig): Partial<LogStorePluginConfig> => {
+	return {
+		logStoreConfig: {
+			refreshInterval,
+		},
+		db:
+			db.type === 'cassandra'
+				? {
+						type: 'cassandra',
+						hosts: [STREAMR_DOCKER_DEV_HOST],
+						datacenter: 'datacenter1',
+						username: '',
+						password: '',
+						keyspace: db.keyspace ?? 'logstore_test',
+				  }
+				: {
+						type: 'sqlite',
+						dataPath: db.dbPath ?? ':memory:',
+				  },
+	};
+};
+
+export const formStorageProxyPluginConfig = ({
+	clusterAddress,
+}: StorageProxyPluginTestConfig): Partial<StorageProxyPluginConfig> => {
+	return {
+		storageConfig: {
+			refreshInterval: 10000,
+			storeStakeAmount: '1000000000',
+		},
+		cluster: {
+			clusterAddress: toEthereumAddress(clusterAddress),
 		},
 	};
 };

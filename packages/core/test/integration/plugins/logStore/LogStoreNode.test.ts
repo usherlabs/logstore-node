@@ -21,7 +21,14 @@ describe('LogStoreNode', () => {
 		logStoreBrokerAccount = new Wallet(await fetchPrivateKeyWithGas());
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: 1234
+			trackerPort: 1234,
+			plugins: {
+				logStore: {
+					db: {
+						type: 'cassandra',
+					},
+				},
+			},
 		});
 	}, 30 * 1000);
 
