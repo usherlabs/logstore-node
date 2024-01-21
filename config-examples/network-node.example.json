@@ -18,7 +18,8 @@
   },
   "plugins": {
     "logStore": {
-      "cassandra": {
+			"db": {
+				"type": "cassandra",
         "hosts": [
           "cassandra"
         ],
