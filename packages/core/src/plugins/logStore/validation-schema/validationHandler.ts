@@ -36,7 +36,7 @@ export const createValidationHandler =
 
 		if (shouldSkipValidation) {
 			if (isEncrypted) {
-				logger.warn(
+				logger.trace(
 					`Message ${message.getStreamId()} is encrypted, skipping validation`
 				);
 			}
