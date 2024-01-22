@@ -197,8 +197,8 @@ describe('StorageProxy management', () => {
 			}
 
 			expect(messages.length).toEqual(2);
-			expect(messages[0].content).toEqual(publishedMessages[0].originalCOntent);
-			expect(messages[1].content).toEqual(publishedMessages[1].originalCOntent);
+			expect(messages[0].content).toEqual(publishedMessages[0].originalContent);
+			expect(messages[1].content).toEqual(publishedMessages[1].originalContent);
 		},
 		10 * 1000
 	);

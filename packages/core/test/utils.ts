@@ -270,13 +270,13 @@ export const publishTestMessages = async (
 	interval: number = 200,
 	finalDelay: number = 5000
 ) => {
-	const messages: (Message & { originalCOntent: string })[] = [];
+	const messages: (Message & { originalContent: string })[] = [];
 
 	for (let i = 0; i < number; i++) {
-		const originalCOntent = `Test Message ${i}`;
-		const message = await client.publish(stream.id, originalCOntent);
+		const originalContent = `Test Message ${i}`;
+		const message = await client.publish(stream.id, originalContent);
 
-		messages.push({ ...message, originalCOntent });
+		messages.push({ ...message, originalContent });
 
 		await sleep(interval);
 	}

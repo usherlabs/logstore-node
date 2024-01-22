@@ -39,7 +39,7 @@ describe('StorageProxy resends', () => {
 	let tracker: Tracker;
 	let testStream: Stream;
 
-	let publishedMessages: (Message & { originalCOntent: string })[];
+	let publishedMessages: (Message & { originalContent: string })[];
 
 	beforeAll(async () => {
 		if (TRACKER_PORT) {
@@ -88,8 +88,8 @@ describe('StorageProxy resends', () => {
 			}
 
 			expect(messages.length).toEqual(5);
-			expect(messages[0].content).toEqual(publishedMessages[0].originalCOntent);
-			expect(messages[4].content).toEqual(publishedMessages[4].originalCOntent);
+			expect(messages[0].content).toEqual(publishedMessages[0].originalContent);
+			expect(messages[4].content).toEqual(publishedMessages[4].originalContent);
 		});
 
 		it('Resends From', async () => {
@@ -194,8 +194,8 @@ describe('StorageProxy resends', () => {
 			}
 
 			expect(messages.length).toEqual(5);
-			expect(messages[0].content).toEqual(publishedMessages[0].originalCOntent);
-			expect(messages[4].content).toEqual(publishedMessages[4].originalCOntent);
+			expect(messages[0].content).toEqual(publishedMessages[0].originalContent);
+			expect(messages[4].content).toEqual(publishedMessages[4].originalContent);
 		});
 
 		it('Resends From', async () => {
@@ -211,9 +211,9 @@ describe('StorageProxy resends', () => {
 			}
 
 			expect(messages.length).toEqual(3);
-			expect(messages[0].content).toEqual(publishedMessages[2].originalCOntent);
-			expect(messages[1].content).toEqual(publishedMessages[3].originalCOntent);
-			expect(messages[2].content).toEqual(publishedMessages[4].originalCOntent);
+			expect(messages[0].content).toEqual(publishedMessages[2].originalContent);
+			expect(messages[1].content).toEqual(publishedMessages[3].originalContent);
+			expect(messages[2].content).toEqual(publishedMessages[4].originalContent);
 		});
 
 		it('Resends Range', async () => {
@@ -232,9 +232,9 @@ describe('StorageProxy resends', () => {
 			}
 
 			expect(messages.length).toEqual(3);
-			expect(messages[0].content).toEqual(publishedMessages[1].originalCOntent);
-			expect(messages[1].content).toEqual(publishedMessages[2].originalCOntent);
-			expect(messages[2].content).toEqual(publishedMessages[3].originalCOntent);
+			expect(messages[0].content).toEqual(publishedMessages[1].originalContent);
+			expect(messages[1].content).toEqual(publishedMessages[2].originalContent);
+			expect(messages[2].content).toEqual(publishedMessages[3].originalContent);
 		});
 	});
 });
