@@ -1,5 +1,14 @@
 import { PromiseOrValue } from '@logsn/contracts/dist/common';
-import { defer, map, mergeAll, mergeMap, share } from 'rxjs';
+import { Logger } from '@streamr/utils';
+import {
+	catchError,
+	defer,
+	map,
+	mergeAll,
+	mergeMap,
+	share,
+	throwError,
+} from 'rxjs';
 
 import { StrictConfig } from '../../../config/config';
 import {
@@ -7,6 +16,8 @@ import {
 	getNextAvailablePort,
 	tmpFilePathFromContent,
 } from './utils';
+
+const logger = new Logger(module);
 
 export type ReversePath = {
 	port: number;
@@ -26,7 +37,15 @@ const tinyProxyFromConfigPath = (configFilePath: string) =>
 		name: 'tinyproxy',
 		cmd: 'tinyproxy',
 		args: ['-d', '-c', configFilePath],
-	});
+	}).pipe(
+		catchError((err) => {
+			logger.error(
+				'tinyproxy failed to start, are you sure it is installed?',
+				err
+			);
+			return throwError(() => err);
+		})
+	);
 
 const textFromTinyConfig = ({
 	port,

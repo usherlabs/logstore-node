@@ -18,11 +18,19 @@ COPY --chown=node:node ./pnpm-workspace.yaml ./
 COPY --chown=node:node ./tsconfig.node.json ./
 
 COPY --chown=node:node ./packages/core/package.json ./packages/core/
+COPY --chown=node:node ./packages/core/scripts/ ./packages/core/scripts/
 COPY --chown=node:node ./packages/program/package.json ./packages/program/
 COPY --chown=node:node ./packages/program-evm-validate/package.json ./packages/program-evm-validate/
 COPY --chown=node:node ./packages/program-solana-validate/package.json ./packages/program-solana-validate/
 
+USER root
+
 RUN pnpm install
+
+# Recursive chown
+RUN chown -R node:node /home/node/logstore-node
+
+USER node
 
 COPY --chown=node:node ./ ./
 
