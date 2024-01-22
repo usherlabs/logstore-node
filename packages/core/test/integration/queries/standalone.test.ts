@@ -11,6 +11,7 @@ import StreamrClient, {
 } from 'streamr-client';
 
 import { LogStoreNode } from '../../../src/node';
+import { WEBSERVER_PATHS } from '../../../src/plugins/logStore/http-proxy/constants';
 import {
 	createLogStoreClient,
 	createStreamrClient,
@@ -18,6 +19,7 @@ import {
 	sleep,
 	startLogStoreBroker,
 	startTestTracker,
+	TEST_WEBSERVER_PATH,
 } from '../../utils';
 
 jest.setTimeout(60000);
@@ -29,6 +31,8 @@ jest.setTimeout(60000);
 const TRACKER_PORT = undefined;
 
 describe('Standalone Mode Queries', () => {
+	jest.spyOn(WEBSERVER_PATHS, 'prover').mockReturnValue(TEST_WEBSERVER_PATH);
+
 	const provider = new providers.JsonRpcProvider(
 		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
 		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId

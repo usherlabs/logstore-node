@@ -13,6 +13,7 @@ import {
 } from '@streamr/utils';
 import { Wallet } from 'ethers';
 import _ from 'lodash';
+import path from 'path';
 import {
 	Stream,
 	StreamMetadata,
@@ -207,3 +208,8 @@ export async function sleep(ms = 0): Promise<void> {
 		setTimeout(resolve, ms);
 	});
 }
+
+export const TEST_WEBSERVER_PATH = path.join(
+	__dirname,
+	'./assets/test-webserver'
+);

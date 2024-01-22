@@ -6,10 +6,10 @@ import {
 } from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
 import _ from 'lodash';
-import path from 'path';
 
 import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
 import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
+import { WEBSERVER_PATHS } from '../http-proxy/constants';
 import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
@@ -26,7 +26,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 
 		this.proverServer = new ProxiedWebServerProcess(
 			'prover',
-			path.join(process.cwd(), './bin/prover-webserver'),
+			WEBSERVER_PATHS.prover(),
 			({ port }) => [`-p`, port.toString()],
 			'/prover/',
 			this.reverseProxy

@@ -4,16 +4,16 @@ import { StreamPartIDUtils } from '@streamr/protocol';
 import { EthereumAddress, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
 import { ethers } from 'ethers';
-import path from 'path';
 import { Stream } from 'streamr-client';
 
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
+import { WEBSERVER_PATHS } from '../http-proxy/constants';
+import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
-import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { Heartbeat } from './Heartbeat';
 import { KyvePool } from './KyvePool';
 import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
@@ -55,7 +55,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 
 		this.notaryServer = new ProxiedWebServerProcess(
 			'notary',
-			path.join(process.cwd(), './bin/notary-webserver'),
+			WEBSERVER_PATHS.notary(),
 			({ port }) => [`-p`, port.toString()],
 			'/notary/',
 			this.reverseProxy
