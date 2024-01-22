@@ -50,10 +50,6 @@ describe('StorageProxy resends', () => {
 		ownerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 
 		ownerClient = await createStreamrClient(tracker, ownerAccount.privateKey);
-
-		testStream = await createTestStream(ownerClient, module);
-
-		await testStream.addToStorageNode(STORAGE_PROXY_ADDRESS);
 	}, 30 * 1000);
 
 	afterAll(async () => {
@@ -69,10 +65,14 @@ describe('StorageProxy resends', () => {
 
 	describe('Public stream', () => {
 		beforeAll(async () => {
+			testStream = await createTestStream(ownerClient, module);
+
 			await testStream.grantPermissions({
 				public: true,
 				permissions: [StreamPermission.SUBSCRIBE],
 			});
+
+			await testStream.addToStorageNode(STORAGE_PROXY_ADDRESS);
 
 			publishedMessages = await publishTestMessages(ownerClient, testStream, 5);
 		}, 30 * 1000);
@@ -157,6 +157,8 @@ describe('StorageProxy resends', () => {
 				subscriberAccount.privateKey
 			);
 
+			testStream = await createTestStream(ownerClient, module);
+
 			await ownerClient.grantPermissions(testStream.id, {
 				user: publisherAccount.address,
 				permissions: [StreamPermission.PUBLISH],
@@ -167,12 +169,14 @@ describe('StorageProxy resends', () => {
 				permissions: [StreamPermission.SUBSCRIBE],
 			});
 
+			await testStream.addToStorageNode(STORAGE_PROXY_ADDRESS);
+
 			publishedMessages = await publishTestMessages(
 				publisherClient,
 				testStream,
 				5
 			);
-		}, 30 * 1000);
+		}, 60 * 1000);
 
 		afterAll(async () => {
 			await subscriberClient?.destroy();
