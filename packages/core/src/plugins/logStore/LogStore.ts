@@ -94,13 +94,6 @@ export class LogStore extends DatabaseEventEmitter {
 	}
 
 	/**
-	 * Requests data from the DB using the serialized message ID.
-	 */
-	requestByMessageId(messageIdSerialized: string): Readable {
-		return this.requestByMessageIds([messageIdSerialized]);
-	}
-
-	/**
 	 * Requests messages from DB by their serialized message IDs.
 	 */
 	requestByMessageIds(messageIdsSerialized: string[]): Readable {

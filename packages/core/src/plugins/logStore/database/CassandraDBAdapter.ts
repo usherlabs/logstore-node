@@ -5,7 +5,6 @@ import merge2 from 'merge2';
 import { pipeline, Readable, Transform } from 'stream';
 import { v1 as uuidv1 } from 'uuid';
 
-import { isPresent } from '../../../helpers/isPresent';
 import { sleep } from '../../../utils/sleep';
 import { BatchManager } from '../BatchManager';
 import { Bucket, BucketId } from '../Bucket';
@@ -455,95 +454,70 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 		messageIds: MessageID[]
 		// ? should we need to add limit param? Will we use it to fetch over 5000 messages?
 	) {
+		const sourceStream = Readable.from(messageIds);
+
 		const resultStream = this.createResultStream({
 			messageIds: messageIds.map((m) => m.serialize()),
 		});
 
-		const getStatementForMessageId = (messageId: MessageID) => {
-			// TODO: uncomment the following block of code to include buckedId in the query params
-			// Preferred way to get a proper bucket from the database
-			// const [bucket] = this.getBucketsByTimestamp(
-			// 	messageId.streamId,
-			// 	messageId.streamPartition,
-			// 	messageId.timestamp,
-			// 	messageId.timestamp
-			// );
-
-			// Obsolete approacy that always returns undefined
-			// const bucketId = this.bucketManager.getBucketId(
-			// 	messageId.streamId,
-			// 	messageId.streamPartition,
-			// 	messageId.timestamp
-			// );
-
-			// if (!bucketId) {
-			// 	// With this we decide not to stop execution on missing bucket id, but just skip the message
-			// 	return undefined;
-			// }
-
-			return {
-				// query:
-				// 	'SELECT payload FROM stream_data WHERE ' +
-				// 	'stream_id = ? AND partition = ? AND bucket_id = ? AND ts = ? AND sequence_no = ? AND publisher_id = ? AND msg_chain_id = ?',
-				query:
-					'SELECT payload FROM stream_data WHERE ' +
-					'stream_id = ? AND partition = ? AND ts = ? AND sequence_no = ? AND publisher_id = ? AND msg_chain_id = ? ' +
-					'ALLOW FILTERING',
-				params: [
+		const transfrom = new Transform({
+			objectMode: true,
+			transform: async (messageId: MessageID, _, done) => {
+				const [bucket] = await this.getBucketsByTimestamp(
 					messageId.streamId,
 					messageId.streamPartition,
-					// bucketId,
+					messageId.timestamp,
+					messageId.timestamp
+				);
+				if (!bucket) {
+					logger.warn(`Bucket not found for messageId`, {
+						messageId: messageId.serialize(),
+					});
+					done();
+					return;
+				}
+
+				const query =
+					'SELECT payload FROM stream_data WHERE ' +
+					'stream_id = ? AND partition = ? AND bucket_id = ? AND ts = ? AND sequence_no = ? AND publisher_id = ? AND msg_chain_id = ?';
+				const params = [
+					messageId.streamId,
+					messageId.streamPartition,
+					bucket.id,
 					messageId.timestamp,
 					messageId.sequenceNumber,
 					messageId.publisherId,
 					messageId.msgChainId,
-				],
-			};
-		};
+				];
 
-		const queries = messageIds.map(getStatementForMessageId).filter(isPresent);
+				const resultSet = await this.cassandraClient.execute(query, params, {
+					prepare: true,
+				});
 
-		const resultsPromises = Promise.all(
-			queries.map((q) =>
-				this.cassandraClient.execute(q.query, q.params, { prepare: true })
-			)
-		);
+				if (!resultSet.rows[0]) {
+					logger.warn('Message not found for messageId', {
+						messageId: messageId.serialize(),
+					});
+					done();
+					return;
+				}
 
-		/**
-		 * Creates a Readable stream from a Promise of ResultSet array
-		 */
-		function createPromiseReadable(
-			promise: Promise<types.ResultSet[]>
-		): Readable {
-			let handled = false;
-			return new Readable({
-				objectMode: true,
-				async read() {
-					if (!handled) {
-						handled = true;
-						try {
-							const resultSet = await promise;
-							resultSet.forEach((r) => {
-								r.rows.forEach((row) => {
-									this.push(row);
-								});
-							});
-							this.push(null); // End of data
-						} catch (error) {
-							this.destroy(error);
-						}
-					}
-				},
-			});
-		}
-
-		const stream = createPromiseReadable(resultsPromises);
-		return pipeline(stream, resultStream, (err: Error | null) => {
-			if (err) {
-				resultStream.destroy(err);
-				stream.destroy(undefined);
-			}
+				done(null, resultSet.rows[0]);
+			},
 		});
+
+		return pipeline(
+			sourceStream,
+			transfrom,
+			resultStream,
+			(err: Error | null) => {
+				if (err) {
+					sourceStream.destroy();
+					transfrom.destroy();
+					resultStream.destroy(err);
+				}
+			}
+		);
 	}
 
 	async getTotalBytesInStream(

@@ -10,10 +10,11 @@ import { fastWallet } from '@streamr/test-utils';
 import { EthereumAddress, toEthereumAddress } from '@streamr/utils';
 import { Wallet } from 'ethers';
 import { keccak256 } from 'ethers/lib/utils';
+import { Readable } from 'stream';
 import { MessageListener, MessageMetadata } from 'streamr-client';
 
-import { Heartbeat } from '../../../../src/plugins/logStore/network/Heartbeat';
 import { LogStore } from '../../../../src/plugins/logStore/LogStore';
+import { Heartbeat } from '../../../../src/plugins/logStore/network/Heartbeat';
 import { PropagationDispatcher } from '../../../../src/plugins/logStore/network/PropagationDispatcher';
 import { PropagationResolver } from '../../../../src/plugins/logStore/network/PropagationResolver';
 import { QueryResponseManager } from '../../../../src/plugins/logStore/network/QueryResponseManager';
@@ -46,9 +47,9 @@ const msgHashMap_2: [string, string] = [msgId_2, hashMsg(msg_2)];
 const msgHashMap_3: [string, string] = [msgId_3, hashMsg(msg_3)];
 
 const msgs = {
-	[msgId_1]: msg_1.serialize(),
-	[msgId_2]: msg_2.serialize(),
-	[msgId_3]: msg_3.serialize(),
+	[msgId_1]: msg_1,
+	[msgId_2]: msg_2,
+	[msgId_3]: msg_3,
 };
 
 const requestId = 'aaaa-bbbb-cccc';
@@ -151,9 +152,15 @@ describe(PropagationDispatcher, () => {
 
 	beforeEach(async () => {
 		logStore = {
-			requestByMessageId: jest.fn().mockImplementation((messageId: string) => ({
-				read: () => msgs[messageId],
-			})),
+			requestByMessageIds: jest
+				.fn()
+				.mockImplementation((messageIds: string[]) => {
+					const messages = Object.entries(msgs)
+						.filter(([messageId]) => messageIds.includes(messageId))
+						.map(([_, value]) => value);
+
+					return Readable.from(messages);
+				}),
 		} as unknown as LogStore;
 
 		publisher = {

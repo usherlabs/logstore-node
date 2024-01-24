@@ -73,10 +73,9 @@ export class PropagationDispatcher {
 
 		// Read the messages from the LogStore
 		const messages: [string, string][] = [];
-		for await (const messageId of messageIds) {
-			for await (const message of this.logStore.requestByMessageId(messageId)) {
-				messages.push([messageId, (message as StreamMessage).serialize()]);
-			}
+		for await (const value of this.logStore.requestByMessageIds(messageIds)) {
+			const message = value as StreamMessage;
+			messages.push([message.messageId.serialize(), message.serialize()]);
 		}
 
 		const queryPropagate = new QueryPropagate({

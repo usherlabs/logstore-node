@@ -165,7 +165,7 @@ describe('cassanda-queries', () => {
 		cassandraAdapter.cassandraClient = proxyClient;
 	});
 
-	describe('requestByMessageId', () => {
+	describe('requestByMessageIds', () => {
 		it('single happy path', async () => {
 			const resultStream = cassandraAdapter.queryByMessageIds([
 				MOCK_MESSAGES[0].messageId,
