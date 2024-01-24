@@ -113,7 +113,7 @@ describe('StorageProxy management', () => {
 	);
 
 	it(
-		'Joins a Node to a StorageProxy',
+		'Adds a Node to a StorageProxy',
 		async () => {
 			await addNodeToStorageProxy({
 				privateKey: storageProxyAccount.privateKey,
@@ -227,6 +227,8 @@ describe('StorageProxy management', () => {
 				node: toEthereumAddress(logStoreBrokerAccount.address),
 				devNetwork: true,
 			});
+
+			await nodeManager.leave();
 		},
 		30 * 1000
 	);
