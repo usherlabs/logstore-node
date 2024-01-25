@@ -1,4 +1,3 @@
-import { LogStoreClient } from '@logsn/client';
 import StreamrClient, { Stream } from 'streamr-client';
 
 import { ObservableEventEmitter } from '../../utils/events';
@@ -35,5 +34,11 @@ export class NodeStreamsRegistry extends ObservableEventEmitter<{
 		this.registeredStreams.delete(streamId);
 
 		this.emit('unregisterStream', stream);
+	}
+
+	public clear() {
+		this.registeredStreams.forEach((_, streamId) =>
+			this.unregisterStreamId(streamId)
+		);
 	}
 }

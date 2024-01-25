@@ -12,9 +12,6 @@ import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
 
-
-const logger = new Logger(module);
-
 export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
 
@@ -40,7 +37,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 	}
 
 	override async stop(): Promise<void> {
-		await this.maybeLogStoreConfig?.destroy();
+		await super.stop();
 	}
 
 	public async processQueryRequest(queryRequest: QueryRequest) {

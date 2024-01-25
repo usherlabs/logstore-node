@@ -27,6 +27,7 @@ import StreamrClient, {
 
 import { LogStoreNode } from '../../../../../src/node';
 import {
+	CONTRACT_OWNER_PRIVATE_KEY,
 	createStreamrClient,
 	createTestStream,
 	sleep,
@@ -81,10 +82,7 @@ describe('Network Mode Programs', () => {
 		);
 
 		// Accounts
-		adminAccount = new Wallet(
-			process.env.CONTRACT_OWNER_PRIVATE_KEY!,
-			provider
-		);
+		adminAccount = new Wallet(CONTRACT_OWNER_PRIVATE_KEY, provider);
 		publisherAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeOwnerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeConsumerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
@@ -118,14 +116,23 @@ describe('Network Mode Programs', () => {
 			.then((tx) => tx.wait());
 
 		await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
-		(await nodeManager.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))).wait();
+		await nodeManager
+			.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
+			.then((tx) => tx.wait());
 
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
 
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: TRACKER_PORT
+			trackerPort: TRACKER_PORT,
+			plugins: {
+				logStore: {
+					db: {
+						type: 'cassandra',
+					},
+				},
+			},
 		});
 
 		publisherClient = await createStreamrClient(
@@ -141,10 +148,12 @@ describe('Network Mode Programs', () => {
 		testStream = await createTestStream(publisherClient, module);
 
 		await prepareStakeForStoreManager(storeOwnerAccount, STAKE_AMOUNT);
-		(await storeManager.stake(testStream.id, STAKE_AMOUNT)).wait();
+		await storeManager
+			.stake(testStream.id, STAKE_AMOUNT)
+			.then((tx) => tx.wait());
 
 		await prepareStakeForQueryManager(storeConsumerAccount, STAKE_AMOUNT);
-		(await queryManager.stake(STAKE_AMOUNT)).wait();
+		await queryManager.stake(STAKE_AMOUNT).then((tx) => tx.wait());
 	});
 
 	afterEach(async () => {
@@ -152,7 +161,7 @@ describe('Network Mode Programs', () => {
 		await consumerClient.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
-			nodeManager.leave(),
+			nodeManager.leave().then((tx) => tx.wait()),
 			tracker?.stop(),
 		]);
 	});

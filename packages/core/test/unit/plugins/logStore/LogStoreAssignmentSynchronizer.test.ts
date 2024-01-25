@@ -4,7 +4,7 @@ import {
 	Diff,
 	EMPTY_DIFF,
 	SetMembershipSynchronizer,
-} from '../../../../src/plugins/logStore/network/SetMembershipSynchronizer';
+} from '../../../../src/utils/SetMembershipSynchronizer';
 
 const { parse } = StreamPartIDUtils;
 

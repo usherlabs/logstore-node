@@ -39,6 +39,7 @@ import StreamrClient, {
 import { LogStoreNode } from '../../../../../src/node';
 import { toObject } from '../../../../../src/plugins/logStore/http/DataQueryFormat';
 import {
+	CONTRACT_OWNER_PRIVATE_KEY,
 	createLogStoreClient,
 	createStreamrClient,
 	createTestStream,
@@ -118,10 +119,7 @@ describe('http works', () => {
 			fetchPrivateKeyWithGas(),
 		]);
 		// Accounts
-		adminAccount = new Wallet(
-			process.env.CONTRACT_OWNER_PRIVATE_KEY!,
-			provider
-		);
+		adminAccount = new Wallet(CONTRACT_OWNER_PRIVATE_KEY, provider);
 		publisherAccount = new Wallet(privateKey, provider);
 		storeOwnerAccount = new Wallet(privateKey1, provider);
 		storeConsumerAccount = new Wallet(privateKey2, provider);
@@ -156,24 +154,28 @@ describe('http works', () => {
 			.then((tx) => tx.wait());
 
 		await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
-		(
-			await nodeManager.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata), {
-				nonce: await logStoreBrokerAccount.getTransactionCount(),
-			})
-		).wait();
+
+		await nodeManager
+			.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
+			.then((tx) => tx.wait());
 
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
 
 		[logStoreBroker, publisherStreamrClient, consumerStreamrClient] =
 			await Promise.all([
-			startLogStoreBroker({
-				privateKey: logStoreBrokerAccount.privateKey,
-				trackerPort: TRACKER_PORT
-			}),
+				startLogStoreBroker({
+					privateKey: logStoreBrokerAccount.privateKey,
+					trackerPort: TRACKER_PORT,
+					plugins: {
+						logStore: {
+							db: { type: 'cassandra' },
+						},
+					},
+				}),
 				createStreamrClient(tracker, publisherAccount.privateKey),
 				createStreamrClient(tracker, storeConsumerAccount.privateKey),
-		]);
+			]);
 
 		consumerLogStoreClient = await createLogStoreClient(consumerStreamrClient);
 

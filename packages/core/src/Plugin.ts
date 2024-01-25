@@ -53,7 +53,7 @@ export abstract class Plugin<T extends object> {
 		this.modeConfig = options.mode;
 		this.nodeConfig = options.nodeConfig;
 		this.signer = options.signer;
-		this.pluginConfig = options.nodeConfig.plugins[this.name];
+		this.pluginConfig = options.nodeConfig.plugins[this.name] as T;
 		const configSchema = this.getConfigSchema();
 		if (configSchema !== undefined) {
 			validateConfig(this.pluginConfig, configSchema, `${this.name} plugin`);

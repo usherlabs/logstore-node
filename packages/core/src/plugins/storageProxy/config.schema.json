@@ -1,0 +1,48 @@
+{
+	"$id": "config.schema.json",
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"description": "StorageProxy plugin configuration",
+	"required": [
+		"storageConfig",
+		"cluster"
+	],
+	"additionalProperties": false,
+	"properties": {
+		"storageConfig": {
+			"type": "object",
+			"required": [
+				"refreshInterval",
+				"storeStakeAmount"
+			],
+			"properties": {
+				"refreshInterval": {
+					"type": "integer",
+					"description": "Interval (in milliseconds) in which to refresh LogStore config from Core API (0 = disable)"
+				},
+				"storeStakeAmount": {
+					"type": "string",
+					"description": "Amount to stake to a new Store created for a proxied stream"
+				}
+			},
+			"additionalProperties": false,
+			"default": {
+				"refreshInterval": 600000,
+				"storeStakeAmount": "10000000000000000"
+			}
+		},
+		"cluster": {
+			"type": "object",
+			"description": "StorageProxy cluster config",
+			"required": [
+				"clusterAddress"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"clusterAddress": {
+					"type": "string"
+				}
+			}
+		}
+	}
+}
