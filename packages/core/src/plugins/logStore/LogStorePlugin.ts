@@ -137,6 +137,8 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 	}
 
 	async stop(): Promise<void> {
+		this.nodeStreamsRegistry.clear();
+
 		await Promise.all([
 			this.messageListener.stop(),
 			this.maybeLogStore?.close(),
