@@ -66,6 +66,13 @@ export class ReportPoller {
 		} else {
 			await this.tryPoll();
 		}
+
+		logger.info('Started');
+	}
+
+	public async stop() {
+		await this.subscriber.unsubscribe();
+		logger.info('Stopped');
 	}
 
 	private async poll(): Promise<void> {
