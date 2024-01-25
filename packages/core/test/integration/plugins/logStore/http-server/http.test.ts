@@ -154,11 +154,10 @@ describe('http works', () => {
 			.then((tx) => tx.wait());
 
 		await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
-		(
-			await nodeManager.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata), {
-				nonce: await logStoreBrokerAccount.getTransactionCount(),
-			})
-		).wait();
+
+		await nodeManager
+			.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
+			.then((tx) => tx.wait());
 
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);

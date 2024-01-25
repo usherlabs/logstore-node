@@ -30,7 +30,7 @@ import {
 	STREAMR_DOCKER_DEV_HOST,
 } from '../../../utils';
 
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 const contactPoints = [STREAMR_DOCKER_DEV_HOST];
 const localDataCenter = 'datacenter1';
@@ -112,7 +112,9 @@ describe('LogStoreConfig', () => {
 			.then((tx) => tx.wait());
 
 		await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
-		(await nodeManager.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))).wait();
+		await nodeManager
+			.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
+			.then((tx) => tx.wait());
 
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
@@ -138,14 +140,16 @@ describe('LogStoreConfig', () => {
 		testStream = await createTestStream(publisherClient, module);
 
 		await prepareStakeForStoreManager(storeOwnerAccount, STAKE_AMOUNT);
-		(await storeManager.stake(testStream.id, STAKE_AMOUNT)).wait();
+		await storeManager
+			.stake(testStream.id, STAKE_AMOUNT)
+			.then((tx) => tx.wait());
 	});
 
 	afterEach(async () => {
 		await publisherClient?.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
-			nodeManager.leave(),
+			nodeManager.leave().then((tx) => tx.wait()),
 			tracker?.stop(),
 		]);
 	});

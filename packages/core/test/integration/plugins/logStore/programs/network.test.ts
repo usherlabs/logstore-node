@@ -116,7 +116,9 @@ describe('Network Mode Programs', () => {
 			.then((tx) => tx.wait());
 
 		await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
-		(await nodeManager.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))).wait();
+		await nodeManager
+			.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
+			.then((tx) => tx.wait());
 
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
@@ -146,10 +148,12 @@ describe('Network Mode Programs', () => {
 		testStream = await createTestStream(publisherClient, module);
 
 		await prepareStakeForStoreManager(storeOwnerAccount, STAKE_AMOUNT);
-		(await storeManager.stake(testStream.id, STAKE_AMOUNT)).wait();
+		await storeManager
+			.stake(testStream.id, STAKE_AMOUNT)
+			.then((tx) => tx.wait());
 
 		await prepareStakeForQueryManager(storeConsumerAccount, STAKE_AMOUNT);
-		(await queryManager.stake(STAKE_AMOUNT)).wait();
+		await queryManager.stake(STAKE_AMOUNT).then((tx) => tx.wait());
 	});
 
 	afterEach(async () => {
@@ -157,7 +161,7 @@ describe('Network Mode Programs', () => {
 		await consumerClient.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
-			nodeManager.leave(),
+			nodeManager.leave().then((tx) => tx.wait()),
 			tracker?.stop(),
 		]);
 	});

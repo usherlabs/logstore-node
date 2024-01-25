@@ -133,12 +133,13 @@ describe('StorageProxy management', () => {
 				.then((tx) => tx.wait());
 
 			await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
-			await (
-				await nodeManager.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
-			).wait();
+
+			await nodeManager
+				.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
+				.then((tx) => tx.wait());
 
 			await prepareStakeForQueryManager(logStoreBrokerAccount, STAKE_AMOUNT);
-			await (await queryManager.stake(STAKE_AMOUNT)).wait();
+			await queryManager.stake(STAKE_AMOUNT).then((tx) => tx.wait());
 		},
 		30 * 1000
 	);
@@ -228,7 +229,7 @@ describe('StorageProxy management', () => {
 				devNetwork: true,
 			});
 
-			await nodeManager.leave();
+			await nodeManager.leave().then((tx) => tx.wait());
 		},
 		30 * 1000
 	);
