@@ -2471,6 +2471,7 @@ name = "notary"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "clap",
  "dotenv",
  "elliptic-curve",
  "eyre",
@@ -3010,6 +3011,7 @@ name = "prover"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "clap",
  "futures",
  "futures-util",
  "hyper",

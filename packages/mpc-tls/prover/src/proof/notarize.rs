@@ -1,11 +1,11 @@
-use tracing::debug;
-use hyper::StatusCode;
-use futures::AsyncWriteExt;
-use crate::proxy::ProxyRequest;
-use tokio::io::AsyncWriteExt as _;
-use tlsn_prover::tls::{Prover, ProverConfig};
-use tokio_util::compat::{FuturesAsyncReadCompatExt, TokioAsyncReadCompatExt};
 use crate::proof::utils::{build_proof, build_request, setup_notary_connection};
+use crate::proxy::ProxyRequest;
+use futures::AsyncWriteExt;
+use hyper::StatusCode;
+use tlsn_prover::tls::{Prover, ProverConfig};
+use tokio::io::AsyncWriteExt as _;
+use tokio_util::compat::{FuturesAsyncReadCompatExt, TokioAsyncReadCompatExt};
+use tracing::debug;
 
 pub async fn notarize_request(req_proxy: ProxyRequest) -> hyper::Response<hyper::Body> {
     let (notary_tls_socket, session_id) = setup_notary_connection().await;
@@ -62,9 +62,7 @@ pub async fn notarize_request(req_proxy: ProxyRequest) -> hyper::Response<hyper:
     let proof = build_proof(prover).await;
 
     // Dump the proof to a file.
-    let mut file = tokio::fs::File::create("proof.json")
-        .await
-        .unwrap();
+    let mut file = tokio::fs::File::create("proof.json").await.unwrap();
     file.write_all(serde_json::to_string_pretty(&proof).unwrap().as_bytes())
         .await
         .unwrap();

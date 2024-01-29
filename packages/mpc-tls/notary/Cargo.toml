@@ -36,3 +36,4 @@ tracing = "0.1.40"
 rustls-pemfile = { version = "1.0.2" }
 eyre = "0.6.8"
 structopt = "0.3.26"
+clap = "2"
