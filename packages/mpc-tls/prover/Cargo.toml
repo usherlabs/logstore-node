@@ -5,6 +5,7 @@ edition = "2021"
 
 
 [dependencies]
+clap = "2"
 url = "2.2.2"
 actix-web = "4.3.1"
 tokio-util = "0.7"
@@ -23,3 +24,4 @@ tracing-subscriber = "0.3"
 tokio-rustls = { version = "0.24.1" }
 rustls-pemfile = { version = "1.0.2" }
 rustls = { version = "0.21" }
+
