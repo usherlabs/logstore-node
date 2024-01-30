@@ -1,30 +1,28 @@
 #!/usr/bin/env bash
 
-
 # Check for tinyproxy installation
 if command -v tinyproxy >/dev/null 2>&1; then
     echo "tinyproxy is already installed."
 else
+		THIS_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
     echo "tinyproxy is not installed. Attempting to install..."
 
-    # verify if it's running with root privileges, else error and exit
-    if [ "$EUID" -ne 0 ]; then
-    		echo "Please run this script as root, or install tinyproxy manually"
-    		exit 1
-    fi
+		# download from https://github.com/tinyproxy/tinyproxy/releases/download/1.11.1/tinyproxy-1.11.1.tar.gz
+    wget https://github.com/tinyproxy/tinyproxy/releases/download/1.11.1/tinyproxy-1.11.1.tar.gz -P /tmp
 
-    # Determine which package manager is available
-    if command -v apt-get >/dev/null 2>&1; then
-        # Using apt-get (Debian/Ubuntu)
-        apt-get update
-        apt-get install tinyproxy -y
-    elif command -v yum >/dev/null 2>&1; then
-        # Using yum (CentOS/RedHat)
-        yum install tinyproxy -y
-    else
-        echo "Neither apt-get nor yum is available. Unable to install tinyproxy."
-        exit 1
-    fi
+    # extract to /tmp/tinyproxy/
+    mkdir -p /tmp/tinyproxy
+    tar -xzf /tmp/tinyproxy-1.11.1.tar.gz -C /tmp/tinyproxy --strip-components=1
+
+    # make and install
+    cd /tmp/tinyproxy
+    ./configure --enable-reverse
+    make
+    make install
+
+    # cleanup
+    rm -rf /tmp/tinyproxy
+    rm /tmp/tinyproxy-1.11.1.tar.gz
 fi
 
 # Verify installation
@@ -32,4 +30,5 @@ if command -v tinyproxy >/dev/null 2>&1; then
     echo "Installation of tinyproxy was successful."
 else
     echo "Failed to install tinyproxy."
+    exit 1
 fi
