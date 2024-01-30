@@ -3,6 +3,7 @@
 # Check for tinyproxy installation
 if command -v tinyproxy >/dev/null 2>&1; then
     echo "tinyproxy is already installed."
+    exit 0
 else
 		THIS_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
     echo "tinyproxy is not installed. Attempting to install..."
