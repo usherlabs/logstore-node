@@ -10,7 +10,7 @@ describe('Config', () => {
 		const broker = await createLogStoreNode({});
 		await broker.start();
 		await broker.stop();
-	});
+	}, 10000);
 
 	const fileNames = fs.readdirSync(PATH).filter(
 		// we don't want to test standalone example as it contains invalid stream address

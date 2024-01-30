@@ -22,6 +22,13 @@ describe('LogStoreNode', () => {
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
 			trackerPort: 1234,
+			plugins: {
+				logStore: {
+					db: {
+						type: 'cassandra',
+					},
+				},
+			},
 		});
 	}, 30 * 1000);
 

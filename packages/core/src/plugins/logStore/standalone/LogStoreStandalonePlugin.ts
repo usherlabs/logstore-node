@@ -1,14 +1,16 @@
 import { QueryRequest } from '@logsn/protocol';
-import { toStreamID, toStreamPartID } from '@streamr/protocol';
+import {
+	StreamPartIDUtils,
+	toStreamID,
+	toStreamPartID,
+} from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
 import _ from 'lodash';
 
 import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
+import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
 import { LogStorePlugin } from '../LogStorePlugin';
-import {LogStoreStandaloneConfig} from "./LogStoreStandaloneConfig";
-import {BaseQueryRequestManager} from "../BaseQueryRequestManager";
-
-const logger = new Logger(module);
+import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
 
 export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
@@ -35,13 +37,13 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 	}
 
 	override async stop(): Promise<void> {
-		await this.maybeLogStoreConfig?.destroy();
+		await super.stop();
 	}
 
 	public async processQueryRequest(queryRequest: QueryRequest) {
 		const data =
 			this.standaloneQueryRequestManager.getDataForQueryRequest(queryRequest);
-		const nodeId = await this.logStoreClient.getAddress();
+		const nodeId = await this.streamrClient.getAddress();
 		return {
 			participatingNodes: [nodeId],
 			data,
@@ -60,18 +62,24 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 				)
 		);
 
-		const node = await this.logStoreClient.getNode();
+		const node = await this.streamrClient.getNode();
 
 		const logStoreConfig = new LogStoreStandaloneConfig(streamPartIds, {
 			onStreamPartAdded: async (streamPart) => {
 				try {
 					await node.subscribeAndWaitForJoin(streamPart); // best-effort, can time out
+					await this.nodeStreamsRegistry.registerStreamId(
+						StreamPartIDUtils.getStreamID(streamPart)
+					);
 				} catch (_e) {
 					// no-op
 				}
 			},
-			onStreamPartRemoved: (streamPart) => {
+			onStreamPartRemoved: async (streamPart) => {
 				node.unsubscribe(streamPart);
+				await this.nodeStreamsRegistry.unregisterStreamId(
+					StreamPartIDUtils.getStreamID(streamPart)
+				);
 			},
 		});
 		return logStoreConfig;

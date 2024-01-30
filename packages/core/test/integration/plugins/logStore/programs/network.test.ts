@@ -1,10 +1,4 @@
-import {
-	CONFIG_TEST,
-	LogStoreClient,
-	NodeMetadata,
-	Stream,
-	StreamPermission,
-} from '@logsn/client';
+import { NodeMetadata } from '@logsn/client';
 import {
 	LogStoreManager,
 	LogStoreNodeManager,
@@ -25,16 +19,21 @@ import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { providers, Wallet } from 'ethers';
 import { defer, firstValueFrom, switchAll } from 'rxjs';
 import { switchMap } from 'rxjs/internal/operators/switchMap';
+import StreamrClient, {
+	Stream,
+	StreamPermission,
+	CONFIG_TEST as STREAMR_CONFIG_TEST,
+} from 'streamr-client';
 
 import { LogStoreNode } from '../../../../../src/node';
 import {
-	createLogStoreClient,
+	CONTRACT_OWNER_PRIVATE_KEY,
+	createStreamrClient,
 	createTestStream,
 	sleep,
 	startLogStoreBroker,
 	startTestTracker,
 } from '../../../../utils';
-
 
 jest.setTimeout(60000);
 
@@ -48,8 +47,8 @@ const TRACKER_PORT = undefined;
 
 describe('Network Mode Programs', () => {
 	const provider = new providers.JsonRpcProvider(
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
+		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
+		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
 	);
 
 	// Accounts
@@ -63,8 +62,8 @@ describe('Network Mode Programs', () => {
 	let logStoreBroker: LogStoreNode;
 
 	// Clients
-	let publisherClient: LogStoreClient;
-	let consumerClient: LogStoreClient;
+	let publisherClient: StreamrClient;
+	let consumerClient: StreamrClient;
 
 	// Contracts
 	let nodeAdminManager: LogStoreNodeManager;
@@ -83,10 +82,7 @@ describe('Network Mode Programs', () => {
 		);
 
 		// Accounts
-		adminAccount = new Wallet(
-			process.env.CONTRACT_OWNER_PRIVATE_KEY!,
-			provider
-		);
+		adminAccount = new Wallet(CONTRACT_OWNER_PRIVATE_KEY, provider);
 		publisherAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeOwnerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeConsumerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
@@ -120,7 +116,9 @@ describe('Network Mode Programs', () => {
 			.then((tx) => tx.wait());
 
 		await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
-		(await nodeManager.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))).wait();
+		await nodeManager
+			.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
+			.then((tx) => tx.wait());
 
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
@@ -128,14 +126,21 @@ describe('Network Mode Programs', () => {
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
 			trackerPort: TRACKER_PORT,
+			plugins: {
+				logStore: {
+					db: {
+						type: 'cassandra',
+					},
+				},
+			},
 		});
 
-		publisherClient = await createLogStoreClient(
+		publisherClient = await createStreamrClient(
 			tracker,
 			publisherAccount.privateKey
 		);
 
-		consumerClient = await createLogStoreClient(
+		consumerClient = await createStreamrClient(
 			tracker,
 			storeConsumerAccount.privateKey
 		);
@@ -143,10 +148,12 @@ describe('Network Mode Programs', () => {
 		testStream = await createTestStream(publisherClient, module);
 
 		await prepareStakeForStoreManager(storeOwnerAccount, STAKE_AMOUNT);
-		(await storeManager.stake(testStream.id, STAKE_AMOUNT)).wait();
+		await storeManager
+			.stake(testStream.id, STAKE_AMOUNT)
+			.then((tx) => tx.wait());
 
 		await prepareStakeForQueryManager(storeConsumerAccount, STAKE_AMOUNT);
-		(await queryManager.stake(STAKE_AMOUNT)).wait();
+		await queryManager.stake(STAKE_AMOUNT).then((tx) => tx.wait());
 	});
 
 	afterEach(async () => {
@@ -154,7 +161,7 @@ describe('Network Mode Programs', () => {
 		await consumerClient.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
-			nodeManager.leave(),
+			nodeManager.leave().then((tx) => tx.wait()),
 			tracker?.stop(),
 		]);
 	});

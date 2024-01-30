@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "del ./dist && esbuild ./index.ts --bundle --platform=node --outfile=../broker/src/plugins/logStore/programs/solana-validate.js"
+    "build": "del ./dist && esbuild ./index.ts --bundle --platform=node --outfile=../core/src/plugins/logStore/programs/solana-validate.js"
   },
   "keywords": [],
   "author": "",

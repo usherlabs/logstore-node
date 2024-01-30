@@ -2,7 +2,11 @@ import { LogStoreClientConfig } from '@logsn/client';
 import { camelCase, set } from 'lodash';
 import * as os from 'os';
 import path from 'path';
+import { StreamrClientConfig } from 'streamr-client';
 import { DeepRequired } from 'ts-essentials';
+
+import { LogStorePluginConfig } from '../plugins/logStore/LogStorePlugin';
+import { StorageProxyPluginConfig } from '../plugins/storageProxy/StorageProxyPluginConfig';
 
 export type NetworkParticipantMode = {
 	type: 'network';
@@ -18,12 +22,14 @@ type StandaloneMode = {
 		id: string;
 		partitions: number;
 	}[];
+	validationErrorsStream?: string;
 	topicsStream?: string;
 };
 type Mode = StandaloneMode | NetworkParticipantMode;
 
 export interface Config {
-	client?: LogStoreClientConfig;
+	logStoreClient?: LogStoreClientConfig;
+	streamrClient?: StreamrClientConfig;
 	mode?: Mode;
 	httpServer?: {
 		port: number;
@@ -32,13 +38,17 @@ export interface Config {
 			certFileName: string;
 		};
 	};
-	plugins?: Record<string, any>;
+	plugins?: {
+		logStore?: Partial<LogStorePluginConfig>;
+		storageProxy?: Partial<StorageProxyPluginConfig>;
+	} & Record<string, unknown>;
 }
 
 // StrictConfig is a config object to which some default values have been applied
 // (see `default` definitions in config.schema.json)
 export type StrictConfig = Config & {
-	client: Exclude<Config['client'], undefined>;
+	logStoreClient: Exclude<Config['logStoreClient'], undefined>;
+	streamrClient: Exclude<Config['streamrClient'], undefined>;
 	plugins: Exclude<Config['plugins'], undefined>;
 	httpServer: Exclude<Config['httpServer'], undefined>;
 	mode: NonNullable<DeepRequired<Config['mode']>>;

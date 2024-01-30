@@ -2,6 +2,7 @@ import { waitForCondition } from '@streamr/utils';
 import { types as cassandraTypes, Client } from 'cassandra-driver';
 
 import { BucketManager } from '../../../../src/plugins/logStore/BucketManager';
+import { CassandraDBAdapter } from '../../../../src/plugins/logStore/database/CassandraDBAdapter';
 import { STREAMR_DOCKER_DEV_HOST } from '../../../utils';
 
 const { TimeUuid } = cassandraTypes;
@@ -11,6 +12,7 @@ const localDataCenter = 'datacenter1';
 const keyspace = 'logstore_dev';
 
 describe('BucketManager', () => {
+	let db: CassandraDBAdapter;
 	let bucketManager: BucketManager;
 	let streamId: string;
 	let cassandraClient: Client;
@@ -44,14 +46,25 @@ describe('BucketManager', () => {
 			keyspace,
 		});
 
-		await cassandraClient.connect();
-		bucketManager = new BucketManager(cassandraClient, {
-			checkFullBucketsTimeout: 1000,
+		const commonOpts = {
 			storeBucketsTimeout: 1000,
-			maxBucketSize: 10 * 300,
-			maxBucketRecords: 10,
 			bucketKeepAliveSeconds: 60,
-		});
+			checkFullBucketsTimeout: 1000,
+			maxBucketRecords: 10,
+			maxBucketSize: 10 * 300,
+		};
+		db = new CassandraDBAdapter(
+			{
+				type: 'cassandra',
+				contactPoints,
+				keyspace,
+				localDataCenter,
+			},
+			commonOpts
+		);
+
+		await cassandraClient.connect();
+		bucketManager = db.bucketManager;
 
 		streamId = `stream-id-${Date.now()}-${streamIdx}`;
 		streamIdx += 1;
@@ -176,13 +189,13 @@ describe('BucketManager', () => {
 		);
 
 		// get latest sorted
-		const lastBuckets = await bucketManager.getLastBuckets(streamId, 0, 5);
+		const lastBuckets = await db.getLastBuckets(streamId, 0, 5);
 		expect(lastBuckets).toHaveLength(2);
 		expect(lastBuckets[0].getId()).toEqual(lastBucketId);
 		expect(lastBuckets[1].getId()).toEqual(bucketId5minAgo);
 
 		// get latest from
-		const lastBucketsFrom = await bucketManager.getBucketsByTimestamp(
+		const lastBucketsFrom = await db.getBucketsByTimestamp(
 			streamId,
 			0,
 			timestamp5ago
@@ -192,7 +205,7 @@ describe('BucketManager', () => {
 		expect(lastBucketsFrom[1].getId()).toEqual(bucketId5minAgo);
 
 		// get latest from-to
-		const lastBucketsFromTo = await bucketManager.getBucketsByTimestamp(
+		const lastBucketsFromTo = await db.getBucketsByTimestamp(
 			streamId,
 			0,
 			timestamp5ago,
@@ -207,7 +220,7 @@ describe('BucketManager', () => {
 		const timestamp = new Date();
 		await insertBuckets(timestamp);
 
-		const buckets = await bucketManager.getLastBuckets(streamId, 0, 10);
+		const buckets = await db.getLastBuckets(streamId, 0, 10);
 
 		expect(buckets.length).toEqual(10);
 	});
@@ -218,11 +231,7 @@ describe('BucketManager', () => {
 
 		// middle
 		const fromTimestamp = timestamp.getTime() + 50 * 60 * 1000;
-		const buckets = await bucketManager.getBucketsByTimestamp(
-			streamId,
-			0,
-			fromTimestamp
-		);
+		const buckets = await db.getBucketsByTimestamp(streamId, 0, fromTimestamp);
 
 		expect(buckets.length).toEqual(50);
 	});
@@ -234,7 +243,7 @@ describe('BucketManager', () => {
 
 		const fromTimestamp = timestamp.getTime() + 25 * 60 * 1000;
 		const toTimestamp = timestamp.getTime() + 65 * 60 * 1000 - 1; // exclude 1 bucket
-		const buckets = await bucketManager.getBucketsByTimestamp(
+		const buckets = await db.getBucketsByTimestamp(
 			streamId,
 			0,
 			fromTimestamp,
@@ -250,7 +259,7 @@ describe('BucketManager', () => {
 		await insertBuckets(timestamp);
 
 		const toTimestamp = timestamp.getTime() + 65 * 60 * 1000 - 1; // exclude 1 bucket
-		const buckets = await bucketManager.getBucketsByTimestamp(
+		const buckets = await db.getBucketsByTimestamp(
 			streamId,
 			0,
 			undefined,

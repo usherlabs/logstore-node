@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-shadow */
 import {
 	EncryptionType,
 	MessageID,
@@ -11,7 +12,7 @@ import toArray from 'stream-to-array';
 
 import {
 	LogStore,
-	startCassandraLogStore,
+	startLogStore,
 } from '../../../../src/plugins/logStore/LogStore';
 import { STREAMR_DOCKER_DEV_HOST } from '../../../utils';
 
@@ -93,6 +94,7 @@ function buildEncryptedMsg({
 		content,
 		encryptionType: EncryptionType.AES,
 		signature: 'signature',
+		groupKeyId: 'groupKeyId',
 	});
 }
 
@@ -140,17 +142,20 @@ describe('LogStore', () => {
 			localDataCenter,
 			keyspace,
 		});
-		logStore = await startCassandraLogStore({
-			contactPoints,
-			localDataCenter,
-			keyspace,
-			opts: {
+		logStore = await startLogStore(
+			{
+				type: 'cassandra',
+				contactPoints,
+				localDataCenter,
+				keyspace,
+			},
+			{
 				maxBucketRecords: MAX_BUCKET_MESSAGE_COUNT,
 				checkFullBucketsTimeout: 100,
 				storeBucketsTimeout: 100,
 				bucketKeepAliveSeconds: 1,
-			},
-		});
+			}
+		);
 	});
 
 	afterAll(async () => {

@@ -1,9 +1,4 @@
-import {
-	CONFIG_TEST,
-	LogStoreClient,
-	NodeMetadata,
-	Stream,
-} from '@logsn/client';
+import { NodeMetadata } from '@logsn/client';
 import { LogStoreManager, LogStoreNodeManager, LSAN } from '@logsn/contracts';
 import {
 	getNodeManagerContract,
@@ -18,10 +13,16 @@ import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { waitForCondition } from '@streamr/utils';
 import cassandra, { Client } from 'cassandra-driver';
 import { providers, Wallet } from 'ethers';
+import {
+	Stream,
+	CONFIG_TEST as STREAMR_CLIENT_CONFIG_TEST,
+	StreamrClient,
+} from 'streamr-client';
 
 import { LogStoreNode } from '../../../../src/node';
 import {
-	createLogStoreClient,
+	CONTRACT_OWNER_PRIVATE_KEY,
+	createStreamrClient,
 	createTestStream,
 	sleep,
 	startLogStoreBroker,
@@ -29,7 +30,7 @@ import {
 	STREAMR_DOCKER_DEV_HOST,
 } from '../../../utils';
 
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 const contactPoints = [STREAMR_DOCKER_DEV_HOST];
 const localDataCenter = 'datacenter1';
@@ -41,8 +42,8 @@ const TRACKER_PORT = 17772;
 
 describe('LogStoreConfig', () => {
 	const provider = new providers.JsonRpcProvider(
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
+		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
+		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
 	);
 
 	// Accounts
@@ -55,7 +56,7 @@ describe('LogStoreConfig', () => {
 	let logStoreBroker: LogStoreNode;
 
 	// Clients
-	let publisherClient: LogStoreClient;
+	let publisherClient: StreamrClient;
 	let cassandraClient: Client;
 
 	// Contracts
@@ -75,10 +76,7 @@ describe('LogStoreConfig', () => {
 		);
 		publisherAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeOwnerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
-		adminAccount = new Wallet(
-			process.env.CONTRACT_OWNER_PRIVATE_KEY!,
-			provider
-		);
+		adminAccount = new Wallet(CONTRACT_OWNER_PRIVATE_KEY, provider);
 
 		// Contracts
 		nodeManager = await getNodeManagerContract(logStoreBrokerAccount);
@@ -114,7 +112,9 @@ describe('LogStoreConfig', () => {
 			.then((tx) => tx.wait());
 
 		await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
-		(await nodeManager.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))).wait();
+		await nodeManager
+			.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
+			.then((tx) => tx.wait());
 
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
@@ -122,10 +122,17 @@ describe('LogStoreConfig', () => {
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
 			trackerPort: TRACKER_PORT,
-			keyspace,
+			plugins: {
+				logStore: {
+					db: {
+						type: 'cassandra',
+						keyspace,
+					},
+				},
+			},
 		});
 
-		publisherClient = await createLogStoreClient(
+		publisherClient = await createStreamrClient(
 			tracker,
 			publisherAccount.privateKey
 		);
@@ -133,14 +140,16 @@ describe('LogStoreConfig', () => {
 		testStream = await createTestStream(publisherClient, module);
 
 		await prepareStakeForStoreManager(storeOwnerAccount, STAKE_AMOUNT);
-		(await storeManager.stake(testStream.id, STAKE_AMOUNT)).wait();
+		await storeManager
+			.stake(testStream.id, STAKE_AMOUNT)
+			.then((tx) => tx.wait());
 	});
 
 	afterEach(async () => {
-		await publisherClient.destroy();
+		await publisherClient?.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
-			nodeManager.leave(),
+			nodeManager.leave().then((tx) => tx.wait()),
 			tracker?.stop(),
 		]);
 	});

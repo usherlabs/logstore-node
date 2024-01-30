@@ -1,10 +1,4 @@
-import {
-	CONFIG_TEST,
-	LogStoreClient,
-	NodeMetadata,
-	Stream,
-	StreamPermission,
-} from '@logsn/client';
+import { LogStoreClient, NodeMetadata } from '@logsn/client';
 import {
 	LogStoreManager,
 	LogStoreNodeManager,
@@ -24,10 +18,18 @@ import { Tracker } from '@streamr/network-tracker';
 import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { waitForCondition } from '@streamr/utils';
 import { providers, Wallet } from 'ethers';
+import { defer, firstValueFrom, map, mergeAll, toArray } from 'rxjs';
+import StreamrClient, {
+	Stream,
+	StreamPermission,
+	CONFIG_TEST as STREAMR_CLIENT_CONFIG_TEST,
+} from 'streamr-client';
 
 import { LogStoreNode } from '../../../src/node';
 import {
+	CONTRACT_OWNER_PRIVATE_KEY,
 	createLogStoreClient,
+	createStreamrClient,
 	createTestStream,
 	sleep,
 	startLogStoreBroker,
@@ -35,6 +37,9 @@ import {
 } from '../../utils';
 
 jest.setTimeout(60000);
+jest.useFakeTimers({
+	advanceTimers: true,
+});
 
 const STAKE_AMOUNT = BigInt('1000000000000000000');
 
@@ -46,8 +51,8 @@ const TRACKER_PORT = undefined;
 
 describe('Network Mode Queries', () => {
 	const provider = new providers.JsonRpcProvider(
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
+		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
+		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
 	);
 
 	// Accounts
@@ -61,8 +66,10 @@ describe('Network Mode Queries', () => {
 	let logStoreBroker: LogStoreNode;
 
 	// Clients
-	let publisherClient: LogStoreClient;
-	let consumerClient: LogStoreClient;
+	let publisherStreamrClient: StreamrClient;
+	let publisherLogStoreClient: LogStoreClient;
+	let consumerStreamrClient: StreamrClient;
+	let consumerLogStoreClient: LogStoreClient;
 
 	// Contracts
 	let nodeAdminManager: LogStoreNodeManager;
@@ -81,10 +88,7 @@ describe('Network Mode Queries', () => {
 		);
 
 		// Accounts
-		adminAccount = new Wallet(
-			process.env.CONTRACT_OWNER_PRIVATE_KEY!,
-			provider
-		);
+		adminAccount = new Wallet(CONTRACT_OWNER_PRIVATE_KEY, provider);
 		publisherAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeOwnerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeConsumerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
@@ -118,7 +122,9 @@ describe('Network Mode Queries', () => {
 			.then((tx) => tx.wait());
 
 		await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
-		(await nodeManager.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))).wait();
+		await nodeManager
+			.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
+			.then((tx) => tx.wait());
 
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
@@ -126,33 +132,51 @@ describe('Network Mode Queries', () => {
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
 			trackerPort: TRACKER_PORT,
+			plugins: {
+				logStore: {
+					db: {
+						type: 'cassandra',
+					},
+				},
+			},
 		});
 
-		publisherClient = await createLogStoreClient(
+		publisherStreamrClient = await createStreamrClient(
 			tracker,
 			publisherAccount.privateKey
 		);
 
-		consumerClient = await createLogStoreClient(
+		publisherLogStoreClient = await createLogStoreClient(
+			publisherStreamrClient
+		);
+
+		consumerStreamrClient = await createStreamrClient(
 			tracker,
 			storeConsumerAccount.privateKey
 		);
+		consumerLogStoreClient = await createLogStoreClient(consumerStreamrClient);
 
-		testStream = await createTestStream(publisherClient, module);
+		testStream = await createTestStream(publisherStreamrClient, module);
+
+		// debug easier
+		// @ts-ignore
+		global.streamId = testStream.id;
 
 		await prepareStakeForStoreManager(storeOwnerAccount, STAKE_AMOUNT);
-		(await storeManager.stake(testStream.id, STAKE_AMOUNT)).wait();
+		await storeManager
+			.stake(testStream.id, STAKE_AMOUNT)
+			.then((tx) => tx.wait());
 
 		await prepareStakeForQueryManager(storeConsumerAccount, STAKE_AMOUNT);
-		(await queryManager.stake(STAKE_AMOUNT)).wait();
+		await queryManager.stake(STAKE_AMOUNT).then((tx) => tx.wait());
 	});
 
 	afterEach(async () => {
-		await publisherClient.destroy();
-		await consumerClient.destroy();
+		await publisherStreamrClient?.destroy();
+		await consumerStreamrClient?.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
-			nodeManager.leave(),
+			nodeManager.leave().then((tx) => tx.wait()),
 			tracker?.stop(),
 		]);
 	});
@@ -160,7 +184,7 @@ describe('Network Mode Queries', () => {
 	it('when client publishes a message, it is written to the store', async () => {
 		// TODO: the consumer must have permission to subscribe to the stream or the strem have to be public
 		await testStream.grantPermissions({
-			user: await consumerClient.getAddress(),
+			user: await consumerStreamrClient.getAddress(),
 			permissions: [StreamPermission.SUBSCRIBE],
 		});
 		// await testStream.grantPermissions({
@@ -168,13 +192,13 @@ describe('Network Mode Queries', () => {
 		// 	permissions: [StreamPermission.SUBSCRIBE],
 		// });
 
-		await publisherClient.publish(testStream.id, {
+		await publisherStreamrClient.publish(testStream.id, {
 			foo: 'bar 1',
 		});
-		await publisherClient.publish(testStream.id, {
+		await publisherStreamrClient.publish(testStream.id, {
 			foo: 'bar 2',
 		});
-		await publisherClient.publish(testStream.id, {
+		await publisherStreamrClient.publish(testStream.id, {
 			foo: 'bar 3',
 		});
 
@@ -182,7 +206,7 @@ describe('Network Mode Queries', () => {
 
 		const messages = [];
 
-		const messageStream = await consumerClient.query(testStream.id, {
+		const messageStream = await consumerLogStoreClient.query(testStream.id, {
 			last: 2,
 		});
 
@@ -193,6 +217,211 @@ describe('Network Mode Queries', () => {
 
 		await waitForCondition(async () => {
 			return messages.length === 2;
+		});
+	});
+
+	describe('validation schema', () => {
+		const schema = {
+			$id: 'https://example.com/demo.schema.json',
+			$schema: 'http://json-schema.org/draft-07/schema#',
+			type: 'object',
+			additionalProperties: false,
+			properties: {
+				foo: {
+					type: 'string',
+				},
+			},
+		};
+		const errorsStream$ = defer(() =>
+			consumerStreamrClient.subscribe(
+				nodeManager.address + '/validation-errors'
+			)
+		).pipe(mergeAll());
+		const errorMessage$ = errorsStream$.pipe(map((s) => s.content));
+
+		beforeEach(async () => {
+			// validation schema is only supported for public streams
+			await testStream.grantPermissions({
+				public: true,
+				permissions: [StreamPermission.SUBSCRIBE],
+			});
+
+			await publisherLogStoreClient.setValidationSchema({
+				streamId: testStream.id,
+				schemaOrHash: schema,
+				protocol: 'RAW',
+			});
+			// to ensure that the new schema is picked up
+			jest.advanceTimersByTime(300_000);
+			// this only works on the broker running this same process. Other ones won't pick it up.
+			// to execute this test you should ensure there are no other brokers running.
+			expect(
+				await nodeManager.totalNodes().then((bn) => bn.toNumber())
+			).toEqual(1);
+			// schemas to be picked up
+			await sleep(1_000);
+		});
+
+		it('when client publishes a valid message message, it is written to the store', async () => {
+			await publisherStreamrClient.publish(testStream.id, {
+				foo: 'bar 1',
+			});
+
+			await sleep(5000);
+
+			const messageStream = await consumerLogStoreClient.query(testStream.id, {
+				last: 2,
+			});
+
+			const messages = await firstValueFrom(
+				messageStream.asObservable().pipe(toArray())
+			);
+
+			expect(messages.length).toEqual(1);
+			expect(messages[0].content).toEqual({ foo: 'bar 1' });
+		});
+
+		it('when client publishes an invalid message message, it is not written to the store', async () => {
+			const firstErrorMessage = firstValueFrom(errorMessage$);
+
+			await publisherStreamrClient.publish(testStream.id, {
+				foo: 1,
+			});
+
+			await sleep(5000);
+
+			const messageStream = await consumerLogStoreClient.query(testStream.id, {
+				last: 2,
+			});
+
+			const messages = await firstValueFrom(
+				messageStream.asObservable().pipe(toArray())
+			);
+
+			expect(messages.length).toEqual(0);
+			expect(await firstErrorMessage).toEqual({
+				errors: [expect.stringContaining('/foo must be string')],
+				streamId: testStream.id,
+			});
+		});
+
+		it('will NOT work with private schemas, and messages will be stored even with a schema', async () => {
+			await testStream.revokePermissions({
+				public: true,
+				permissions: [StreamPermission.SUBSCRIBE],
+			});
+			await testStream.grantPermissions({
+				user: await consumerStreamrClient.getAddress(),
+				permissions: [StreamPermission.SUBSCRIBE],
+			});
+
+			await publisherLogStoreClient.setValidationSchema({
+				streamId: testStream.id,
+				schemaOrHash: schema,
+				protocol: 'RAW',
+			});
+			// to ensure that the new schema is picked up
+			jest.advanceTimersByTime(300_000);
+			// schemas to be picked up
+			await sleep(1_000);
+
+			await publisherStreamrClient.publish(testStream.id, {
+				foo: 'bar 1',
+			});
+
+			await sleep(5000);
+
+			const messageStream = await consumerLogStoreClient.query(testStream.id, {
+				last: 2,
+			});
+
+			const messages = await firstValueFrom(
+				messageStream.asObservable().pipe(toArray())
+			);
+
+			expect(messages.length).toEqual(1);
+			expect(messages[0].content).toEqual({ foo: 'bar 1' });
+		});
+
+		it('creating a bad schema will NOT break the feature', async () => {
+			const validationSchemaUpdatePromise =
+				publisherLogStoreClient.setValidationSchema({
+					streamId: testStream.id,
+					schemaOrHash: {
+						foo: 'bar',
+						type: 'unknown',
+						// @ts-ignore
+						id: 1,
+						apple: 'banana',
+					},
+					protocol: 'RAW',
+				});
+
+			await expect(validationSchemaUpdatePromise).rejects.toThrow(
+				'schema is invalid'
+			);
+
+			// string schema
+			// @ts-ignore
+			await publisherLogStoreClient.setValidationSchema({
+				streamId: testStream.id,
+				schemaOrHash: 'foo',
+				protocol: 'RAW',
+			});
+
+			jest.advanceTimersByTime(300_000);
+			await sleep(500);
+
+			const firstErrorMessage = firstValueFrom(errorMessage$);
+
+			await publisherStreamrClient.publish(testStream.id, {
+				foo: 'bar 1',
+			});
+
+			await sleep(500);
+
+			const messageStream = await consumerLogStoreClient.query(testStream.id, {
+				last: 2,
+			});
+
+			const messages = await firstValueFrom(
+				messageStream.asObservable().pipe(toArray())
+			);
+
+			expect(messages.length).toEqual(0);
+			expect(await firstErrorMessage).toEqual({
+				errors: [expect.stringContaining('Invalid schema')],
+				streamId: testStream.id,
+			});
+
+			// now we create a good one to see if now it's ok
+
+			await publisherLogStoreClient.setValidationSchema({
+				streamId: testStream.id,
+				schemaOrHash: schema,
+				protocol: 'RAW',
+			});
+
+			// to ensure that the new schema is picked up
+			jest.advanceTimersByTime(300_000);
+			// schemas to be picked up
+			await sleep(500);
+
+			await publisherStreamrClient.publish(testStream.id, {
+				bad: 'bar 1',
+			});
+
+			await sleep(5000);
+
+			const messageStream2 = await consumerLogStoreClient.query(testStream.id, {
+				last: 2,
+			});
+
+			const messages2 = await firstValueFrom(
+				messageStream2.asObservable().pipe(toArray())
+			);
+
+			expect(messages2.length).toEqual(0);
 		});
 	});
 });

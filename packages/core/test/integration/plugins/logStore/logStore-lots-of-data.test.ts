@@ -4,10 +4,11 @@ import toArray from 'stream-to-array';
 
 import {
 	LogStore,
-	startCassandraLogStore,
+	startLogStore,
 } from '../../../../src/plugins/logStore/LogStore';
 import { getTestName, STREAMR_DOCKER_DEV_HOST } from '../../../utils';
 import { buildMsg } from './LogStore.test';
+
 
 const contactPoints = [STREAMR_DOCKER_DEV_HOST];
 const localDataCenter = 'datacenter1';
@@ -31,7 +32,7 @@ function retryFlakyTest(
 				return;
 			} catch (e) {
 				if (isFlakyError(e)) {
-					logger.warn('Flaky test run detected %d/%d run', i, maxRuns);
+					logger.warn('Flaky test run detected', { i, maxRuns });
 					if (i === maxRuns) {
 						throw e;
 					}
@@ -48,17 +49,20 @@ describe('LogStore: lots of data', () => {
 	let streamId: string;
 
 	beforeAll(async () => {
-		logStore = await startCassandraLogStore({
-			contactPoints,
-			localDataCenter,
-			keyspace,
-			opts: {
+		logStore = await startLogStore(
+			{
+				type: 'cassandra',
+				contactPoints,
+				localDataCenter,
+				keyspace,
+			},
+			{
 				maxBucketRecords: MAX_BUCKET_MESSAGE_COUNT,
 				checkFullBucketsTimeout: 100,
 				storeBucketsTimeout: 100,
 				bucketKeepAliveSeconds: 1,
-			},
-		});
+			}
+		);
 		streamId = getTestName(module) + Date.now();
 	});
 

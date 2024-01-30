@@ -5,22 +5,21 @@
       "privateKey": "0xbb00000000000000000000000000000000000000000000000000000000000001"
     }
   },
-	"mode": {
-		"type": "standalone",
-		"topicsStream": "0xc0ffee254729296a45a3885639AC7E10F9d54979/topics",
-		"trackedStreams": [
-			{
-				"id": "testStream.id",
-				"partitions": 1
-			}
-		]
-	},
+  "mode": {
+    "type": "network",
+    "pool": {
+      "id": "0",
+      "url": "http://logstore-kyve:1317",
+      "pollInterval": 60000
+    }
+  },
   "httpServer": {
     "port": 7771
   },
   "plugins": {
     "logStore": {
-      "cassandra": {
+			"db": {
+				"type": "cassandra",
         "hosts": [
           "cassandra"
         ],
