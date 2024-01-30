@@ -40,7 +40,6 @@ export const getTinyProxyPath = () => {
 	const output = spawnSync('which', ['tinyproxy'], { stdio: 'inherit' });
 	if (output.status !== 0) {
 		const nodeModulesBinDir = path.join(projectRootDirectory, 'node_modules', '.bin');
-		console.log({ nodeModulesBinDir });
 		const tinyProxyPath = path.join(nodeModulesBinDir, 'tinyproxy');
 		// check if exists
 		if (fs.existsSync(tinyProxyPath)) {
