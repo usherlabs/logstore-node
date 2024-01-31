@@ -10,7 +10,10 @@ const THRESHOLD = 60 * 1000;
 
 export class Heartbeat {
 	private clientId?: EthereumAddress;
-	private nodes: Map<EthereumAddress, number>;
+	private nodes: Map<
+		EthereumAddress,
+		[publishedTimestamp: number, lag: number]
+	>;
 	private timer?: NodeJS.Timer;
 	private nodeMetadata: NodeMetadata;
 
@@ -36,10 +39,17 @@ export class Heartbeat {
 		await this.subscriber.unsubscribe();
 	}
 
+	public get onlineNodesByAscendingLag() {
+		return this.onlineNodes.sort(
+			// get lag using the ethereum address
+			(a, b) => this.nodes.get(a)![1] - this.nodes.get(b)![1]
+		);
+	}
+
 	public get onlineNodes() {
 		const result: EthereumAddress[] = [];
-		for (const [node, timestamp] of this.nodes) {
-			if (Date.now() - timestamp <= THRESHOLD) {
+		for (const [node, [publishTimestamp]] of this.nodes) {
+			if (Date.now() - publishTimestamp <= THRESHOLD) {
 				result.push(node);
 			}
 		}
@@ -52,10 +62,15 @@ export class Heartbeat {
 	}
 
 	private async onMessage(_: unknown, metadata: MessageMetadata) {
+		// exclude itself
 		if (metadata.publisherId === this.clientId) {
 			return;
 		}
 
-		this.nodes.set(metadata.publisherId, metadata.timestamp);
+		const now = Date.now();
+		const publishedTimestamp = metadata.timestamp;
+		const lag = now - publishedTimestamp;
+
+		this.nodes.set(metadata.publisherId, [metadata.timestamp, lag]);
 	}
 }
