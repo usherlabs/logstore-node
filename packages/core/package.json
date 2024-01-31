@@ -24,7 +24,8 @@
 		"start:fresh": "npm-run-all -s build start",
 		"ts": "tsc --noEmit",
 		"lint": "eslint ./src/**/*.ts ./test/**/*.ts",
-		"test": "dotenv -e .env jest --"
+		"test": "dotenv -e .env jest --",
+		"postinstall": "./scripts/post-install.sh"
 	},
 	"dependencies": {
 		"@ethersproject/abstract-signer": "^5.7.0",

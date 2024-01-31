@@ -1,12 +1,27 @@
 import { PromiseOrValue } from '@logsn/contracts/dist/common';
-import { defer, map, mergeAll, mergeMap, share } from 'rxjs';
+import { Logger } from '@streamr/utils';
+import fs from 'fs';
+import { spawnSync } from 'node:child_process';
+import path from 'path';
+import {
+	catchError,
+	defer,
+	map,
+	mergeAll,
+	mergeMap,
+	share,
+	throwError,
+} from 'rxjs';
 
 import { StrictConfig } from '../../../config/config';
+import { projectRootDirectory } from '../../../utils/paths';
 import {
 	fromProcess,
 	getNextAvailablePort,
 	tmpFilePathFromContent,
 } from './utils';
+
+const logger = new Logger(module);
 
 export type ReversePath = {
 	port: number;
@@ -21,12 +36,35 @@ export type MaybePromiseReversePath = {
 
 export type RegisterProxyPath = (path: MaybePromiseReversePath) => void;
 
+export const getTinyProxyPath = () => {
+	const output = spawnSync('which', ['tinyproxy'], { stdio: 'inherit' });
+	if (output.status !== 0) {
+		const nodeModulesBinDir = path.join(projectRootDirectory, 'node_modules', '.bin');
+		const tinyProxyPath = path.join(nodeModulesBinDir, 'tinyproxy');
+		// check if exists
+		if (fs.existsSync(tinyProxyPath)) {
+			return tinyProxyPath;
+		} else {
+			throw new Error('tinyproxy not found');
+		}
+	}
+	return output.stdout.toString().trim();
+};
+
 const tinyProxyFromConfigPath = (configFilePath: string) =>
 	fromProcess({
 		name: 'tinyproxy',
-		cmd: 'tinyproxy',
+		cmd: getTinyProxyPath(),
 		args: ['-d', '-c', configFilePath],
-	});
+	}).pipe(
+		catchError((err) => {
+			logger.error(
+				'tinyproxy failed to start, are you sure it is installed?',
+				err
+			);
+			return throwError(() => err);
+		})
+	);
 
 const textFromTinyConfig = ({
 	port,

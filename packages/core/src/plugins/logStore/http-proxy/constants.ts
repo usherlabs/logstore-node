@@ -1,8 +1,10 @@
 import path from 'path';
 
+import { projectRootDirectory } from '../../../utils/paths';
+
 
 // they are functions so we can easily mock them in tests
 export const WEBSERVER_PATHS = {
-	notary: () => path.join(process.cwd(), './bin/notary-webserver'),
-	prover: () => path.join(process.cwd(), './bin/prover-webserver'),
+	notary: () => path.join(projectRootDirectory, './bin/notary-webserver'),
+	prover: () => path.join(projectRootDirectory, './bin/prover-webserver'),
 };
