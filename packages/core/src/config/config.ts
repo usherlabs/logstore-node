@@ -5,6 +5,9 @@ import path from 'path';
 import { StreamrClientConfig } from 'streamr-client';
 import { DeepRequired } from 'ts-essentials';
 
+import { LogStorePluginConfig } from '../plugins/logStore/LogStorePlugin';
+import { StorageProxyPluginConfig } from '../plugins/storageProxy/StorageProxyPluginConfig';
+
 export type NetworkParticipantMode = {
 	type: 'network';
 	pool?: {
@@ -35,7 +38,10 @@ export interface Config {
 			certFileName: string;
 		};
 	};
-	plugins?: Record<string, any>;
+	plugins?: {
+		logStore?: Partial<LogStorePluginConfig>;
+		storageProxy?: Partial<StorageProxyPluginConfig>;
+	} & Record<string, unknown>;
 }
 
 // StrictConfig is a config object to which some default values have been applied

@@ -56,7 +56,7 @@ export const getForRangeQueryRequest = ({
 		return {
 			error: {
 				message:
-					'Query parameter "toTimestamp" required as well. To request all messages since a timestamp, use the endpoint /streams/:id/data/partitions/:partition/from',
+					'Query parameter "toTimestamp" required as well. To request all messages since a timestamp, use the endpoint /stores/:id/data/partitions/:partition/from',
 			},
 		};
 	}

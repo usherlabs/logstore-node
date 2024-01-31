@@ -1,12 +1,15 @@
 import { LogStoreClient } from '@logsn/client';
 import { StreamPartID } from '@streamr/protocol';
 import { keyToArrayIndex, Logger } from '@streamr/utils';
-import StreamrClient, {Stream} from 'streamr-client';
+import StreamrClient, { Stream } from 'streamr-client';
 
+import {
+	Diff,
+	SetMembershipSynchronizer,
+} from '../../../utils/SetMembershipSynchronizer';
 import { LogStoreConfig, LogStoreConfigListener } from '../LogStoreConfig';
 import { LogStoreEventListener } from '../LogStoreEventListener';
 import { LogStorePoller } from './LogStorePoller';
-import { Diff, SetMembershipSynchronizer } from './SetMembershipSynchronizer';
 
 const logger = new Logger(module);
 

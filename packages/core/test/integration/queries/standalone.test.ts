@@ -99,6 +99,13 @@ describe('Standalone Mode Queries', () => {
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
 			trackerPort: TRACKER_PORT,
+			plugins: {
+				logStore: {
+					db: {
+						type: 'cassandra',
+					},
+				},
+			},
 			mode: {
 				type: 'standalone',
 				trackedStreams: [

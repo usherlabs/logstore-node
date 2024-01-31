@@ -26,7 +26,6 @@ import { ReportPoller } from './ReportPoller';
 import { SystemCache } from './SystemCache';
 import { SystemRecovery } from './SystemRecovery';
 
-
 const METRICS_INTERVAL = 60 * 1000;
 
 const logger = new Logger(module);
@@ -171,7 +170,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		if (this.pluginConfig.experimental?.enableValidator) {
 			// start the report polling process
 			const abortController = new AbortController();
-			this.reportPoller.start(abortController.signal);
+			await this.reportPoller.start(abortController.signal);
 			await this.systemCache.start();
 			await this.systemRecovery.start();
 		}
@@ -202,7 +201,11 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		clearInterval(this.metricsTimer);
 
 		const stopValidatorComponents = async () => {
-			await Promise.all([this.systemCache.stop(), this.systemRecovery.stop()]);
+			await Promise.all([
+				this.reportPoller.stop(),
+				this.systemCache.stop(),
+				this.systemRecovery.stop(),
+			]);
 		};
 
 		await Promise.all([
@@ -216,6 +219,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 				? stopValidatorComponents()
 				: Promise.resolve(),
 		]);
+
+		await super.stop();
 	}
 
 	// eslint-disable-next-line class-methods-use-this

@@ -14,9 +14,6 @@ import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
 
-
-const logger = new Logger(module);
-
 export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
 	private proverServer: ProxiedWebServerProcess;

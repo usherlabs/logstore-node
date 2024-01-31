@@ -19,7 +19,8 @@
 	},
 	"plugins": {
 		"logStore": {
-			"cassandra": {
+			"db": {
+				"type": "cassandra",
 				"hosts": ["http://127.0.0.1:9042"],
 				"username": "",
 				"password": "",
