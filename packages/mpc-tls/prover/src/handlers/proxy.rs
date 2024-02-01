@@ -64,7 +64,7 @@ pub async fn handle_notarization_request(payload: web::Payload, req: HttpRequest
         body: Some(body_str).filter(|s| !s.is_empty()),
     };
 
-    let http_response = notarize_request(req_proxy).await;
+    let http_response: hyper::Response<hyper::Body> = notarize_request(req_proxy).await;
     let mut response = HttpResponseBuilder::new(http_response.status());
     for val in http_response.headers().iter() {
         response.insert_header(val);
