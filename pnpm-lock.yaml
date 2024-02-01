@@ -98,20 +98,20 @@ importers:
         specifier: ^5.7.1
         version: 5.7.1
       '@logsn/client':
-        specifier: ^0.0.12
-        version: 0.0.12(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3)
+        specifier: ^0.0.13
+        version: 0.0.13(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3)
       '@logsn/contracts':
-        specifier: 0.0.12
-        version: 0.0.12
+        specifier: 0.0.13
+        version: 0.0.13
       '@logsn/program':
         specifier: workspace:*
         version: link:../program
       '@logsn/protocol':
-        specifier: 0.0.12
-        version: 0.0.12
+        specifier: 0.0.13
+        version: 0.0.13
       '@logsn/shared':
-        specifier: 0.0.12
-        version: 0.0.12
+        specifier: 0.0.13
+        version: 0.0.13
       '@streamr/protocol':
         specifier: ^8.5.5
         version: 8.5.5
@@ -207,8 +207,8 @@ importers:
         version: 1.0.5
     devDependencies:
       '@logsn/storage-proxy':
-        specifier: ^0.0.12
-        version: 0.0.12(@ethersproject/hash@5.7.0)(typescript@5.3.3)
+        specifier: ^0.0.13
+        version: 0.0.13(@ethersproject/hash@5.7.0)(typescript@5.3.3)
       '@streamr/network-node':
         specifier: ^8.5.5
         version: 8.5.5
@@ -2220,8 +2220,8 @@ packages:
       '@lit-labs/ssr-dom-shim': 1.1.2
     dev: false
 
-  /@logsn/client@0.0.12(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3):
-    resolution: {integrity: sha512-52s8ie20aJobR65C4cCU+nd6i8uDpVRnW25h0JS3JJ2o3aA+VU4Id5oZM848GMpgsS6y1n5vGkUsROpTLjT3uA==}
+  /@logsn/client@0.0.13(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3):
+    resolution: {integrity: sha512-a0oAVbHf4twtWDuZ+VYpoTdLH+qwBlQE9oxbL40y74UNFGs/4gK497gHDcLONhPsGrlvKiouAyNszaVavTHDFg==}
     dependencies:
       '@babel/runtime': 7.23.5
       '@babel/runtime-corejs3': 7.23.5
@@ -2236,9 +2236,9 @@ packages:
       '@ethersproject/web': 5.7.1
       '@ethersproject/wordlists': 5.7.0
       '@lit-protocol/lit-node-client': 2.2.63(@ethersproject/contracts@5.7.0)(@ethersproject/hash@5.7.0)(@ethersproject/providers@5.7.2)(@ethersproject/wallet@5.7.0)(react@18.2.0)
-      '@logsn/contracts': 0.0.12
-      '@logsn/protocol': 0.0.12
-      '@logsn/shared': 0.0.12
+      '@logsn/contracts': 0.0.13
+      '@logsn/protocol': 0.0.13
+      '@logsn/shared': 0.0.13
       '@streamr/network-contracts': 7.0.8
       '@streamr/network-node': 8.5.5
       '@streamr/protocol': 8.5.5
@@ -2305,14 +2305,14 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@logsn/contracts@0.0.12:
-    resolution: {integrity: sha512-xg6RnMFG8B9z4eXxXwQsIj6nPfVPnCXqz6wpjNvZRlVu278gkzKoF2TsuoYfbyZ9B7X04MGwIJU2meLLQh9zoA==}
+  /@logsn/contracts@0.0.13:
+    resolution: {integrity: sha512-55M85cCahE272XwIOLGjkMnTRXWQUEmPfudT7jMTo8xiduzU0DrMKkNOL+TYY/ueNFmWvAw1yiW90lzvKsRoHg==}
     dependencies:
       '@openzeppelin/contracts-upgradeable': 4.9.5
     dev: false
 
-  /@logsn/protocol@0.0.12:
-    resolution: {integrity: sha512-hT4dg+W/DqC8GZIT+gkIVjLKolvqr8IWP7cfSD0oJcggU7/6TuLyx3Wyl71fA3QfsFBIS9jbPkXr2beKMlgdIg==}
+  /@logsn/protocol@0.0.13:
+    resolution: {integrity: sha512-B7OTKGDP8HhEVHzAfKYg/OB6vCZbsJ3O0k+SqQzH0QZAqgdZ5gFe0+XVbvr3rdc+7P4mwQeAC2Mtc3UfYzhIaw==}
     dependencies:
       '@ethersproject/abstract-signer': 5.7.0
       '@ethersproject/bignumber': 5.7.0
@@ -2320,12 +2320,12 @@ packages:
       '@ethersproject/solidity': 5.7.0
     dev: false
 
-  /@logsn/shared@0.0.12:
-    resolution: {integrity: sha512-WRFIWM4+z4WOErmDPCz30VXLuAoTWvluvQsVe4GwAzGvwWZ8LND8pIgxoWDvq6sNZ1aO+h3eyfk7+osqJv09Iw==}
+  /@logsn/shared@0.0.13:
+    resolution: {integrity: sha512-kW2XDPEGPY1hdsqtoZ1QADkZW4R4c63mLplrHcPocRcQBXkczT0C9PxAsr33b9qCRLsYShsflYGtObD5xEzzfA==}
     dependencies:
       '@ethersproject/providers': 5.7.2(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-      '@logsn/contracts': 0.0.12
-      '@logsn/protocol': 0.0.12
+      '@logsn/contracts': 0.0.13
+      '@logsn/protocol': 0.0.13
       ethers: 5.7.2(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       inquirer: 8.1.1
       redstone-api: 0.4.11
@@ -2336,8 +2336,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@logsn/storage-proxy@0.0.12(@ethersproject/hash@5.7.0)(typescript@5.3.3):
-    resolution: {integrity: sha512-4rPc0coAroSz/5NqC3PfQ+Uv6bn2mqDdkC4MJvXICIzx6AbzIe5L3u7641+cuLbUIuktqWtTwmHZl2/52sJ5YQ==}
+  /@logsn/storage-proxy@0.0.13(@ethersproject/hash@5.7.0)(typescript@5.3.3):
+    resolution: {integrity: sha512-dm++VxSFH6uwzokJxgGhlHZS87eWSpYn8nXD1s9Tz+e60FFkqN2VuW2RqPja8brIHI4LwVh+FfZeywPP92sNww==}
     hasBin: true
     dependencies:
       '@streamr/utils': 8.5.5
