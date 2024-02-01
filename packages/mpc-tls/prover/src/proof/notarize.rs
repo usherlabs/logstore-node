@@ -1,3 +1,4 @@
+use crate::proof::redact::Redactor;
 use crate::proof::utils::{build_proof, build_request, setup_notary_connection};
 use crate::proxy::ProxyRequest;
 use futures::AsyncWriteExt;
@@ -59,6 +60,15 @@ pub async fn notarize_request(req_proxy: ProxyRequest) -> hyper::Response<hyper:
     // The Prover task should be done now, so we can grab it.
     let prover = prover_task.await.unwrap().unwrap();
     let prover = prover.start_notarize();
+    // pass in a list of redacted items in the request and response
+    // let redactor = Redactor::new(&request, &response);
+
+
+    // redacted items in the request should be the first parameter
+    // go through the request and response
+    // let request_redacted = [];
+    // let response_Redacted = [];
+    // redacted items in the response should be the second parameter
     let proof = build_proof(prover).await;
 
     // Dump the proof to a file.

@@ -38,7 +38,7 @@ pub const BLACKLISTED_HEADERS: &[&str] = &[
 ];
 
 pub fn get_port(matches: &clap::ArgMatches<'_>) -> u64 {
-    // ? should we throw an error when an invalid port is provided
+    // ? should we throw an error when an invalid port is provided or just return default port
     match matches.value_of("p") {
         Some(x) => x.parse::<u64>().or::<u64>(Ok(DEFAULT_PORT)).unwrap(),
         None => DEFAULT_PORT,
