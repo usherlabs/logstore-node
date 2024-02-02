@@ -8,6 +8,9 @@ import { HeartbeatMonitor } from '../HeartbeatMonitor';
 
 const INTERVAL = 1 * 1000;
 
+/**
+ * Extends the HeartbeatMonitor to publish the node metadata to other nodes.
+ */
 export class Heartbeat extends HeartbeatMonitor {
 	private timer?: NodeJS.Timer;
 	private nodeMetadata: NodeMetadata;
