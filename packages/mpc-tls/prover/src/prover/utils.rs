@@ -2,6 +2,7 @@ use crate::proxy::ProxyRequest;
 use hyper::{body::to_bytes, client::conn::Parts, Body, Method, Request, StatusCode};
 use rustls::{Certificate, ClientConfig, RootCertStore};
 use serde::{Deserialize, Serialize};
+use std::ops::Range;
 use std::str::FromStr;
 use std::{str, sync::Arc};
 use tlsn_core::proof::TlsProof;
@@ -40,13 +41,40 @@ pub enum ClientType {
     Websocket,
 }
 
-pub async fn build_proof(mut prover: Prover<Notarize>) -> TlsProof {
-    let sent_len = prover.sent_transcript().data().len();
-    let recv_len = prover.recv_transcript().data().len();
+pub async fn build_proof(
+    mut prover: Prover<Notarize>,
+    req_redact_items: Vec<String>,
+    res_redact_items: Vec<String>,
+) -> TlsProof {
+    let req_slice: Vec<&[u8]> = req_redact_items.iter().map(|s| s.as_bytes()).collect();
+    let res_slice: Vec<&[u8]> = res_redact_items.iter().map(|s| s.as_bytes()).collect();
+
+    // Identify the ranges in the outbound data which contain data which we want to disclose
+    let (sent_public_ranges, _) = find_ranges(
+        prover.sent_transcript().data(),
+        // req_redact_items.as_slice()
+        req_slice.as_slice(),
+    );
+
+    // Identify the ranges in the inbound data which contain data which we want to disclose
+    let (recv_public_ranges, _) = find_ranges(
+        prover.recv_transcript().data(),
+        // res_redact_items.as_slice(),
+        res_slice.as_slice(),
+    );
 
     let builder = prover.commitment_builder();
-    let sent_commitment = builder.commit_sent(0..sent_len).unwrap();
-    let recv_commitment = builder.commit_recv(0..recv_len).unwrap();
+
+    // Commit to each range of the public outbound data which we want to disclose
+    let sent_commitments: Vec<_> = sent_public_ranges
+        .iter()
+        .map(|r| builder.commit_sent(r.clone()).unwrap())
+        .collect();
+    // Commit to each range of the public inbound data which we want to disclose
+    let recv_commitments: Vec<_> = recv_public_ranges
+        .iter()
+        .map(|r| builder.commit_recv(r.clone()).unwrap())
+        .collect();
 
     // Finalize, returning the notarized session
     let notarized_session = prover.finalize().await.unwrap();
@@ -55,8 +83,12 @@ pub async fn build_proof(mut prover: Prover<Notarize>) -> TlsProof {
     let mut proof_builder = notarized_session.data().build_substrings_proof();
 
     // Reveal all the public ranges
-    proof_builder.reveal(sent_commitment).unwrap();
-    proof_builder.reveal(recv_commitment).unwrap();
+    for commitment_id in sent_commitments {
+        proof_builder.reveal(commitment_id).unwrap();
+    }
+    for commitment_id in recv_commitments {
+        proof_builder.reveal(commitment_id).unwrap();
+    }
 
     let substrings_proof = proof_builder.build().unwrap();
 
@@ -179,6 +211,7 @@ pub async fn setup_notary_connection() -> (tokio_rustls::client::TlsStream<TcpSt
     (notary_tls_socket, notarization_response.session_id)
 }
 
+
 pub fn build_request(proxy_request: ProxyRequest) -> Request<Body> {
     let request_method = Method::from_str(&proxy_request.method[..]).unwrap();
     let request_body = proxy_request
@@ -204,4 +237,36 @@ pub fn build_request(proxy_request: ProxyRequest) -> Request<Body> {
     }
 
     builder.body(request_body).unwrap()
+}
+
+/// Find the ranges of the public and private parts of a sequence.
+///
+/// Returns a tuple of `(public, private)` ranges.
+fn find_ranges(seq: &[u8], private_seq: &[&[u8]]) -> (Vec<Range<usize>>, Vec<Range<usize>>) {
+    let mut private_ranges = Vec::new();
+    for s in private_seq {
+        for (idx, w) in seq.windows(s.len()).enumerate() {
+            if w == *s {
+                private_ranges.push(idx..(idx + w.len()));
+            }
+        }
+    }
+
+    let mut sorted_ranges = private_ranges.clone();
+    sorted_ranges.sort_by_key(|r| r.start);
+
+    let mut public_ranges = Vec::new();
+    let mut last_end = 0;
+    for r in sorted_ranges {
+        if r.start > last_end {
+            public_ranges.push(last_end..r.start);
+        }
+        last_end = r.end;
+    }
+
+    if last_end < seq.len() {
+        public_ranges.push(last_end..seq.len());
+    }
+
+    (public_ranges, private_ranges)
 }

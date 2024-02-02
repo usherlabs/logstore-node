@@ -3,8 +3,8 @@ use crate::proxy::get_port;
 use actix_web::{App, HttpServer};
 use clap::{App as ClapApp, Arg};
 
+pub mod prover;
 pub mod handlers;
-pub mod proof;
 pub mod proxy;
 
 
