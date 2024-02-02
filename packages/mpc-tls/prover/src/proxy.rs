@@ -1,6 +1,6 @@
 use hyper::body::to_bytes;
+use hyper::Response;
 use hyper::{Body, Request};
-use hyper::{Response, StatusCode};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

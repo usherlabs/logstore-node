@@ -19,21 +19,26 @@ impl HTTPParts {
             .map(|header_value: &HeaderValue| header_value.to_str().unwrap_or("").to_string());
     }
 
-    pub fn get_body(&self, body_path: String) -> Option<String> {
-        let json_str = self.body.clone().unwrap_or(r#"{}"#.to_string());
-        // Parse the JSON string
-        let json_value: Value = from_str(json_str.as_str()).ok()?;
-        let result = body_path.split('.').try_fold(&json_value, |current, part| {
-            if let Some(index) = part.parse::<usize>().ok() {
-                current.get(index)
-            } else {
-                current.get(part)
-            }
-        });
+    pub fn get_body(&self, body_path_option: Option<String>) -> Option<String> {
+        match body_path_option {
+            Some(body_path) => {
+                let json_str = self.body.clone().unwrap_or(r#"{}"#.to_string());
+                // Parse the JSON string
+                let json_value: Value = from_str(json_str.as_str()).ok()?;
+                let result = body_path.split('.').try_fold(&json_value, |current, part| {
+                    if let Some(index) = part.parse::<usize>().ok() {
+                        current.get(index)
+                    } else {
+                        current.get(part)
+                    }
+                });
 
-        result
-            .cloned()
-            .map(|x| x.to_string().trim_matches('"').to_string())
+                result
+                    .cloned()
+                    .map(|x| x.to_string().trim_matches('"').to_string())
+            }
+            None => Some(self.body.clone().unwrap_or("".to_string())),
+        }
     }
 }
 
@@ -74,10 +79,16 @@ impl Redactor {
         let parts: Vec<&str> = parameter_path.split(':').collect();
 
         let response = match parts.as_slice() {
-            ["res", "header", header_name] => self.response.get_header(header_name.to_string()),
-            ["res", "body", property_path] => self.response.get_body(property_path.to_string()),
+            ["req", "body", ""] => self.request.get_body(None),
+            ["res", "body", ""] => self.response.get_body(None),
             ["req", "header", header_name] => self.request.get_header(header_name.to_string()),
-            ["req", "body", property_path] => self.request.get_body(property_path.to_string()),
+            ["res", "header", header_name] => self.response.get_header(header_name.to_string()),
+            ["req", "body", property_path] => {
+                self.request.get_body(Some(property_path.to_string()))
+            }
+            ["res", "body", property_path] => {
+                self.response.get_body(Some(property_path.to_string()))
+            }
             _ => None,
         };
 
