@@ -1,76 +1,40 @@
+import type { LogStoreClient } from '@logsn/client';
 import { NodeMetadata } from '@logsn/client';
-import { EthereumAddress, MessageMetadata } from 'streamr-client';
+import { EthereumAddress } from 'streamr-client';
 
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
-import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import { getNodeMetadata } from '../../../utils/nodeMetadata';
+import { HeartbeatMonitor } from '../HeartbeatMonitor';
 
 const INTERVAL = 1 * 1000;
-const THRESHOLD = 60 * 1000;
 
-export class Heartbeat {
-	private clientId?: EthereumAddress;
-	private nodes: Map<
-		EthereumAddress,
-		[publishedTimestamp: number, lag: number]
-	>;
+export class Heartbeat extends HeartbeatMonitor {
 	private timer?: NodeJS.Timer;
 	private nodeMetadata: NodeMetadata;
 
 	constructor(
-		private readonly publisher: BroadbandPublisher,
-		private readonly subscriber: BroadbandSubscriber
+		override readonly logStoreClient: LogStoreClient,
+		private readonly publisher: BroadbandPublisher
 	) {
-		this.nodes = new Map();
+		super(logStoreClient);
 		this.nodeMetadata = getNodeMetadata();
 	}
 
-	public async start(clientId: EthereumAddress) {
-		this.clientId = clientId;
-		await this.subscriber.subscribe(this.onMessage.bind(this));
+	public override async start(clientId: EthereumAddress) {
+		await super.start(clientId);
+
 		this.timer = setInterval(this.onInterval.bind(this), INTERVAL);
 	}
 
-	public async stop() {
+	public override async stop() {
 		if (this.timer) {
 			clearTimeout(this.timer);
 			this.timer = undefined;
 		}
-		await this.subscriber.unsubscribe();
-	}
-
-	public get onlineNodesByAscendingLag() {
-		return this.onlineNodes.sort(
-			// get lag using the ethereum address
-			(a, b) => this.nodes.get(a)![1] - this.nodes.get(b)![1]
-		);
-	}
-
-	public get onlineNodes() {
-		const result: EthereumAddress[] = [];
-		for (const [node, [publishTimestamp]] of this.nodes) {
-			if (Date.now() - publishTimestamp <= THRESHOLD) {
-				result.push(node);
-			}
-		}
-
-		return result;
+		await super.stop();
 	}
 
 	private async onInterval() {
 		await this.publisher.publish({ http: this.nodeMetadata.http });
-	}
-
-	private async onMessage(_: unknown, metadata: MessageMetadata) {
-		// exclude itself
-		if (metadata.publisherId === this.clientId) {
-			return;
-		}
-
-		const now = Date.now();
-		const publishedTimestamp = metadata.timestamp;
-		const lag = now - publishedTimestamp;
-
-		this.nodes.set(metadata.publisherId, [metadata.timestamp, lag]);
 	}
 }
