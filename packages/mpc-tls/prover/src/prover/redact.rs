@@ -37,8 +37,8 @@ impl HTTPParts {
     }
 }
 
-impl From<&Request<String>> for HTTPParts {
-    fn from(request: &Request<String>) -> Self {
+impl From<Request<String>> for HTTPParts {
+    fn from(request: Request<String>) -> Self {
         Self {
             headers: request.headers().clone(),
             body: Some(request.body().clone()).filter(|s| !s.is_empty()),
@@ -46,8 +46,8 @@ impl From<&Request<String>> for HTTPParts {
     }
 }
 
-impl From<&Response<String>> for HTTPParts {
-    fn from(response: &Response<String>) -> Self {
+impl From<Response<String>> for HTTPParts {
+    fn from(response: Response<String>) -> Self {
         Self {
             headers: response.headers().clone(),
             body: Some(response.body().clone()).filter(|s| !s.is_empty()),
@@ -62,7 +62,7 @@ pub struct Redactor {
 }
 
 impl Redactor {
-    pub fn new(request: &Request<String>, response: &Response<String>) -> Self {
+    pub fn new(request: Request<String>, response: Response<String>) -> Self {
         Self {
             request: HTTPParts::from(request),
             response: HTTPParts::from(response),
@@ -179,7 +179,7 @@ mod tests {
     fn test_get_redacted_parameter() {
         // Example Request
         let (request, response) = generate_request_response();
-        let redactor = Redactor::new(&request, &response);
+        let redactor = Redactor::new(request, response);
 
         // test for all four success cases
         let req_header_path_found = redactor.get_parameter("req:header:x-api-key".to_string());
@@ -198,7 +198,7 @@ mod tests {
     #[test]
     fn test_get_redacted_values() {
         let (request, response) = generate_request_response();
-        let redactor = Redactor::new(&request, &response);
+        let redactor = Redactor::new(request, response);
 
         let sample_cs_redacted_headers =
             "req:header:x-api-key,req:body:age, res:header:secret-header, res:body:deep.3.name";

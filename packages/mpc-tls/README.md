@@ -21,7 +21,7 @@ sh ./start_prover.sh
 ```
 curl -X POST http://localhost:8080/proxy \
 -H "T-PROXY-URL: https://jsonplaceholder.typicode.com/posts" \
--H "T-STORE: storeone" \
+-H "T-REDACTED: res:body:id,req:body:userId,res:body:userId, req:header:x-api-key" \
 -H "Content-Type: application/json" \
 -H "X-API-KEY: secret" \
 -d '{"title": "usher", "body": "labs", "userId": 10}'

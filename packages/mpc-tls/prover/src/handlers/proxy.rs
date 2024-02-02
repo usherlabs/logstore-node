@@ -1,5 +1,5 @@
 use crate::{
-    proof::notarize::notarize_request,
+    prover::notarize::{notarize_request, NotarizeRequestParams},
     proxy::{Header, ProxyRequest, BLACKLISTED_HEADERS},
 };
 use actix_web::{route, web, HttpRequest, HttpResponseBuilder, Responder};
@@ -14,7 +14,10 @@ use url::Url;
     method = "PUT",
     method = "PATCH"
 )]
-pub async fn handle_notarization_request(payload: web::Payload, req: HttpRequest) -> impl Responder {
+pub async fn handle_notarization_request(
+    payload: web::Payload,
+    req: HttpRequest,
+) -> impl Responder {
     let t_proxy_url = req
         .headers()
         .get("T-PROXY-URL")
@@ -27,7 +30,7 @@ pub async fn handle_notarization_request(payload: web::Payload, req: HttpRequest
         .get("T-STORE")
         .map_or("", |value| value.to_str().unwrap_or_default());
 
-    let _t_redacted_parameters = req
+    let t_redacted_parameters = req
         .headers()
         .get("T-REDACTED")
         .map_or("", |value| value.to_str().unwrap_or_default());
@@ -64,7 +67,11 @@ pub async fn handle_notarization_request(payload: web::Payload, req: HttpRequest
         body: Some(body_str).filter(|s| !s.is_empty()),
     };
 
-    let http_response: hyper::Response<hyper::Body> = notarize_request(req_proxy).await;
+    let norarization_params = NotarizeRequestParams {
+        req_proxy,
+        redacted_parameters: t_redacted_parameters.to_string(),
+    };
+    let http_response: hyper::Response<hyper::Body> = notarize_request(norarization_params).await;
     let mut response = HttpResponseBuilder::new(http_response.status());
     for val in http_response.headers().iter() {
         response.insert_header(val);
