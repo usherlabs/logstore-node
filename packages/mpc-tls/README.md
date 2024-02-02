@@ -27,5 +27,6 @@ curl -X POST http://localhost:8080/proxy \
 -d '{"title": "usher", "body": "labs", "userId": 10}'
 ```
 Note: Replace `http://localhost:8080/` with the url and port of your proxy.
+Note: Replace the headers with the following to redact the all the body `-H "T-REDACTED: res:body:,res:body:" \`
 
 You should get a response back and your request has been notarized.
