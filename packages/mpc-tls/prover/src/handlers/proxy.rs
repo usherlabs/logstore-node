@@ -25,7 +25,7 @@ pub async fn handle_notarization_request(
         .to_str()
         .unwrap();
 
-    let _t_store = req
+    let t_store = req
         .headers()
         .get("T-STORE")
         .map_or("", |value| value.to_str().unwrap_or_default());
@@ -35,7 +35,7 @@ pub async fn handle_notarization_request(
         .get("T-REDACTED")
         .map_or("", |value| value.to_str().unwrap_or_default());
 
-    let _t_should_publish = req
+    let t_should_publish = req
         .headers()
         .get("T-PUBLISH")
         .map_or("", |value| value.to_str().unwrap_or_default());
@@ -70,6 +70,8 @@ pub async fn handle_notarization_request(
     let norarization_params = NotarizeRequestParams {
         req_proxy,
         redacted_parameters: t_redacted_parameters.to_string(),
+        store: t_store.to_string(),
+        publish: t_should_publish.to_string(),
     };
     let http_response: hyper::Response<hyper::Body> = notarize_request(norarization_params).await;
     let mut response = HttpResponseBuilder::new(http_response.status());

@@ -14,12 +14,15 @@ use tracing::debug;
 pub struct NotarizeRequestParams {
     pub req_proxy: ProxyRequest,
     pub redacted_parameters: String,
+    pub store: String,
+    pub publish: String
 }
 
 pub async fn notarize_request(params: NotarizeRequestParams) -> hyper::Response<hyper::Body> {
     let NotarizeRequestParams {
         req_proxy,
         redacted_parameters,
+        ..
     } = params;
     let (notary_tls_socket, session_id) = setup_notary_connection().await;
     debug!(
