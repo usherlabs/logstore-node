@@ -34,7 +34,6 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private readonly systemSubscriber: BroadbandSubscriber;
 	private readonly systemPublisher: BroadbandPublisher;
 	private readonly heartbeatPublisher: BroadbandPublisher;
-	private readonly heartbeatSubscriber: BroadbandSubscriber;
 	private readonly kyvePool: KyvePool;
 	private readonly messageMetricsCollector: MessageMetricsCollector;
 	private readonly heartbeat: Heartbeat;
@@ -84,19 +83,14 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			networkStrictNodeConfig.pool.id
 		);
 
-		this.heartbeatSubscriber = new BroadbandSubscriber(
-			this.streamrClient,
-			this.networkConfig.heartbeatStream
-		);
-
 		this.heartbeatPublisher = new BroadbandPublisher(
 			this.streamrClient,
 			this.networkConfig.heartbeatStream
 		);
 
 		this.heartbeat = new Heartbeat(
-			this.heartbeatPublisher,
-			this.heartbeatSubscriber
+			this.logStoreClient,
+			this.heartbeatPublisher
 		);
 
 		this.messageMetricsCollector = new MessageMetricsCollector(

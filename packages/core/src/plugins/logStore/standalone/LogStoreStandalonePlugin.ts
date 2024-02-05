@@ -4,11 +4,11 @@ import {
 	toStreamID,
 	toStreamPartID,
 } from '@streamr/protocol';
-import { Logger } from '@streamr/utils';
 import _ from 'lodash';
 
 import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
 import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
+import { HeartbeatMonitor } from '../HeartbeatMonitor';
 import { WEBSERVER_PATHS } from '../http-proxy/constants';
 import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { LogStorePlugin } from '../LogStorePlugin';
@@ -17,6 +17,7 @@ import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
 export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
 	private proverServer: ProxiedWebServerProcess;
+	private hearbeatMonitor: HeartbeatMonitor;
 
 	constructor(options: PluginOptions) {
 		super(options);
@@ -28,6 +29,8 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 			'/prover/',
 			this.reverseProxy
 		);
+
+		this.hearbeatMonitor = new HeartbeatMonitor(this.logStoreClient);
 
 		this.standaloneQueryRequestManager = new BaseQueryRequestManager();
 	}
@@ -47,6 +50,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		await super.start();
 		await this.standaloneQueryRequestManager.start(this.logStore);
 		await this.proverServer.start();
+		await this.hearbeatMonitor.start(await this.streamrClient.getAddress());
 	}
 
 	override async stop(): Promise<void> {
@@ -54,6 +58,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 			super.stop(),
 			this.maybeLogStoreConfig?.destroy(),
 			this.proverServer.stop(),
+			this.hearbeatMonitor.stop(),
 		]);
 	}
 
