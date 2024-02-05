@@ -1,9 +1,7 @@
 import type { LogStoreClient } from '@logsn/client';
-import { NodeMetadata } from '@logsn/client';
 import { EthereumAddress } from 'streamr-client';
 
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
-import { getNodeMetadata } from '../../../utils/nodeMetadata';
 import { HeartbeatMonitor } from '../HeartbeatMonitor';
 
 const INTERVAL = 1 * 1000;
@@ -13,14 +11,12 @@ const INTERVAL = 1 * 1000;
  */
 export class Heartbeat extends HeartbeatMonitor {
 	private timer?: NodeJS.Timer;
-	private nodeMetadata: NodeMetadata;
 
 	constructor(
 		override readonly logStoreClient: LogStoreClient,
 		private readonly publisher: BroadbandPublisher
 	) {
 		super(logStoreClient);
-		this.nodeMetadata = getNodeMetadata();
 	}
 
 	public override async start(clientId: EthereumAddress) {
@@ -38,6 +34,6 @@ export class Heartbeat extends HeartbeatMonitor {
 	}
 
 	private async onInterval() {
-		await this.publisher.publish({ http: this.nodeMetadata.http });
+		await this.publisher.publish('');
 	}
 }
