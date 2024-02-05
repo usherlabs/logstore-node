@@ -9,7 +9,7 @@
 		"type": "standalone",
 		"trackedStreams": [
 			{
-				"id": "0x5e98df807c09a91557d8b3161f2d01852fb005b9/logstore-demo",
+				"id": "0xd37dc4d7e2c1bdf3edd89db0e505394ea69af43d/gas-station/ethereum",
 				"partitions": 1
 			}
 		]
@@ -19,6 +19,10 @@
 	},
 	"plugins": {
 		"logStore": {
+			"db": {
+				"type": "sqlite",
+				"dataPath": ".logstore/data/logstore-node.db"
+			},
 			"programs": {
 				"chainRpcUrls": {
 					"137": "https://polygon.llamarpc.com"
