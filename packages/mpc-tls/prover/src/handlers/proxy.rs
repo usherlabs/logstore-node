@@ -1,8 +1,19 @@
+use std::sync::Arc;
+// use crypto::sha2::Sha256;
+
 use crate::{
-    prover::notarize::{notarize_request, NotarizeRequestParams},
-    proxy::{Header, ProxyRequest, BLACKLISTED_HEADERS},
+    generated::prover::{ProverServer, TlsProof},
+    prover::{notarize::{notarize_request, NotarizeRequestParams}, utils::compute_sha256_hash},
+    proxy::{
+        EmptyProverHandlersImpl, Header, ProxyRequest, ServerState, BLACKLISTED_HEADERS,
+        DEFAULT_PUBLISH_SOCKET, DEFAULT_REQUEST_SOCKET,
+    },
 };
-use actix_web::{route, web, HttpRequest, HttpResponseBuilder, Responder};
+use actix_web::{
+    route,
+    web::{self},
+    HttpRequest, HttpResponseBuilder, Responder,
+};
 use hyper::body;
 use tracing::debug;
 use url::Url;
@@ -14,10 +25,19 @@ use url::Url;
     method = "PUT",
     method = "PATCH"
 )]
+// recieve the parameter for the publisher as well
 pub async fn handle_notarization_request(
     payload: web::Payload,
     req: HttpRequest,
 ) -> impl Responder {
+    let reply_handlers = Arc::new(EmptyProverHandlersImpl {});
+    let server_state = ServerState::default();
+    let mut prove_server = ProverServer::new(
+        server_state.publish_socket,
+        server_state.request_socket,
+        reply_handlers,
+    );
+
     let t_proxy_url = req
         .headers()
         .get("T-PROXY-URL")
@@ -73,12 +93,20 @@ pub async fn handle_notarization_request(
         store: t_store.to_string(),
         publish: t_should_publish.to_string(),
     };
-    let http_response: hyper::Response<hyper::Body> = notarize_request(norarization_params).await;
+    let (http_response, string_proof) = notarize_request(norarization_params).await;
     let mut response = HttpResponseBuilder::new(http_response.status());
     for val in http_response.headers().iter() {
         response.insert_header(val);
     }
 
     let bytes = body::to_bytes(http_response.into_body()).await.unwrap();
+    let proof_id = compute_sha256_hash(string_proof.clone()).unwrap();
+
+    prove_server
+        .publish_to_proofs(TlsProof {
+            id: proof_id,
+            data: string_proof.clone(),
+        })
+        .expect("Failed to publish");
     response.body(bytes)
 }

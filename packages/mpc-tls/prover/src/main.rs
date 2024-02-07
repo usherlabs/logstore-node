@@ -3,10 +3,10 @@ use crate::proxy::get_port;
 use actix_web::{App, HttpServer};
 use clap::{App as ClapApp, Arg};
 
-pub mod prover;
+pub mod generated;
 pub mod handlers;
+pub mod prover;
 pub mod proxy;
-
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -29,7 +29,7 @@ async fn main() -> std::io::Result<()> {
     println!("PROVER SERVER STARTED ON PORT:{port}");
 
     // start the server on the specified port
-    let server_result = HttpServer::new(|| App::new().service(handle_notarization_request))
+    let server_result = HttpServer::new(move || App::new().service(handle_notarization_request))
         .bind(format!("127.0.0.1:{port}"))?
         .run()
         .await;

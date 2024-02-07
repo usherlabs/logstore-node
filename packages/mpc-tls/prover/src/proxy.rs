@@ -3,6 +3,28 @@ use hyper::Response;
 use hyper::{Body, Request};
 use serde::{Deserialize, Serialize};
 
+use crate::generated::prover::ProverHandlers;
+
+pub const DEFAULT_PORT: u64 = 8080;
+pub const BLACKLISTED_HEADERS: &[&str] = &[
+    "host",
+    "user-agent",
+    "postman-token",
+    "accept-encoding",
+    "cache-control",
+    "content-length",
+    "accept",
+    "connection",
+    "t-proxy-url",
+    "t-redacted",
+    "t-store",
+    "t-publish",
+];
+
+// Default paths for the sockets for PUB-SUB and REQUEST-REPLY communications
+pub const DEFAULT_PUBLISH_SOCKET: &str = "/tmp/test_sockets/test_pub";
+pub const DEFAULT_REQUEST_SOCKET: &str = "/tmp/test_sockets/test_req";
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Message {
     pub message: String,
@@ -23,22 +45,23 @@ pub struct ProxyRequest {
     pub body: Option<String>,
 }
 
-pub const DEFAULT_PORT: u64 = 8080;
+pub struct EmptyProverHandlersImpl {}
+impl ProverHandlers for EmptyProverHandlersImpl {}
 
-pub const BLACKLISTED_HEADERS: &[&str] = &[
-    "host",
-    "user-agent",
-    "postman-token",
-    "accept-encoding",
-    "cache-control",
-    "content-length",
-    "accept",
-    "connection",
-    "t-proxy-url",
-    "t-redacted",
-    "t-store",
-    "t-publish",
-];
+#[derive(Debug, Deserialize, Clone)]
+pub struct ServerState {
+    pub publish_socket: String,
+    pub request_socket: String,
+}
+
+impl ServerState {
+    pub fn default() -> Self {
+        Self {
+            publish_socket: DEFAULT_PUBLISH_SOCKET.to_string(),
+            request_socket: DEFAULT_REQUEST_SOCKET.to_string(),
+        }
+    }
+}
 
 pub fn get_port(matches: &clap::ArgMatches<'_>) -> u64 {
     // ? should we throw an error when an invalid port is provided or just return default port

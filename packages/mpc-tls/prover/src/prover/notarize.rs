@@ -15,10 +15,12 @@ pub struct NotarizeRequestParams {
     pub req_proxy: ProxyRequest,
     pub redacted_parameters: String,
     pub store: String,
-    pub publish: String
+    pub publish: String,
 }
 
-pub async fn notarize_request(params: NotarizeRequestParams) -> hyper::Response<hyper::Body> {
+pub async fn notarize_request(
+    params: NotarizeRequestParams,
+) -> (hyper::Response<hyper::Body>, String) {
     let NotarizeRequestParams {
         req_proxy,
         redacted_parameters,
@@ -90,12 +92,15 @@ pub async fn notarize_request(params: NotarizeRequestParams) -> hyper::Response<
     let (req_redact_items, res_redact_items) = redactor.get_redacted_values(redacted_parameters);
 
     let proof = build_proof(prover, req_redact_items, res_redact_items).await;
-
+    let stringified_proof = serde_json::to_string_pretty(&proof).unwrap();
     // Dump the proof to a file.
     let mut file = tokio::fs::File::create("proof.json").await.unwrap();
     file.write_all(serde_json::to_string_pretty(&proof).unwrap().as_bytes())
         .await
         .unwrap();
 
-    return return_response;
+    return (
+        return_response,
+        stringified_proof,
+    );
 }

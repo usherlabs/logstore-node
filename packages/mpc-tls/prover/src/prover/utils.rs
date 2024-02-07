@@ -2,6 +2,8 @@ use crate::proxy::ProxyRequest;
 use hyper::{body::to_bytes, client::conn::Parts, Body, Method, Request, StatusCode};
 use rustls::{Certificate, ClientConfig, RootCertStore};
 use serde::{Deserialize, Serialize};
+use sha2::Digest;
+use sha2::Sha256;
 use std::ops::Range;
 use std::str::FromStr;
 use std::{str, sync::Arc};
@@ -211,7 +213,6 @@ pub async fn setup_notary_connection() -> (tokio_rustls::client::TlsStream<TcpSt
     (notary_tls_socket, notarization_response.session_id)
 }
 
-
 pub fn build_request(proxy_request: ProxyRequest) -> Request<Body> {
     let request_method = Method::from_str(&proxy_request.method[..]).unwrap();
     let request_body = proxy_request
@@ -269,4 +270,10 @@ fn find_ranges(seq: &[u8], private_seq: &[&[u8]]) -> (Vec<Range<usize>>, Vec<Ran
     }
 
     (public_ranges, private_ranges)
+}
+
+pub fn compute_sha256_hash(string: String) -> Result<String, String> {
+    let mut hasher = Sha256::new();
+    hasher.update(string);
+    Ok(format!("0x{:x}", hasher.finalize()))
 }
