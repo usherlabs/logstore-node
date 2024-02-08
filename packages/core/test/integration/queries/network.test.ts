@@ -222,7 +222,7 @@ describe('Network Mode Queries', () => {
 		});
 	});
 
-	describe.skip('validation schema', () => {
+	describe('validation schema', () => {
 		const schema = {
 			$id: 'https://example.com/demo.schema.json',
 			$schema: 'http://json-schema.org/draft-07/schema#',
