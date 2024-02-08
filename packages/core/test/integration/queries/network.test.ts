@@ -174,6 +174,8 @@ describe('Network Mode Queries', () => {
 	afterEach(async () => {
 		await publisherStreamrClient?.destroy();
 		await consumerStreamrClient?.destroy();
+		publisherLogStoreClient.destroy();
+		consumerLogStoreClient.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
 			nodeManager.leave().then((tx) => tx.wait()),
