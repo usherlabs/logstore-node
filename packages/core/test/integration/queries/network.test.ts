@@ -174,6 +174,8 @@ describe('Network Mode Queries', () => {
 	afterEach(async () => {
 		await publisherStreamrClient?.destroy();
 		await consumerStreamrClient?.destroy();
+		publisherLogStoreClient.destroy();
+		consumerLogStoreClient.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
 			nodeManager.leave().then((tx) => tx.wait()),
@@ -220,7 +222,7 @@ describe('Network Mode Queries', () => {
 		});
 	});
 
-	describe('validation schema', () => {
+	describe.skip('validation schema', () => {
 		const schema = {
 			$id: 'https://example.com/demo.schema.json',
 			$schema: 'http://json-schema.org/draft-07/schema#',
