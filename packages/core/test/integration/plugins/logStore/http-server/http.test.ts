@@ -206,6 +206,7 @@ describe('http works', () => {
 	afterEach(async () => {
 		await publisherStreamrClient.destroy();
 		await consumerStreamrClient.destroy();
+		consumerLogStoreClient.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
 			nodeManager.leave().then((tx) => tx.wait()),
