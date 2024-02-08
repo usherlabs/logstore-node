@@ -116,9 +116,9 @@ impl Redactor {
     }
 
     // right now we get all the headers to be redacted as a comma seperated string
-    // however when redacting, we need to seperate request redactiosn fromr esponse redactions
+    // however when redacting, we need to seperate request redaction from response redactions
     // so this function will take in a string of comma seperated values and return two vectors
-    // which contain the redacted parameters
+    // which contain the redacted parameters for both the request and the response
     pub fn split_redacted_values(comma_seperated_headers: String) -> (Vec<String>, Vec<String>) {
         let mut req_vector = Vec::new();
         let mut res_vector = Vec::new();

@@ -6,7 +6,7 @@ const PROTOC_PATH: &str = "/usr/local/bin/protoc";
 fn main() -> Result<()> {
     std::env::set_var("PROTOC", PROTOC_PATH);
     prost_build::Config::new()
-        .out_dir("src/generated/")
+        .out_dir("src/socket/")
         .service_generator(Box::new(ZmqServerGenerator {}))
         .compile_protos(&["prover.proto"], &["proto/"])?;
 

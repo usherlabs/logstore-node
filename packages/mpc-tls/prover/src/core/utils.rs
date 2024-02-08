@@ -1,4 +1,5 @@
 use crate::proxy::ProxyRequest;
+use crate::proxy::ServerConfig;
 use hyper::{body::to_bytes, client::conn::Parts, Body, Method, Request, StatusCode};
 use rustls::{Certificate, ClientConfig, RootCertStore};
 use serde::{Deserialize, Serialize};
@@ -16,9 +17,9 @@ use tracing::debug;
 // Setting of the notary server
 // Make sure these are the same with those in ../../../notary-server
 // TODO extract notary details into env file.
-const NOTARY_HOST: &str = "127.0.0.1";
-const NOTARY_PORT: u16 = 7047;
 const NOTARY_MAX_TRANSCRIPT_SIZE: usize = 16384;
+pub const NOTARY_HOST: &str = "127.0.0.1";
+pub const NOTARY_PORT: u16 = 7047;
 
 /// Response object of the /session API
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,14 +55,12 @@ pub async fn build_proof(
     // Identify the ranges in the outbound data which contain data which we want to disclose
     let (sent_public_ranges, _) = find_ranges(
         prover.sent_transcript().data(),
-        // req_redact_items.as_slice()
         req_slice.as_slice(),
     );
 
     // Identify the ranges in the inbound data which contain data which we want to disclose
     let (recv_public_ranges, _) = find_ranges(
         prover.recv_transcript().data(),
-        // res_redact_items.as_slice(),
         res_slice.as_slice(),
     );
 
@@ -100,7 +99,7 @@ pub async fn build_proof(
     }
 }
 
-pub async fn setup_notary_connection() -> (tokio_rustls::client::TlsStream<TcpStream>, String) {
+pub async fn setup_notary_connection(config: &ServerConfig) -> (tokio_rustls::client::TlsStream<TcpStream>, String) {
     // Connect to the Notary via TLS-TCP
     let pem_file =
         str::from_utf8(include_bytes!("../../../notary/fixture/tls/rootCA.crt")).unwrap();
@@ -120,8 +119,9 @@ pub async fn setup_notary_connection() -> (tokio_rustls::client::TlsStream<TcpSt
         .with_root_certificates(root_store)
         .with_no_client_auth();
     let notary_connector = TlsConnector::from(Arc::new(client_notary_config));
-
-    let notary_socket = tokio::net::TcpStream::connect((NOTARY_HOST, NOTARY_PORT))
+    let notary_host = &config.notary_host[..];
+    let notary_port = config.notary_port;
+    let notary_socket = tokio::net::TcpStream::connect((notary_host, notary_port))
         .await
         .unwrap();
 
@@ -147,9 +147,9 @@ pub async fn setup_notary_connection() -> (tokio_rustls::client::TlsStream<TcpSt
     .unwrap();
 
     let request = Request::builder()
-        .uri(format!("https://{NOTARY_HOST}:{NOTARY_PORT}/session"))
+        .uri(format!("https://{notary_host}:{notary_port}/session"))
         .method("POST")
-        .header("Host", NOTARY_HOST)
+        .header("Host", notary_host)
         // Need to specify application/json for axum to parse it as json
         .header("Content-Type", "application/json")
         .body(Body::from(payload))
@@ -182,12 +182,12 @@ pub async fn setup_notary_connection() -> (tokio_rustls::client::TlsStream<TcpSt
         // as the configuration is set in the previous HTTP call
         .uri(format!(
             "https://{}:{}/notarize?sessionId={}",
-            NOTARY_HOST,
-            NOTARY_PORT,
+            notary_host,
+            notary_port,
             notarization_response.session_id.clone()
         ))
         .method("GET")
-        .header("Host", NOTARY_HOST)
+        .header("Host", notary_host)
         .header("Connection", "Upgrade")
         // Need to specify this upgrade header for server to extract tcp connection later
         .header("Upgrade", "TCP")

@@ -3156,9 +3156,9 @@ dependencies = [
 
 [[package]]
 name = "protobuf-zmq-rust-generator"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e10bad1a0566d15a3cda2e8f3badf91ab753ea84e9b5a70d2d686e7c187acb1"
+checksum = "fba188ddaabba52253e51881a2233a06ca0a769fbf26d0eab298c61f7d9f586d"
 dependencies = [
  "prost-build",
 ]
@@ -3168,6 +3168,7 @@ name = "prover"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "anyhow",
  "clap",
  "futures",
  "futures-util",
@@ -3179,6 +3180,7 @@ dependencies = [
  "rustls-pemfile",
  "serde",
  "serde_json",
+ "sha2",
  "time",
  "tlsn-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
  "tlsn-prover 0.1.0-alpha.2",

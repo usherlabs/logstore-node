@@ -1,6 +1,6 @@
-use crate::prover::redact::Redactor;
-use crate::prover::utils::{build_proof, build_request, setup_notary_connection};
-use crate::proxy::ProxyRequest;
+use crate::core::redact::Redactor;
+use crate::core::utils::{build_proof, build_request, setup_notary_connection};
+use crate::proxy::{ProxyRequest, ServerConfig};
 use crate::proxy::{
     convert_request_body_to_string, convert_response_body_to_string, shadow_clone_response,
 };
@@ -20,13 +20,14 @@ pub struct NotarizeRequestParams {
 
 pub async fn notarize_request(
     params: NotarizeRequestParams,
+    config: &ServerConfig
 ) -> (hyper::Response<hyper::Body>, String) {
     let NotarizeRequestParams {
         req_proxy,
         redacted_parameters,
         ..
     } = params;
-    let (notary_tls_socket, session_id) = setup_notary_connection().await;
+    let (notary_tls_socket, session_id) = setup_notary_connection(config).await;
     debug!(
         "Connection to notary server completed with id:{session_id}; Forminig MPC-TLS connection"
     );
@@ -99,8 +100,5 @@ pub async fn notarize_request(
         .await
         .unwrap();
 
-    return (
-        return_response,
-        stringified_proof,
-    );
+    return (return_response, stringified_proof);
 }

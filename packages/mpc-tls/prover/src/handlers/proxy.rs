@@ -1,13 +1,10 @@
-use std::sync::Arc;
-// use crypto::sha2::Sha256;
-
 use crate::{
-    generated::prover::{ProverServer, TlsProof},
-    prover::{notarize::{notarize_request, NotarizeRequestParams}, utils::compute_sha256_hash},
-    proxy::{
-        EmptyProverHandlersImpl, Header, ProxyRequest, ServerState, BLACKLISTED_HEADERS,
-        DEFAULT_PUBLISH_SOCKET, DEFAULT_REQUEST_SOCKET,
+    core::{
+        notarize::{notarize_request, NotarizeRequestParams},
+        utils::compute_sha256_hash,
     },
+    proxy::{EmptyProverHandlersImpl, Header, ProxyRequest, ServerConfig, BLACKLISTED_HEADERS},
+    socket::prover::{ProverServer, TlsProof},
 };
 use actix_web::{
     route,
@@ -15,6 +12,7 @@ use actix_web::{
     HttpRequest, HttpResponseBuilder, Responder,
 };
 use hyper::body;
+use std::sync::Arc;
 use tracing::debug;
 use url::Url;
 
@@ -29,12 +27,13 @@ use url::Url;
 pub async fn handle_notarization_request(
     payload: web::Payload,
     req: HttpRequest,
+    data: web::Data<ServerConfig>,
 ) -> impl Responder {
+    let config = data.get_ref();
     let reply_handlers = Arc::new(EmptyProverHandlersImpl {});
-    let server_state = ServerState::default();
-    let mut prove_server = ProverServer::new(
-        server_state.publish_socket,
-        server_state.request_socket,
+    let mut prover_socket = ProverServer::new(
+        config.publish_socket.clone(),
+        config.request_socket.clone(),
         reply_handlers,
     );
 
@@ -44,24 +43,20 @@ pub async fn handle_notarization_request(
         .expect("incomplete headers provided")
         .to_str()
         .unwrap();
-
     let t_store = req
         .headers()
         .get("T-STORE")
         .map_or("", |value| value.to_str().unwrap_or_default());
-
     let t_redacted_parameters = req
         .headers()
         .get("T-REDACTED")
         .map_or("", |value| value.to_str().unwrap_or_default());
-
     let t_should_publish = req
         .headers()
         .get("T-PUBLISH")
         .map_or("", |value| value.to_str().unwrap_or_default());
 
     debug!("received notarization request for {t_proxy_url}");
-
     let url = Url::parse(t_proxy_url).unwrap();
     let host_url = url.host_str().unwrap();
     let method = req.method().to_string();
@@ -87,26 +82,27 @@ pub async fn handle_notarization_request(
         body: Some(body_str).filter(|s| !s.is_empty()),
     };
 
-    let norarization_params = NotarizeRequestParams {
+    let notarization_params = NotarizeRequestParams {
         req_proxy,
         redacted_parameters: t_redacted_parameters.to_string(),
         store: t_store.to_string(),
         publish: t_should_publish.to_string(),
     };
-    let (http_response, string_proof) = notarize_request(norarization_params).await;
+    let (http_response, string_proof) = notarize_request(notarization_params, config).await;
     let mut response = HttpResponseBuilder::new(http_response.status());
+
     for val in http_response.headers().iter() {
         response.insert_header(val);
     }
-
     let bytes = body::to_bytes(http_response.into_body()).await.unwrap();
     let proof_id = compute_sha256_hash(string_proof.clone()).unwrap();
 
-    prove_server
+    prover_socket
         .publish_to_proofs(TlsProof {
             id: proof_id,
             data: string_proof.clone(),
         })
         .expect("Failed to publish");
+
     response.body(bytes)
 }

@@ -3,7 +3,8 @@ use hyper::Response;
 use hyper::{Body, Request};
 use serde::{Deserialize, Serialize};
 
-use crate::generated::prover::ProverHandlers;
+use crate::core::utils::{NOTARY_HOST, NOTARY_PORT};
+use crate::socket::prover::ProverHandlers;
 
 pub const DEFAULT_PORT: u64 = 8080;
 pub const BLACKLISTED_HEADERS: &[&str] = &[
@@ -49,16 +50,33 @@ pub struct EmptyProverHandlersImpl {}
 impl ProverHandlers for EmptyProverHandlersImpl {}
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct ServerState {
+pub struct ServerConfig {
     pub publish_socket: String,
     pub request_socket: String,
+    pub notary_host: String,
+    pub notary_port: u16,
 }
 
-impl ServerState {
+impl ServerConfig {
     pub fn default() -> Self {
         Self {
             publish_socket: DEFAULT_PUBLISH_SOCKET.to_string(),
             request_socket: DEFAULT_REQUEST_SOCKET.to_string(),
+            notary_host: NOTARY_HOST.to_string(),
+            notary_port: NOTARY_PORT,
+        }
+    }
+}
+
+impl From<&clap::ArgMatches<'_>> for ServerConfig {
+    fn from(value: &clap::ArgMatches<'_>) -> Self {
+        let (notary_url, notary_port) = get_notary_details(value);
+        let publish_socket_path = get_pub_socket_path(value);
+        Self {
+            publish_socket: publish_socket_path,
+            request_socket: DEFAULT_REQUEST_SOCKET.to_string(),
+            notary_host: notary_url,
+            notary_port: notary_port,
         }
     }
 }
@@ -68,6 +86,31 @@ pub fn get_port(matches: &clap::ArgMatches<'_>) -> u64 {
     match matches.value_of("p") {
         Some(x) => x.parse::<u64>().or::<u64>(Ok(DEFAULT_PORT)).unwrap(),
         None => DEFAULT_PORT,
+    }
+}
+
+pub fn get_pub_socket_path(matches: &clap::ArgMatches<'_>) -> String {
+    // ? should we throw an error when an invalid port is provided or just return default port
+    match matches.value_of("s") {
+        Some(x) => x.to_owned(),
+        None => DEFAULT_PUBLISH_SOCKET.to_owned(),
+    }
+}
+
+pub fn get_notary_details(matches: &clap::ArgMatches<'_>) -> (String, u16) {
+    // ? should we throw an error when an invalid port is provided or just return default port
+    match matches.value_of("u") {
+        Some(notary_connection_url) => {
+            let notary_parts: Vec<&str> = notary_connection_url.split(':').collect();
+            let notary_host = notary_parts.get(0).unwrap_or(&NOTARY_HOST).to_string();
+            let notary_port = notary_parts
+                .get(1)
+                .unwrap_or(&"")
+                .parse::<u16>()
+                .unwrap_or(NOTARY_PORT);
+            (notary_host.to_string(), notary_port)
+        }
+        None => (NOTARY_HOST.to_string(), NOTARY_PORT),
     }
 }
 
