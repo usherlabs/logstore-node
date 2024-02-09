@@ -29,8 +29,6 @@ else
     make
     make install
 
-    chmod +x NODE_MODULE_TINYPROXY
-
     # cleanup
     rm -rf /tmp/tinyproxy
     rm /tmp/tinyproxy-1.11.1.tar.gz

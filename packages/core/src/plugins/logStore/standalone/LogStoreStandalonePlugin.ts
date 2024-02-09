@@ -14,6 +14,8 @@ import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
 
+const logger = new Logger(module);
+
 export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
 	private proverServer: ProxiedWebServerProcess;
@@ -89,6 +91,11 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		const logStoreConfig = new LogStoreStandaloneConfig(streamPartIds, {
 			onStreamPartAdded: async (streamPart) => {
 				try {
+					logger.debug(
+						`Subscribing to stream part ${StreamPartIDUtils.getStreamID(
+							streamPart
+						)}`
+					);
 					await node.subscribeAndWaitForJoin(streamPart); // best-effort, can time out
 					await this.nodeStreamsRegistry.registerStreamId(
 						StreamPartIDUtils.getStreamID(streamPart)
