@@ -2,7 +2,6 @@ syntax = "proto3";
 package socket;
 import "google/protobuf/descriptor.proto";
 
-
 extend google.protobuf.MethodOptions {
   optional string zmq_type = 50000;
 }
@@ -12,15 +11,14 @@ message TlsProof {
   string id = 1;
   string data = 2;
   string stream = 3;
+  bool publish = 4;
 }
-message ValidationResult {
-  string id = 1;
-  bool ok = 2;
-}
-
-
 message TlsProofFilter {
 }
+message ValidationResult {
+}
+
+
 service Socket {
   rpc subscribeToProofs(TlsProofFilter) returns (stream TlsProof) {
     option (zmq_type) = 'sub';

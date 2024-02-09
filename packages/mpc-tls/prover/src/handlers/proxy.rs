@@ -46,7 +46,9 @@ pub async fn handle_notarization_request(
     let t_store = req
         .headers()
         .get("T-STORE")
-        .map_or("", |value| value.to_str().unwrap_or_default());
+        .expect("incomplete headers provided")
+        .to_str()
+        .unwrap();
     let t_redacted_parameters = req
         .headers()
         .get("T-REDACTED")
@@ -54,7 +56,9 @@ pub async fn handle_notarization_request(
     let t_should_publish = req
         .headers()
         .get("T-PUBLISH")
-        .map_or("", |value| value.to_str().unwrap_or_default());
+        .expect("incomplete headers provided")
+        .to_str()
+        .unwrap();
 
     debug!("received notarization request for {t_proxy_url}");
     let url = Url::parse(t_proxy_url).unwrap();
@@ -101,7 +105,8 @@ pub async fn handle_notarization_request(
         .publish_to_proofs(TlsProof {
             id: proof_id,
             data: string_proof.clone(),
-            stream: "".to_string()
+            stream: t_store.to_string(),
+            publish: t_should_publish.to_lowercase() == "true"
         })
         .expect("Failed to publish");
 

@@ -34,18 +34,15 @@ pub struct TlsProof {
     pub data: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
     pub stream: ::prost::alloc::string::String,
-}
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ValidationResult {
-    #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(bool, tag = "2")]
-    pub ok: bool,
+    #[prost(bool, tag = "4")]
+    pub publish: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TlsProofFilter {}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ValidationResult {}
 pub struct SocketServer {
     pub_socket: zmq::Socket,
     rep_socket: Arc<Mutex<zmq::Socket>>,
