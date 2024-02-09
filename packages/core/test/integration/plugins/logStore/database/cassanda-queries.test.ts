@@ -194,8 +194,9 @@ describe('cassanda-queries', () => {
 		// but breaks all the other tests because of storing extra messages
 		// whose are not expected by the other tests
 		it.skip('multiple with more than one bucket', async () => {
+			const mockStreamId = DEFAULT_MOCK_STREAM_ID + '_multipleId';
 			const MOCK_MESSAGES_2 = [4, 5, 6].map((contentValue: number) =>
-				createMockMessage(contentValue)
+				createMockMessage(contentValue, undefined, mockStreamId)
 			);
 			await Promise.all(
 				MOCK_MESSAGES_2.map((msg) => cassandraAdapter.store(msg))
