@@ -4,7 +4,7 @@ use hyper::{Body, Request};
 use serde::{Deserialize, Serialize};
 
 use crate::core::utils::{NOTARY_HOST, NOTARY_PORT};
-use crate::socket::prover::ProverHandlers;
+use crate::message::socket::SocketHandlers;
 
 pub const DEFAULT_PORT: u64 = 8080;
 pub const BLACKLISTED_HEADERS: &[&str] = &[
@@ -47,7 +47,7 @@ pub struct ProxyRequest {
 }
 
 pub struct EmptyProverHandlersImpl {}
-impl ProverHandlers for EmptyProverHandlersImpl {}
+impl SocketHandlers for EmptyProverHandlersImpl {}
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct ServerConfig {

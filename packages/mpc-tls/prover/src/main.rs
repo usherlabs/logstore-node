@@ -6,7 +6,7 @@ use clap::{App as ClapApp, Arg};
 pub mod core;
 pub mod handlers;
 pub mod proxy;
-pub mod socket;
+pub mod message;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

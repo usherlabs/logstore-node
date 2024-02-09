@@ -3,8 +3,8 @@ use crate::{
         notarize::{notarize_request, NotarizeRequestParams},
         utils::compute_sha256_hash,
     },
+    message::socket::{SocketServer, TlsProof},
     proxy::{EmptyProverHandlersImpl, Header, ProxyRequest, ServerConfig, BLACKLISTED_HEADERS},
-    socket::prover::{ProverServer, TlsProof},
 };
 use actix_web::{
     route,
@@ -31,7 +31,7 @@ pub async fn handle_notarization_request(
 ) -> impl Responder {
     let config = data.get_ref();
     let reply_handlers = Arc::new(EmptyProverHandlersImpl {});
-    let mut prover_socket = ProverServer::new(
+    let mut prover_socket = SocketServer::new(
         config.publish_socket.clone(),
         config.request_socket.clone(),
         reply_handlers,
@@ -101,6 +101,7 @@ pub async fn handle_notarization_request(
         .publish_to_proofs(TlsProof {
             id: proof_id,
             data: string_proof.clone(),
+            stream: "".to_string()
         })
         .expect("Failed to publish");
 
