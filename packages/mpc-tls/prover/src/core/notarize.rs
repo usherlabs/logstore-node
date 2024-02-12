@@ -15,7 +15,7 @@ pub struct NotarizeRequestParams {
     pub req_proxy: ProxyRequest,
     pub redacted_parameters: String,
     pub store: String,
-    pub publish: String,
+    // pub publish: String,
 }
 
 pub async fn notarize_request(

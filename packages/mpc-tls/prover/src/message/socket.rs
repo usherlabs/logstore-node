@@ -32,10 +32,9 @@ pub struct TlsProof {
     pub id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub data: ::prost::alloc::string::String,
+    /// bool publish = 4;
     #[prost(string, tag = "3")]
     pub stream: ::prost::alloc::string::String,
-    #[prost(bool, tag = "4")]
-    pub publish: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

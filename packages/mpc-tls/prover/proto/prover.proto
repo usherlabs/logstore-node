@@ -11,7 +11,7 @@ message TlsProof {
   string id = 1;
   string data = 2;
   string stream = 3;
-  bool publish = 4;
+  // bool publish = 4;
 }
 message TlsProofFilter {
 }

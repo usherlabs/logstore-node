@@ -53,12 +53,12 @@ pub async fn handle_notarization_request(
         .headers()
         .get("T-REDACTED")
         .map_or("", |value| value.to_str().unwrap_or_default());
-    let t_should_publish = req
-        .headers()
-        .get("T-PUBLISH")
-        .expect("incomplete headers provided")
-        .to_str()
-        .unwrap();
+    // let t_should_publish = req
+    //     .headers()
+    //     .get("T-PUBLISH")
+    //     .expect("incomplete headers provided")
+    //     .to_str()
+    //     .unwrap();
 
     debug!("received notarization request for {t_proxy_url}");
     let url = Url::parse(t_proxy_url).unwrap();
@@ -90,7 +90,7 @@ pub async fn handle_notarization_request(
         req_proxy,
         redacted_parameters: t_redacted_parameters.to_string(),
         store: t_store.to_string(),
-        publish: t_should_publish.to_string(),
+        // publish: t_should_publish.to_string(),
     };
     let (http_response, string_proof) = notarize_request(notarization_params, config).await;
     let mut response = HttpResponseBuilder::new(http_response.status());
@@ -106,7 +106,7 @@ pub async fn handle_notarization_request(
             id: proof_id,
             data: string_proof.clone(),
             stream: t_store.to_string(),
-            publish: t_should_publish.to_lowercase() == "true"
+            // publish: t_should_publish.to_lowercase() == "true"
         })
         .expect("Failed to publish");
 
