@@ -5,14 +5,13 @@ import {
 	QueryRequest,
 	QueryType,
 } from '@logsn/protocol';
-import {Readable} from 'stream';
+import { Readable } from 'stream';
 
 import {
 	LogStore,
 	MAX_SEQUENCE_NUMBER_VALUE,
 	MIN_SEQUENCE_NUMBER_VALUE,
 } from './LogStore';
-
 
 export class BaseQueryRequestManager {
 	private logStore?: LogStore;
@@ -29,7 +28,7 @@ export class BaseQueryRequestManager {
 		let readableStream: Readable;
 		switch (queryRequest.queryType) {
 			case QueryType.Last: {
-				const {last} = queryRequest.queryOptions as QueryLastOptions;
+				const { last } = queryRequest.queryOptions as QueryLastOptions;
 
 				readableStream = this.logStore!.requestLast(
 					queryRequest.streamId,
@@ -39,7 +38,7 @@ export class BaseQueryRequestManager {
 				break;
 			}
 			case QueryType.From: {
-				const {from, publisherId, limit} =
+				const { from, publisherId, limit } =
 					queryRequest.queryOptions as QueryFromOptions;
 
 				readableStream = this.logStore!.requestFrom(
@@ -53,7 +52,7 @@ export class BaseQueryRequestManager {
 				break;
 			}
 			case QueryType.Range: {
-				const {from, publisherId, to, msgChainId, limit} =
+				const { from, publisherId, to, msgChainId, limit } =
 					queryRequest.queryOptions as QueryRangeOptions;
 
 				readableStream = this.logStore!.requestRange(
