@@ -11,8 +11,8 @@ import { EthereumAddress, Logger, toEthereumAddress } from '@streamr/utils';
 import { MessageMetadata } from 'streamr-client';
 
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
-import { Heartbeat } from './Heartbeat';
 import { LogStore } from '../LogStore';
+import { Heartbeat } from './Heartbeat';
 
 const logger = new Logger(module);
 
@@ -124,9 +124,9 @@ class QueryPropagationState {
 			return true;
 		}
 
-		const respondedCount = Array.from(
-			this.nodesResponseState.values()
-		).filter(Boolean).length;
+		const respondedCount = Array.from(this.nodesResponseState.values()).filter(
+			Boolean
+		).length;
 		const percentResponded = respondedCount / this.nodesResponseState.size;
 
 		return (
@@ -271,10 +271,15 @@ export class PropagationResolver {
 		// we just don't want to process them twice
 		queryState.messagesReadyToBeStored = [];
 
-		for (const [_messageId, messageStr] of messagesToBeStored) {
-			const message = StreamMessage.deserialize(messageStr);
-			await this.logStore.store(message);
-		}
+		// Because messages are batched by the BatchManager,
+		// a promise returned by logStore.store() resolves when the batch stores.
+		// Therefore, we call logStore.store() for all the messages, and await all the returned promises.
+		await Promise.all(
+			messagesToBeStored.map(([_, messageStr]) => {
+				const message = StreamMessage.deserialize(messageStr);
+				return this.logStore.store(message);
+			})
+		);
 
 		// May be ready if this propagation was the last one missing.
 		this.finishIfReady(queryState, queryPropagate.requestId);
