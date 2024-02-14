@@ -62,6 +62,8 @@ export class QueryResponseManager {
 	}
 
 	public async publishQueryResponse(queryResponse: QueryResponse) {
+		await this.publisher.publish(queryResponse.serialize());
+
 		if (queryResponse.requestPublisherId === this.clientId) {
 			// We are now responding to our own QueryRequest, so we need to add it to the resolver
 			// as we may need to wait for other nodes to respond and wait their propagations
@@ -71,6 +73,5 @@ export class QueryResponseManager {
 			// as we will need to compare this to the response we receive from the primary node
 			await this.propagationDispatcher.setForeignResponse(queryResponse);
 		}
-		return this.publisher.publish(queryResponse.serialize());
 	}
 }
