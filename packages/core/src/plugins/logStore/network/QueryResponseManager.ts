@@ -51,7 +51,7 @@ export class QueryResponseManager {
 			// Received QueryResponses produced by the same node that issued the QueryRequest (i.e. primary node),
 			// useful to add to the dispatcher as we want to compare to our own responses
 			// when we are the foreign node to dispatch QueryPropagate if necessary
-			this.propagationDispatcher.setPrimaryResponse(queryResponse);
+			await this.propagationDispatcher.setPrimaryResponse(queryResponse);
 		} else {
 			// Received QueryResponses produced by other nodes, useful to add to the resolver
 			// as we want to compare to our own responses when we are the primary node

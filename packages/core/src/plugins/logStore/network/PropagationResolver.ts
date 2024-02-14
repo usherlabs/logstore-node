@@ -237,7 +237,7 @@ export class PropagationResolver {
 	 * @param queryResponse
 	 * @param metadata
 	 */
-	public async setForeignResponse(
+	public setForeignResponse(
 		queryResponse: QueryResponse,
 		metadata: MessageMetadata
 	) {
