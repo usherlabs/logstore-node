@@ -17,11 +17,11 @@ import { Wallet } from 'ethers';
 import { keccak256 } from 'ethers/lib/utils';
 import { MessageListener, MessageMetadata } from 'streamr-client';
 
-import { Heartbeat } from '../../../../src/plugins/logStore/network/Heartbeat';
 import { LogStore } from '../../../../src/plugins/logStore/LogStore';
+import { Heartbeat } from '../../../../src/plugins/logStore/network/Heartbeat';
+import { NetworkQueryRequestManager } from '../../../../src/plugins/logStore/network/NetworkQueryRequestManager';
 import { PropagationDispatcher } from '../../../../src/plugins/logStore/network/PropagationDispatcher';
 import { PropagationResolver } from '../../../../src/plugins/logStore/network/PropagationResolver';
-import { NetworkQueryRequestManager } from '../../../../src/plugins/logStore/network/NetworkQueryRequestManager';
 import { QueryResponseManager } from '../../../../src/plugins/logStore/network/QueryResponseManager';
 import { BroadbandPublisher } from '../../../../src/shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../../src/shared/BroadbandSubscriber';

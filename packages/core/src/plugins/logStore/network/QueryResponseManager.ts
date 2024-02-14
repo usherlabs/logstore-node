@@ -41,6 +41,12 @@ export class QueryResponseManager {
 			return;
 		}
 
+		// We are not interested in QueryResponses sent by ourself,
+		// because we are not propagating to ourself
+		if (metadata.publisherId === this.clientId) {
+			return;
+		}
+
 		const queryResponse = systemMessage as QueryResponse;
 		logger.debug('Received QueryResponse', {
 			content,
