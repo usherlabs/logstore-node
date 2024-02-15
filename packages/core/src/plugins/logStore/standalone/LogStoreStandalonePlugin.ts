@@ -4,6 +4,7 @@ import {
 	toStreamID,
 	toStreamPartID,
 } from '@streamr/protocol';
+import { Logger } from '@streamr/utils';
 import _ from 'lodash';
 
 import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
