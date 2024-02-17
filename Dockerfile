@@ -37,4 +37,7 @@ RUN npm i -g /home/node/logstore-node/packages/core
 USER node
 WORKDIR /home/node
 
+COPY --chown=node:node docker/start-in-docker.sh /home/node/start-in-docker
+
+ENTRYPOINT [ "/bin/bash" ]
 CMD [ "start-in-docker" ]

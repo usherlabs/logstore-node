@@ -126,11 +126,14 @@ describe('cassanda-queries', () => {
 	let cassandraAdapter: CassandraDBAdapter;
 	let realClient: Client;
 
-	const waitForStoredMessageCount = async (expectedCount: number) => {
+	const waitForStoredMessageCount = async (
+		expectedCount: number,
+		streamId: string = DEFAULT_MOCK_STREAM_ID
+	) => {
 		return waitForCondition(async () => {
 			const result = await realClient.execute(
 				'SELECT COUNT(*) AS total FROM stream_data WHERE stream_id = ? ALLOW FILTERING',
-				[DEFAULT_MOCK_STREAM_ID]
+				[streamId]
 			);
 			const actualCount = result.rows[0].total.low;
 			return actualCount === expectedCount;
@@ -193,23 +196,29 @@ describe('cassanda-queries', () => {
 		// Set to skip temporarily while it does not create a new bucket
 		// but breaks all the other tests because of storing extra messages
 		// whose are not expected by the other tests
-		it.skip('multiple with more than one bucket', async () => {
-			const MOCK_MESSAGES_2 = [4, 5, 6].map((contentValue: number) =>
-				createMockMessage(contentValue)
+		it('multiple with more than one bucket', async () => {
+			const mockStreamId = DEFAULT_MOCK_STREAM_ID + '_multipleId_1';
+			const mockStreamId2 = DEFAULT_MOCK_STREAM_ID + '_multipleId_2';
+
+			const BUCKET_1_MESSAGES = [4, 5, 6].map((contentValue: number) =>
+				createMockMessage(contentValue, undefined, mockStreamId)
 			);
-			await Promise.all(
-				MOCK_MESSAGES_2.map((msg) => cassandraAdapter.store(msg))
-			);
-			await waitForStoredMessageCount(
-				MOCK_MESSAGES.length + MOCK_MESSAGES_2.length
+			const BUCKET_2_MESSAGES = [7, 8, 9].map((contentValue: number) =>
+				createMockMessage(contentValue, undefined, mockStreamId2)
 			);
 
+			const allMessages = [...BUCKET_1_MESSAGES, ...BUCKET_2_MESSAGES];
+
+			await Promise.all(allMessages.map((msg) => cassandraAdapter.store(msg)));
+			await waitForStoredMessageCount(BUCKET_1_MESSAGES.length, mockStreamId);
+			await waitForStoredMessageCount(BUCKET_2_MESSAGES.length, mockStreamId2);
+
 			const resultStream = cassandraAdapter.queryByMessageIds(
-				[...MOCK_MESSAGES, ...MOCK_MESSAGES_2].map((msg) => msg.messageId)
+				allMessages.map((msg) => msg.messageId)
 			);
 
 			const contentValues = await streamToContentValues(resultStream);
-			expect(contentValues).toEqual([1, 2, 3, 4, 5, 6]);
+			expect(contentValues).toEqual([4, 5, 6, 7, 8, 9]);
 		});
 
 		it('not found', async () => {
