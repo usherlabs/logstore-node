@@ -52,7 +52,7 @@ pub async fn handle_notarization_request(
     let t_redacted_parameters = req
         .headers()
         .get("T-REDACTED")
-        .map_or("", |value| value.to_str().unwrap_or_default());
+        .map_or("", |value| value.to_str().unwrap_or_default()); //optional;
     // let t_should_publish = req
     //     .headers()
     //     .get("T-PUBLISH")

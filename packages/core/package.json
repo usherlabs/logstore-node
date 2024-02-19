@@ -25,7 +25,8 @@
 		"ts": "tsc --noEmit",
 		"lint": "eslint ./src/**/*.ts ./test/**/*.ts",
 		"test": "dotenv -e .env jest --",
-		"postinstall": "./scripts/post-install.sh"
+		"postinstall": "./scripts/post-install.sh",
+		"generate:proto": "protoc --ts_out ./src/plugins/logStore/protobuff/generated --proto_path ./src/plugins/logStore/protobuff prover.proto"
 	},
 	"dependencies": {
 		"@ethersproject/abstract-signer": "^5.7.0",
@@ -41,8 +42,12 @@
 		"@logsn/program": "workspace:*",
 		"@logsn/protocol": "0.0.0-dev-20240202165736",
 		"@logsn/shared": "0.0.0-dev-20240202165736",
+		"@protobuf-ts/plugin": "^2.9.3",
+		"@protobuf-ts/runtime": "^2.9.3",
+		"@protobuf-ts/runtime-rpc": "^2.9.3",
 		"@streamr/protocol": "^8.5.5",
 		"@streamr/utils": "^8.5.5",
+		"@usherlabs/protobuf-zmq-ts-transport": "^0.0.1",
 		"ajv": "8.8.2",
 		"ajv-formats": "^2.1.1",
 		"axios": "^1.4.0",
@@ -72,6 +77,7 @@
 		"tslog": "^4.8.2",
 		"tsyringe": "^4.7.0",
 		"uuid": "^9.0.0",
+		"zeromq": "6.0.0-beta.19",
 		"zlib": "^1.0.5"
 	},
 	"devDependencies": {

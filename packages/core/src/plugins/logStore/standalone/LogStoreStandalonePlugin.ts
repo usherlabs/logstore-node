@@ -14,6 +14,8 @@ import { WEBSERVER_PATHS } from '../http-proxy/constants';
 import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
+import { proverSocketPath } from '../Prover';
+import { StandAloneProver } from './StandAloneProver';
 
 const logger = new Logger(module);
 
@@ -21,6 +23,8 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
 	private proverServer: ProxiedWebServerProcess;
 	private hearbeatMonitor: HeartbeatMonitor;
+	private readonly proxyRequestProver: StandAloneProver;
+
 
 	constructor(options: PluginOptions) {
 		super(options);
@@ -36,6 +40,10 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		this.hearbeatMonitor = new HeartbeatMonitor(this.logStoreClient);
 
 		this.standaloneQueryRequestManager = new BaseQueryRequestManager();
+		this.proxyRequestProver = new StandAloneProver(
+			proverSocketPath,
+			this.streamrClient
+		);
 	}
 
 	private get standaloneConfig(): StandaloneModeConfig {
@@ -51,6 +59,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		this.maybeLogStoreConfig = await this.startStandaloneLogStoreConfig();
 		// this should be called after the logStoreConfig is initialized
 		await super.start();
+		await this.proxyRequestProver.start();
 		await this.standaloneQueryRequestManager.start(this.logStore);
 		await this.proverServer.start();
 		await this.hearbeatMonitor.start(await this.streamrClient.getAddress());
@@ -61,9 +70,12 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 			super.stop(),
 			this.maybeLogStoreConfig?.destroy(),
 			this.proverServer.stop(),
+			this.proxyRequestProver.stop(),
 			this.hearbeatMonitor.stop(),
 		]);
+		await this.proxyRequestProver.start();
 	}
+
 
 	public async processQueryRequest(queryRequest: QueryRequest) {
 		const data =
