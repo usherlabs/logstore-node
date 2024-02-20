@@ -21,7 +21,8 @@ use url::Url;
     method = "GET",
     method = "POST",
     method = "PUT",
-    method = "PATCH"
+    method = "PATCH",
+    method = "DELETE",
 )]
 // recieve the parameter for the publisher as well
 pub async fn handle_notarization_request(
