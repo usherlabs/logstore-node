@@ -189,6 +189,7 @@ export const createLogStoreNode = async (
 				await stopServer(httpServer);
 			}
 			await Promise.all(plugins.map((plugin) => plugin.stop()));
+			logStoreClient.destroy();
 			await streamrClient.destroy();
 		},
 	};

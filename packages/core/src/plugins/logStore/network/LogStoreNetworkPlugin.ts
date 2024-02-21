@@ -1,9 +1,7 @@
 import { QueryRequest } from '@logsn/protocol';
-import { getQueryManagerContract } from '@logsn/shared';
 import { StreamPartIDUtils } from '@streamr/protocol';
 import { EthereumAddress, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
-import { ethers } from 'ethers';
 import { Stream } from 'streamr-client';
 
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
@@ -299,12 +297,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	}
 
 	public async validateUserQueryAccess(address: EthereumAddress) {
-		const provider = new ethers.providers.JsonRpcProvider(
-			this.nodeConfig.streamrClient.contracts?.streamRegistryChainRPCs!.rpcs[0]
-		);
-		const queryManager = await getQueryManagerContract(provider);
-		const balance = await queryManager.balanceOf(address);
-		if (!balance.gt(0)) {
+		const balance = await this.logStoreClient.getQueryBalanceOf(address);
+		if (balance <= 0) {
 			return {
 				valid: false,
 				message: 'Not enough balance staked for query',
