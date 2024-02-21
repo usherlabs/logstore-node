@@ -340,7 +340,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 	): Readable {
 		const limit = Math.min(requestCount, MAX_RESEND_LAST);
 
-		logger.trace('requestLast %o', { streamId, partition, limit });
+		logger.trace('requestLast', { streamId, partition, limit });
 
 		const GET_LAST_N_MESSAGES =
 			'SELECT payload FROM stream_data WHERE ' +

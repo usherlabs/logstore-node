@@ -12,11 +12,10 @@ import { MessageMetadata } from 'streamr-client';
 
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
+import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
 import { LogStore } from '../LogStore';
 import { PropagationResolver } from './PropagationResolver';
 import { QueryResponseManager } from './QueryResponseManager';
-
-import {BaseQueryRequestManager} from "../BaseQueryRequestManager";
 
 const logger = new Logger(module);
 
