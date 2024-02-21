@@ -22,6 +22,7 @@ out
 # production
 build
 dist
+target
 
 # misc
 .DS_Store
