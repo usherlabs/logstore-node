@@ -197,7 +197,7 @@ describe(PropagationDispatcher, () => {
 			propagationDispatcher
 		);
 
-		queryResponseManager.start(primaryBrokerId);
+		queryResponseManager.start(foreignBrokerId_1);
 	});
 
 	afterEach(() => {
