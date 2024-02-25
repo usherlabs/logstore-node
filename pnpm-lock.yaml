@@ -69,8 +69,8 @@ importers:
         specifier: ^1.1.3
         version: 1.1.3(prettier@3.0.0)
       turbo:
-        specifier: ^1.8.3
-        version: 1.8.3
+        specifier: ^1.12.4
+        version: 1.12.4
       typescript:
         specifier: ^5.3.3
         version: 5.3.3
@@ -102,20 +102,20 @@ importers:
         specifier: ^5.7.1
         version: 5.7.1
       '@logsn/client':
-        specifier: 0.0.14
-        version: 0.0.14(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3)
+        specifier: 0.0.0-dev-20240212133308
+        version: 0.0.0-dev-20240212133308(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3)
       '@logsn/contracts':
-        specifier: 0.0.14
-        version: 0.0.14
+        specifier: 0.0.0-dev-20240212133308
+        version: 0.0.0-dev-20240212133308
       '@logsn/program':
         specifier: workspace:*
         version: link:../program
       '@logsn/protocol':
-        specifier: 0.0.14
-        version: 0.0.14
+        specifier: 0.0.0-dev-20240212133308
+        version: 0.0.0-dev-20240212133308
       '@logsn/shared':
-        specifier: 0.0.14
-        version: 0.0.14
+        specifier: 0.0.0-dev-20240212133308
+        version: 0.0.0-dev-20240212133308
       '@streamr/protocol':
         specifier: ^8.5.5
         version: 8.5.5
@@ -211,8 +211,8 @@ importers:
         version: 1.0.5
     devDependencies:
       '@logsn/storage-proxy':
-        specifier: 0.0.14
-        version: 0.0.14(@ethersproject/hash@5.7.0)(typescript@5.3.3)
+        specifier: 0.0.0-dev-20240212133308
+        version: 0.0.0-dev-20240212133308(@ethersproject/hash@5.7.0)(typescript@5.3.3)
       '@streamr/network-node':
         specifier: ^8.5.5
         version: 8.5.5
@@ -2224,8 +2224,8 @@ packages:
       '@lit-labs/ssr-dom-shim': 1.1.2
     dev: false
 
-  /@logsn/client@0.0.14(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3):
-    resolution: {integrity: sha512-4654ocb/3yAHox0Dk2uG9674B9vhCaEJEl+O4Ra7smGWQ7VkWsZ05Wbvl40vIhQnT/seIiDQeq09IiDURs+o+A==}
+  /@logsn/client@0.0.0-dev-20240212133308(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.2.0)(typescript@5.3.3):
+    resolution: {integrity: sha512-AAstz7uOSasrmRAvq6o8PGXYKNKbRqr7Ftl2J2Ok63zw6csmQyNb6yj2nMhN2oHSQXVsyb6AjhILRu5MCL//Ww==}
     dependencies:
       '@babel/runtime': 7.23.5
       '@babel/runtime-corejs3': 7.23.5
@@ -2240,9 +2240,9 @@ packages:
       '@ethersproject/web': 5.7.1
       '@ethersproject/wordlists': 5.7.0
       '@lit-protocol/lit-node-client': 2.2.63(@ethersproject/contracts@5.7.0)(@ethersproject/hash@5.7.0)(@ethersproject/providers@5.7.2)(@ethersproject/wallet@5.7.0)(react@18.2.0)
-      '@logsn/contracts': 0.0.14
-      '@logsn/protocol': 0.0.14
-      '@logsn/shared': 0.0.14
+      '@logsn/contracts': 0.0.0-dev-20240212133308
+      '@logsn/protocol': 0.0.0-dev-20240212133308
+      '@logsn/shared': 0.0.0-dev-20240212133308
       '@streamr/network-contracts': 7.0.8
       '@streamr/network-node': 8.5.5
       '@streamr/protocol': 8.5.5
@@ -2272,7 +2272,7 @@ packages:
       p-memoize: 4.0.3
       p-throttle: 4.0.0
       quick-lru: 6.1.2
-      reflect-metadata: 0.1.14
+      reflect-metadata: 0.2.1
       rxjs: 8.0.0-alpha.12
       secp256k1: 5.0.0
       sha3: 2.1.4
@@ -2310,14 +2310,14 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@logsn/contracts@0.0.14:
-    resolution: {integrity: sha512-bETpK/bWBQgqcYUcIdlBHqiJOL386wO/lA1OVraWBeLpPRI1Fd7q2JZ3zUKRbFpWRti5HcgxC0PdXBLMti3y0Q==}
+  /@logsn/contracts@0.0.0-dev-20240212133308:
+    resolution: {integrity: sha512-1u0TkP10cfjdoeWHq8M8lmxfhOfNAs13ilc2RuVgWrNvrs2cyOK4TqHA3AefmpdABh49uwTpWGy+bTB+SuinZA==}
     dependencies:
       '@openzeppelin/contracts-upgradeable': 4.9.5
     dev: false
 
-  /@logsn/protocol@0.0.14:
-    resolution: {integrity: sha512-YXdJrf9yUIT+5Vcx31di5MGLmaIOL+Vqi1VhYmAUbD/kafHJnnWG9ZyV1KpARnK0Lo/88OMh3HIi28ePLuPKSg==}
+  /@logsn/protocol@0.0.0-dev-20240212133308:
+    resolution: {integrity: sha512-S2eGXi7BLWYn9l23/Z5IB7Snk+wGybrLgwLTRWFzs/sRPF1G7QRdNjEfXsO/Bcow4gJwGZ1W6Kp94apo0neAGw==}
     dependencies:
       '@ethersproject/abstract-signer': 5.7.0
       '@ethersproject/bignumber': 5.7.0
@@ -2325,12 +2325,12 @@ packages:
       '@ethersproject/solidity': 5.7.0
     dev: false
 
-  /@logsn/shared@0.0.14:
-    resolution: {integrity: sha512-mQOmAaYy4QsLJFJZQh+RHw/edUtpkW0xkgtzv60GsLq3CZkAlDZbOAGN3AC1ituueHGVyoaA54LdzUCk1YSPEA==}
+  /@logsn/shared@0.0.0-dev-20240212133308:
+    resolution: {integrity: sha512-Wume1kvq1ddQKRtJfjdosN54N7OO2KdsfccpBK1TfAM5Nq6mp3k+fu4HdJJQOGhgBglgdi/aNgRvUEl4LfCVPA==}
     dependencies:
       '@ethersproject/providers': 5.7.2(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-      '@logsn/contracts': 0.0.14
-      '@logsn/protocol': 0.0.14
+      '@logsn/contracts': 0.0.0-dev-20240212133308
+      '@logsn/protocol': 0.0.0-dev-20240212133308
       ethers: 5.7.2(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       inquirer: 8.1.1
       redstone-api: 0.4.11
@@ -2341,8 +2341,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@logsn/storage-proxy@0.0.14(@ethersproject/hash@5.7.0)(typescript@5.3.3):
-    resolution: {integrity: sha512-//upb3+nWVivWlkHRVZrqex+g15oCLILNFmp5t9ZEdr4cPrujW3lfuyM+USClg+F8xSqw4GfRCaKKtQFDfUkMg==}
+  /@logsn/storage-proxy@0.0.0-dev-20240212133308(@ethersproject/hash@5.7.0)(typescript@5.3.3):
+    resolution: {integrity: sha512-ZPz+4zM64CqHWWKbgVJZesMzcXABwPHH1d6oDgd7PoXZ5npeRTRY/C/tJYuAqIih/f6IjAkLLna9XgIaBL4VWA==}
     hasBin: true
     dependencies:
       '@streamr/utils': 8.5.5
@@ -10089,6 +10089,10 @@ packages:
   /reflect-metadata@0.1.14:
     resolution: {integrity: sha512-ZhYeb6nRaXCfhnndflDK8qI6ZQ/YcWZCISRAWICW9XYqMUwjZM9Z0DveWX/ABN01oxSHwVxKQmxeYZSsm0jh5A==}
 
+  /reflect-metadata@0.2.1:
+    resolution: {integrity: sha512-i5lLI6iw9AU3Uu4szRNPPEkomnkjRTaVt9hy/bn5g/oSzekBSMeLZblcjP74AW0vBabqERLLIrz+gR8QYR54Tw==}
+    dev: false
+
   /regenerator-runtime@0.14.0:
     resolution: {integrity: sha512-srw17NI0TUWHuGa5CFGGmhfNIeja30WMBfbslPNhf6JrqQlLN5gcrvig1oqPxiVaXb0oW0XRKtH6Nngs5lKCIA==}
 
@@ -11253,65 +11257,64 @@ packages:
     dependencies:
       safe-buffer: 5.2.1
 
-  /turbo-darwin-64@1.8.3:
-    resolution: {integrity: sha512-bLM084Wr17VAAY/EvCWj7+OwYHvI9s/NdsvlqGp8iT5HEYVimcornCHespgJS/yvZDfC+mX9EQkn3V2JmYgGGw==}
+  /turbo-darwin-64@1.12.4:
+    resolution: {integrity: sha512-dBwFxhp9isTa9RS/fz2gDVk5wWhKQsPQMozYhjM7TT4jTrnYn0ZJMzr7V3B/M/T8QF65TbniW7w1gtgxQgX5Zg==}
     cpu: [x64]
     os: [darwin]
     requiresBuild: true
     dev: true
     optional: true
 
-  /turbo-darwin-arm64@1.8.3:
-    resolution: {integrity: sha512-4oZjXtzakopMK110kue3z/hqu3WLv+eDLZOX1NGdo49gqca9BeD8GbH+sXpAp6tqyeuzpss+PIliVYuyt7LgbA==}
+  /turbo-darwin-arm64@1.12.4:
+    resolution: {integrity: sha512-1Uo5iI6xsJ1j9ObsqxYRsa3W26mEbUe6fnj4rQYV6kDaqYD54oAMJ6hM53q9rB8JvFxwdrUXGp3PwTw9A0qqkA==}
     cpu: [arm64]
     os: [darwin]
     requiresBuild: true
     dev: true
     optional: true
 
-  /turbo-linux-64@1.8.3:
-    resolution: {integrity: sha512-uvX2VKotf5PU14FCxJA5iHItPQno2JWzerMd+g3/h/Asay6dvxvtVjc39MQeGT0H5njSvzVKFkT+3/5q8lgOEg==}
+  /turbo-linux-64@1.12.4:
+    resolution: {integrity: sha512-ONg2aSqKP7LAQOg7ysmU5WpEQp4DGNxSlAiR7um+LKtbmC/UxogbR5+T+Uuq6zGuQ5kJyKjWJ4NhtvUswOqBsA==}
     cpu: [x64]
     os: [linux]
     requiresBuild: true
     dev: true
     optional: true
 
-  /turbo-linux-arm64@1.8.3:
-    resolution: {integrity: sha512-E1p+oH3XKMaPS4rqWhYsL4j2Pzc0d/9P5KU7Kn1kqVLo2T3iRA7n2KVULEieUNE0nTH+aIJPXYXOpqCI5wFJaA==}
+  /turbo-linux-arm64@1.12.4:
+    resolution: {integrity: sha512-9FPufkwdgfIKg/9jj87Cdtftw8o36y27/S2vLN7FTR2pp9c0MQiTBOLVYadUr1FlShupddmaMbTkXEhyt9SdrA==}
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
     dev: true
     optional: true
 
-  /turbo-windows-64@1.8.3:
-    resolution: {integrity: sha512-cnzAytHtoLXd0J7aNzRpZFpL/GTjcBmkvAPlbOdf/Pl1iwS4qzGrudZQ+OM1lmLgLIfBPIavsGHBknTwTNib4A==}
+  /turbo-windows-64@1.12.4:
+    resolution: {integrity: sha512-2mOtxHW5Vjh/5rDVu/aFwsMzI+chs8XcEuJHlY1sYOpEymYTz+u6AXbnzRvwZFMrLKr7J7fQOGl+v96sLKbNdA==}
     cpu: [x64]
     os: [win32]
     requiresBuild: true
     dev: true
     optional: true
 
-  /turbo-windows-arm64@1.8.3:
-    resolution: {integrity: sha512-ulIiItNm2w/zYJdD5/oAzjzNns1IjbpweRzpsE8tLXaWwo6+fnXXkyloUug0IUhcd2k6fJXfoiDZfygqpOVuXg==}
+  /turbo-windows-arm64@1.12.4:
+    resolution: {integrity: sha512-nOY5wae9qnxPOpT1fRuYO0ks6dTwpKMPV6++VkDkamFDLFHUDVM/9kmD2UTeh1yyrKnrZksbb9zmShhmfj1wog==}
     cpu: [arm64]
     os: [win32]
     requiresBuild: true
     dev: true
     optional: true
 
-  /turbo@1.8.3:
-    resolution: {integrity: sha512-zGrkU1EuNFmkq6iky6LcMqD4h0OLE8XysVFxQWRIZbcTNnf0XAycbsbeEyiJpiWeqb7qtg2bVuY9EYcNoNhVuQ==}
+  /turbo@1.12.4:
+    resolution: {integrity: sha512-yUJ7elEUSToiGwFZogXpYKJpQ0BvaMbkEuQECIWtkBLcmWzlMOt6bActsIm29oN83mRU0WbzGt4e8H1KHWedhg==}
     hasBin: true
-    requiresBuild: true
     optionalDependencies:
-      turbo-darwin-64: 1.8.3
-      turbo-darwin-arm64: 1.8.3
-      turbo-linux-64: 1.8.3
-      turbo-linux-arm64: 1.8.3
-      turbo-windows-64: 1.8.3
-      turbo-windows-arm64: 1.8.3
+      turbo-darwin-64: 1.12.4
+      turbo-darwin-arm64: 1.12.4
+      turbo-linux-64: 1.12.4
+      turbo-linux-arm64: 1.12.4
+      turbo-windows-64: 1.12.4
+      turbo-windows-arm64: 1.12.4
     dev: true
 
   /tweetnacl-util@0.13.5:
