@@ -20,7 +20,8 @@
 							"properties": {
 								"privateKey": {
 									"type": "string",
-									"pattern": "^(0x)?[a-fA-F0-9]{64}$"
+									"pattern": "^(0x)?[a-fA-F0-9]{64}$",
+									"description": "Private key for authentication, in string format."
 								}
 							},
 							"required": ["privateKey"]
@@ -29,7 +30,8 @@
 							"type": "object",
 							"properties": {
 								"ethereum": {
-									"type": "object"
+									"type": "object",
+									"description": "Ethereum object for Web3 provider-based authentication."
 								}
 							},
 							"required": ["ethereum"]
@@ -60,14 +62,16 @@
 							"enum": ["standalone"]
 						},
 						"topicsStream": {
-							"type": "string"
+							"type": "string",
+							"description": "Stream ID for validation results from predefined processes."
 						},
 						"validationErrorsStream": {
-							"type": "string"
+							"type": "string",
+							"description": "Stream ID for schema validation errors."
 						},
 						"trackedStreams": {
 							"type": "array",
-							"description": "Streams to track",
+							"description": "Array of objects defining streams to track and the number of partitions they have.",
 							"items": {
 								"type": "object",
 								"properties": {

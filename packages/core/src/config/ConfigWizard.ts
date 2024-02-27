@@ -104,13 +104,14 @@ export const storagePathPrompts = [
 
 export const getConfig = (privateKey: string, node: NodeAnswers): any => {
 	const baseConfig = {
-		// $schema: formSchemaUrl(CURRENT_CONFIGURATION_VERSION),
-		$schema: 'https://schema.streamr.network/config-v2.schema.json',
+		$schema: 'http://json-schema.org/draft-07/schema#',
 		// Streamr Client
 		client: {
 			// TODO: For development purpose we use CONFIG_TEST. Have to be removed when go to prod.
 			// ...CONFIG_TEST
-			auth: privateKey,
+			auth: {
+				privateKey,
+			},
 		},
 		plugins: {
 			logStore: {
