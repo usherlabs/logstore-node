@@ -73,7 +73,7 @@
 		"zlib": "^1.0.5"
 	},
 	"devDependencies": {
-		"@logsn/storage-proxy": "0.0.0-dev-20240212133308",
+		"@logsn/storage-proxy": "workspace:*",
 		"@streamr/network-node": "^8.5.5",
 		"@streamr/network-tracker": "^8.5.5",
 		"@streamr/test-utils": "^8.5.5",
