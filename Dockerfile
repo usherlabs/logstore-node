@@ -1,7 +1,7 @@
 FROM node:18.18-buster
 
 RUN apt update
-RUN apt install -y libsecret-1-dev
+RUN apt install -y libsecret-1-dev cmake
 
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10

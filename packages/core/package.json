@@ -37,11 +37,11 @@
 		"@ethersproject/transactions": "^5.7.0",
 		"@ethersproject/wallet": "^5.7.0",
 		"@ethersproject/web": "^5.7.1",
-		"@logsn/client": "0.0.0-dev-20240202165736",
-		"@logsn/contracts": "0.0.0-dev-20240202165736",
+		"@logsn/client": "^0.0.19",
+		"@logsn/contracts": "^0.0.19",
 		"@logsn/program": "workspace:*",
-		"@logsn/protocol": "0.0.0-dev-20240202165736",
-		"@logsn/shared": "0.0.0-dev-20240202165736",
+		"@logsn/protocol": "^0.0.19",
+		"@logsn/shared": "^0.0.19",
 		"@protobuf-ts/plugin": "^2.9.3",
 		"@protobuf-ts/runtime": "^2.9.3",
 		"@protobuf-ts/runtime-rpc": "^2.9.3",
@@ -81,7 +81,6 @@
 		"zlib": "^1.0.5"
 	},
 	"devDependencies": {
-		"@logsn/storage-proxy": "0.0.0-dev-20240202165736",
 		"@streamr/network-node": "^8.5.5",
 		"@streamr/network-tracker": "^8.5.5",
 		"@streamr/test-utils": "^8.5.5",
