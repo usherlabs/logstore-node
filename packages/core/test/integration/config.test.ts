@@ -14,7 +14,7 @@ describe('Config', () => {
 
 	const fileNames = fs.readdirSync(PATH).filter(
 		// we don't want to test standalone example as it contains invalid stream address
-		(fileName) => fileName !== 'standalone-node.example.json'
+		(fileName) => !fileName.startsWith('standalone-node')
 	);
 
 	describe.each(fileNames.map((fileName) => [fileName]))(

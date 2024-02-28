@@ -1,6 +1,6 @@
 {
 	"$schema": "https://schema.streamr.network/config-v2.schema.json",
-	"client": {
+	"streamrClient": {
 		"auth": {
 			"privateKey": "0xbb00000000000000000000000000000000000000000000000000000000000001"
 		}
@@ -21,7 +21,7 @@
 		"logStore": {
 			"db": {
 				"type": "sqlite",
-				"dataPath": ".data/logstore-data.db"
+				"dataPath": ".logstore/data/logstore-node.db"
 			},
 			"programs": {
 				"chainRpcUrls": {
