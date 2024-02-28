@@ -8,7 +8,13 @@
 		"$schema": {
 			"type": "string"
 		},
-		"client": {
+		"logStoreClient": {
+			"type": "object",
+			"description": "LogStore Client configuration",
+			"additionalProperties": true,
+			"default": {}
+		},
+		"streamrClient": {
 			"type": "object",
 			"description": "Streamr Client configuration",
 			"additionalProperties": true,

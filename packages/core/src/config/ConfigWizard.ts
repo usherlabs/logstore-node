@@ -1,3 +1,9 @@
+/**
+ * * The ConfigWizard is a tool for supporting the generation of a Production configuration for the Node.
+ *
+ * This should not be used for development purposes.
+ */
+
 import { toEthereumAddress } from '@streamr/utils';
 import chalk from 'chalk';
 import { Wallet } from 'ethers';
@@ -106,23 +112,9 @@ export const getConfig = (privateKey: string, node: NodeAnswers): any => {
 	const baseConfig = {
 		$schema: 'http://json-schema.org/draft-07/schema#',
 		// Streamr Client
-		client: {
-			// TODO: For development purpose we use CONFIG_TEST. Have to be removed when go to prod.
-			// ...CONFIG_TEST
+		streamrClient: {
 			auth: {
 				privateKey,
-			},
-		},
-		plugins: {
-			logStore: {
-				programs: {
-					chainRpcUrls: {
-						'137': 'https://polygon.llamarpc.com',
-					},
-				},
-				// logStoreConfig: {
-				// 	refreshInterval: 10000,
-				// },
 			},
 		},
 	};
@@ -133,19 +125,12 @@ export const getConfig = (privateKey: string, node: NodeAnswers): any => {
 		return Object.assign({}, baseConfig, {
 			mode: {
 				type: 'network',
-				pool: {
-					id: '0',
-					url: 'http://logstore-kyve:1317',
-					pollInterval: 60000,
-				},
 			},
 			httpServer: {
 				port: 7771,
 			},
 			plugins: {
-				...baseConfig.plugins,
 				logStore: {
-					...baseConfig.plugins.logStore,
 					db: {
 						type: 'cassandra',
 						hosts: ['http://127.0.0.1:9042'],
@@ -172,9 +157,7 @@ export const getConfig = (privateKey: string, node: NodeAnswers): any => {
 				port: 7774,
 			},
 			plugins: {
-				...baseConfig.plugins,
 				logStore: {
-					...baseConfig.plugins.logStore,
 					db: {
 						type: 'sqlite',
 						dataPath: '.data/logstore-data.db',
