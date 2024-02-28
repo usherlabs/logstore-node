@@ -362,6 +362,9 @@ importers:
         specifier: ^8.5.5
         version: 8.5.5(@ethersproject/hash@5.7.0)(typescript@4.9.5)
     devDependencies:
+      '@types/node':
+        specifier: ^16.18.39
+        version: 16.18.83
       del-cli:
         specifier: ^5.0.0
         version: 5.1.0
