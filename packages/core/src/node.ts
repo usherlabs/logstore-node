@@ -158,7 +158,7 @@ export const createLogStoreNode = async (
 					)}`
 				);
 			}
-			logger.info(`Network node ${nodeId} running`);
+			logger.info(`Streamr Network node ${nodeId} running`);
 			logger.info(`Ethereum address ${nodeAddress}`);
 			logger.info(
 				`Tracker Configuration: ${
