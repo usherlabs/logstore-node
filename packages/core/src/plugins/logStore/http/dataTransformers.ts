@@ -72,7 +72,7 @@ export class ResponseTransform extends Transform {
 				? this.format.footer({
 						...this.metadata,
 						totalMessages: this.totalMessages,
-				  })
+					})
 				: [this.format.footer];
 
 		finalChunk.forEach((chunk) => this.push(chunk));
@@ -111,7 +111,7 @@ export class StreamResponseTransform extends Transform {
 							...this.metadata,
 						},
 						true
-				  )
+					)
 				: [this.format.footer];
 		finalChunk.forEach((chunk) => this.push(chunk));
 		done();

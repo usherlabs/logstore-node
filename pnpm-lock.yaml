@@ -276,6 +276,9 @@ importers:
       dotenv-cli:
         specifier: ^7.2.1
         version: 7.3.0
+      fast-glob:
+        specifier: ^3.3.2
+        version: 3.3.2
       jest:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@16.18.85)(ts-node@10.9.2)

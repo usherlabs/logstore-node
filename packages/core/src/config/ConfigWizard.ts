@@ -3,7 +3,6 @@
  *
  * This should not be used for development purposes.
  */
-
 import { toEthereumAddress } from '@streamr/utils';
 import chalk from 'chalk';
 import { Wallet } from 'ethers';

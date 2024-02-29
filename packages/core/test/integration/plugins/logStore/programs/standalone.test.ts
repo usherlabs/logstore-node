@@ -110,9 +110,9 @@ describe('Standalone Mode Programs', () => {
 			plugins: {
 				logStore: {
 					db: {
-						type: 'cassandra'
-					}
-				}
+						type: 'cassandra',
+					},
+				},
 			},
 			mode: {
 				type: 'standalone',

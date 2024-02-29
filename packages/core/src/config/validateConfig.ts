@@ -1,7 +1,7 @@
 import Ajv, { ErrorObject, Schema } from 'ajv';
 import type { Options } from 'ajv';
-import addFormats from 'ajv-formats';
 import { ValidateFunction } from 'ajv';
+import addFormats from 'ajv-formats';
 
 import { StrictConfig } from './config';
 
@@ -45,13 +45,15 @@ export const getValidationErrors = (
 
 	if (!validate(data)) {
 		const prefix = contextName !== undefined ? contextName + ': ' : '';
-		return validate.errors?.map((e: ErrorObject) => {
-			let text = ajv.errorsText([e], { dataVar: '' }).trim();
-			if (e.params.additionalProperty) {
-				text += ` (${e.params.additionalProperty})`;
-			}
-			return prefix + text;
-		}) ?? [];
+		return (
+			validate.errors?.map((e: ErrorObject) => {
+				let text = ajv.errorsText([e], { dataVar: '' }).trim();
+				if (e.params.additionalProperty) {
+					text += ` (${e.params.additionalProperty})`;
+				}
+				return prefix + text;
+			}) ?? []
+		);
 	}
 	return [];
 };

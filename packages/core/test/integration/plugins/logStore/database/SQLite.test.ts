@@ -1,6 +1,6 @@
 import { MessageID, StreamMessage, toStreamID } from '@streamr/protocol';
 import { toEthereumAddress } from '@streamr/utils';
-import { globSync } from 'eslint-import-resolver-typescript';
+import { globSync } from 'fast-glob';
 import fs from 'fs';
 import path from 'path';
 import { firstValueFrom, from, map, toArray } from 'rxjs';

@@ -91,7 +91,7 @@ export const formLogStoreNetworkBrokerConfig = ({
 								ws: `ws://127.0.0.1:${trackerPort}`,
 								http: `http://127.0.0.1:${trackerPort}`,
 							},
-					  ]
+						]
 					: STREAMR_CLIENT_CONFIG_TEST.network?.trackers,
 				location: {
 					latitude: 60.19,
@@ -139,11 +139,11 @@ export const formLogStorePluginConfig = ({
 						username: '',
 						password: '',
 						keyspace: db.keyspace ?? 'logstore_test',
-				  }
+					}
 				: {
 						type: 'sqlite',
 						dataPath: db.dbPath ?? ':memory:',
-				  },
+					},
 	};
 };
 

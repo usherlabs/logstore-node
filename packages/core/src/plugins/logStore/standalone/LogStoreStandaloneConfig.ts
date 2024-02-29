@@ -1,7 +1,6 @@
-import {StreamPartID} from '@streamr/protocol';
+import { StreamPartID } from '@streamr/protocol';
 
-import {LogStoreConfig, LogStoreConfigListener} from '../LogStoreConfig';
-
+import { LogStoreConfig, LogStoreConfigListener } from '../LogStoreConfig';
 
 export class LogStoreStandaloneConfig implements LogStoreConfig {
 	private readonly streamParts: Set<StreamPartID>;
@@ -23,6 +22,5 @@ export class LogStoreStandaloneConfig implements LogStoreConfig {
 		return this.streamParts;
 	}
 
-	async destroy(): Promise<void> {
-	}
+	async destroy(): Promise<void> {}
 }
