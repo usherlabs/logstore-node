@@ -7,7 +7,6 @@ use crate::proxy::{
 use futures::AsyncWriteExt;
 use hyper::StatusCode;
 use tlsn_prover::tls::{Prover, ProverConfig};
-use tokio::io::AsyncWriteExt as _;
 use tokio_util::compat::{FuturesAsyncReadCompatExt, TokioAsyncReadCompatExt};
 use tracing::debug;
 
@@ -94,11 +93,11 @@ pub async fn notarize_request(
 
     let proof = build_proof(prover, req_redact_items, res_redact_items).await;
     let stringified_proof = serde_json::to_string_pretty(&proof).unwrap();
-    // Dump the proof to a file.
-    let mut file = tokio::fs::File::create("proof.json").await.unwrap();
-    file.write_all(serde_json::to_string_pretty(&proof).unwrap().as_bytes())
-        .await
-        .unwrap();
+    // // Dump the proof to a file.
+    // let mut file = tokio::fs::File::create("proof.json").await.unwrap();
+    // file.write_all(serde_json::to_string_pretty(&proof).unwrap().as_bytes())
+    //     .await
+    //     .unwrap();
 
     return (return_response, stringified_proof);
 }
