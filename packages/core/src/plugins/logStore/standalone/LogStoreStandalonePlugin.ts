@@ -13,8 +13,9 @@ import { HeartbeatMonitor } from '../HeartbeatMonitor';
 import { WEBSERVER_PATHS } from '../http-proxy/constants';
 import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { LogStorePlugin } from '../LogStorePlugin';
-import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
 import { proverSocketPath } from '../Prover';
+import { SinkModule } from '../Sink';
+import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
 import { StandAloneProver } from './StandAloneProver';
 
 const logger = new Logger(module);
@@ -24,7 +25,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private proverServer: ProxiedWebServerProcess;
 	private hearbeatMonitor: HeartbeatMonitor;
 	private readonly proxyRequestProver: StandAloneProver;
-
+	private sinkModule: SinkModule;
 
 	constructor(options: PluginOptions) {
 		super(options);
@@ -44,6 +45,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 			proverSocketPath,
 			this.streamrClient
 		);
+		this.sinkModule = new SinkModule();
 	}
 
 	private get standaloneConfig(): StandaloneModeConfig {
@@ -63,6 +65,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		await this.standaloneQueryRequestManager.start(this.logStore);
 		await this.proverServer.start();
 		await this.hearbeatMonitor.start(await this.streamrClient.getAddress());
+		await this.sinkModule.start(this.logStore);
 	}
 
 	override async stop(): Promise<void> {
@@ -75,7 +78,6 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		]);
 		await this.proxyRequestProver.start();
 	}
-
 
 	public async processQueryRequest(queryRequest: QueryRequest) {
 		const data =

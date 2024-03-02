@@ -12,7 +12,7 @@ use actix_web::{
     HttpRequest, HttpResponseBuilder, Responder,
 };
 use hyper::body;
-use std::sync::Arc;
+use std::{fs::File, io::Read, sync::Arc};
 use tracing::debug;
 use url::Url;
 
@@ -22,7 +22,7 @@ use url::Url;
     method = "POST",
     method = "PUT",
     method = "PATCH",
-    method = "DELETE",
+    method = "DELETE"
 )]
 // recieve the parameter for the publisher as well
 pub async fn handle_notarization_request(
@@ -50,16 +50,20 @@ pub async fn handle_notarization_request(
         .expect("incomplete headers provided")
         .to_str()
         .unwrap();
+    let t_process_id = req
+        .headers()
+        .get("T-PROCESS-ID")
+        .map_or("", |value| value.to_str().unwrap_or_default()); //optional;
     let t_redacted_parameters = req
         .headers()
         .get("T-REDACTED")
         .map_or("", |value| value.to_str().unwrap_or_default()); //optional;
-    // let t_should_publish = req
-    //     .headers()
-    //     .get("T-PUBLISH")
-    //     .expect("incomplete headers provided")
-    //     .to_str()
-    //     .unwrap();
+                                                                 // let t_should_publish = req
+                                                                 //     .headers()
+                                                                 //     .get("T-PUBLISH")
+                                                                 //     .expect("incomplete headers provided")
+                                                                 //     .to_str()
+                                                                 //     .unwrap();
 
     debug!("received notarization request for {t_proxy_url}");
     let url = Url::parse(t_proxy_url).unwrap();
@@ -102,11 +106,19 @@ pub async fn handle_notarization_request(
     let bytes = body::to_bytes(http_response.into_body()).await.unwrap();
     let proof_id = compute_sha256_hash(string_proof.clone()).unwrap();
 
+    // read the public key from the system
+    // todo remove hardcode and move all config files to directory accessible from direct path
+    let mut file = File::open("/Users/xander/Documents/workstation/usher/logstore-node/packages/mpc-tls/src/notary/fixture/notary/notary.pub").unwrap();
+    let mut buf = String::new();
+    file.read_to_string(&mut buf).unwrap();
+
     prover_socket
         .publish_to_proofs(TlsProof {
             id: proof_id,
             data: string_proof.clone(),
             stream: t_store.to_string(),
+            process: t_process_id.to_string(),
+            pubkey: buf,
             // publish: t_should_publish.to_lowercase() == "true"
         })
         .expect("Failed to publish");
