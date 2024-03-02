@@ -1,3 +1,4 @@
+// !incompatible base type
 // use crate::{
 //     ecdsa::{self, derive_pk},
 //     ethereum,
@@ -6,8 +7,8 @@
 // use alloc::borrow::ToOwned;
 // use candid::Principal;
 // use easy_hasher::easy_hasher;
-use soroban_sdk::{String, Vec, vec};
-use soroban_sdk::testutils::arbitrary::std::borrow::ToOwned;
+// use soroban_sdk::{String, Vec, vec};
+// use soroban_sdk::testutils::arbitrary::std::borrow::ToOwned;
 
 
 // pub fn string_to_vec_u8(str: &str) -> Vec<u8> {
@@ -24,23 +25,23 @@ use soroban_sdk::testutils::arbitrary::std::borrow::ToOwned;
 //         .collect()
 // }
 
-pub fn hash_eth_message<T: AsRef<[u8]>>(message: T) -> Vec<u8> {
-    const PREFIX: &str = "\x19Ethereum Signed Message:\n";
+// pub fn hash_eth_message<T: AsRef<[u8]>>(message: T) -> Vec<u8> {
+//     const PREFIX: &str = "\x19Ethereum Signed Message:\n";
 
-    let message = message.as_ref();
-    let len = message.len();
-    let len_string = len.to_string();
+//     let message = message.as_ref();
+//     let len = message.len();
+//     let len_string = len.to_string();
 
-    let mut eth_message = ;Vec::with_capacity(PREFIX.len() + len_string.len() + len);
-    eth_message.extend_from_slice(PREFIX.as_bytes());
-    eth_message.extend_from_slice(len_string.as_bytes());
-    eth_message.extend_from_slice(message);
+//     let mut eth_message = ;Vec::with_capacity(PREFIX.len() + len_string.len() + len);
+//     eth_message.extend_from_slice(PREFIX.as_bytes());
+//     eth_message.extend_from_slice(len_string.as_bytes());
+//     eth_message.extend_from_slice(message);
 
-    easy_hasher::raw_keccak256(eth_message)
-        .to_vec()
-        .try_into()
-        .unwrap()
-}
+//     easy_hasher::raw_keccak256(eth_message)
+//         .to_vec()
+//         .try_into()
+//         .unwrap()
+// }
 
 
 // pub fn recover_address_from_eth_signature(
