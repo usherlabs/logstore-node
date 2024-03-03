@@ -83,3 +83,7 @@ coverage.json
 notary
 prover
 .cosine
+
+
+**/core/bin/**
+!**/core/bin/logstore-broker.ts

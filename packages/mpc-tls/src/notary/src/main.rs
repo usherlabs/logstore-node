@@ -1,3 +1,5 @@
+use std::env;
+
 use crate::utils::get_port;
 use clap::{App as ClapApp, Arg};
 use eyre::{eyre, Result};
@@ -7,7 +9,6 @@ use notary_server::{
 use tracing::debug;
 
 pub mod utils;
-
 
 #[tokio::main]
 async fn main() -> Result<(), NotaryServerError> {

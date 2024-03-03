@@ -6,7 +6,7 @@
 set -e
 
 
-################################## move the builds to the logstore repo
+################################## move the builds to the logstore repo and binary config to the logstore repo
 binary_source="../target/release"
 binary_destination="../../core/bin"
 
@@ -18,22 +18,8 @@ cp "$binary_source/notary" "$binary_destination"
 cp "$binary_source/prover" "$binary_destination"
 
 
+cp -r ../src/notary/fixture "$binary_destination"
+cp -r ../src/notary/config "$binary_destination"
+
 echo "Notary and prover copied to $binary_destination"
-################################## move the builds to the logstore repo
-
-
-################################## move the fixtures to a global directory so they can be accessed at runtime
-# Set source and destination paths
-root_folder="$HOME/.logstore"
-source_folder="../src/notary/fixture"
-destination_folder="$root_folder/fixture"
-
-# Create the destination folder if it doesn't exist
-mkdir -p "$destination_folder"
-
-# Copy the contents of the source folder to the destination folder
-cp -r ../src/notary/fixture "$HOME/.logstore"
-
-
-echo "Fixtures copied to path:'$destination_folder' successfully!"
-################################## move the fixtures to a global directory so they can be accessed at runtime
+################################## move the builds to the logstore repo and binary config to the logstore repo

@@ -11,8 +11,8 @@ use actix_web::{
     web::{self},
     HttpRequest, HttpResponseBuilder, Responder,
 };
-use hyper::body;
 use std::env;
+use hyper::body;
 use std::{fs::File, io::Read, sync::Arc};
 use tracing::debug;
 use url::Url;
@@ -108,16 +108,7 @@ pub async fn handle_notarization_request(
     let bytes = body::to_bytes(http_response.into_body()).await.unwrap();
     let proof_id = compute_sha256_hash(string_proof.clone()).unwrap();
 
-    // read the public key from the system root
-    // ensure the script to move the fixtures to this directory has been called
-    // scripts/move_fixtures
-    let mut file = File::open(format!(
-        "{}/.logstore/fixture/notary/notary.pub",
-        env::var("HOME").unwrap()
-    ))
-    .unwrap();
     let mut buf = String::new();
-    file.read_to_string(&mut buf).unwrap();
 
     prover_socket
         .publish_to_proofs(TlsProof {
