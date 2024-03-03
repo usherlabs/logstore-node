@@ -19,7 +19,7 @@ sh ./start_prover.sh
 
 4) Send a sample request to notarize
 ```
-curl -X POST http://localhost:8080/proxy \
+curl -X POST http://localhost:7774/prover/proxy \
 -H "T-PROXY-URL: https://jsonplaceholder.typicode.com/posts" \
 -H "T-STORE: 0x392bd2cb87f5670f321ad521397d30a00c582b34/mpctlsproofspublic" \
 -H "T-PROCESS-ID: SAMPLE_PROCESS" \

@@ -12,6 +12,7 @@ use actix_web::{
     HttpRequest, HttpResponseBuilder, Responder,
 };
 use hyper::body;
+use std::env;
 use std::{fs::File, io::Read, sync::Arc};
 use tracing::debug;
 use url::Url;
@@ -58,14 +59,15 @@ pub async fn handle_notarization_request(
         .headers()
         .get("T-REDACTED")
         .map_or("", |value| value.to_str().unwrap_or_default()); //optional;
-                                                                 // let t_should_publish = req
-                                                                 //     .headers()
-                                                                 //     .get("T-PUBLISH")
-                                                                 //     .expect("incomplete headers provided")
-                                                                 //     .to_str()
-                                                                 //     .unwrap();
+    // let t_should_publish = req
+    //     .headers()
+    //     .get("T-PUBLISH")
+    //     .expect("incomplete headers provided")
+    //     .to_str()
+    //     .unwrap();
 
     debug!("received notarization request for {t_proxy_url}");
+
     let url = Url::parse(t_proxy_url).unwrap();
     let host_url = url.host_str().unwrap();
     let method = req.method().to_string();
@@ -106,9 +108,14 @@ pub async fn handle_notarization_request(
     let bytes = body::to_bytes(http_response.into_body()).await.unwrap();
     let proof_id = compute_sha256_hash(string_proof.clone()).unwrap();
 
-    // read the public key from the system
-    // todo remove hardcode and move all config files to directory accessible from direct path
-    let mut file = File::open("/Users/xander/Documents/workstation/usher/logstore-node/packages/mpc-tls/src/notary/fixture/notary/notary.pub").unwrap();
+    // read the public key from the system root
+    // ensure the script to move the fixtures to this directory has been called
+    // scripts/move_fixtures
+    let mut file = File::open(format!(
+        "{}/.logstore/fixture/notary/notary.pub",
+        env::var("HOME").unwrap()
+    ))
+    .unwrap();
     let mut buf = String::new();
     file.read_to_string(&mut buf).unwrap();
 

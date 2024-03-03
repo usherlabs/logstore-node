@@ -55,7 +55,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		this.notaryServer = new ProxiedWebServerProcess(
 			'notary',
 			WEBSERVER_PATHS.notary(),
-			({ port }) => [`-p`, port.toString()],
+			({ port }) => [`--port`, port.toString()],
 			'/notary/',
 			this.reverseProxy
 		);

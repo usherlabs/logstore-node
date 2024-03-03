@@ -80,5 +80,6 @@ tsconfig.tsbuildinfo
 *.log
 .pnp.*
 coverage.json
-
+notary
+prover
 .cosine

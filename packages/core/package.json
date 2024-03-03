@@ -78,7 +78,8 @@
 		"tsyringe": "^4.7.0",
 		"uuid": "^9.0.0",
 		"zeromq": "6.0.0-beta.19",
-		"zlib": "^1.0.5"
+		"zlib": "^1.0.5",
+		"zod": "^3.22.4"
 	},
 	"devDependencies": {
 		"@streamr/network-node": "^8.5.5",

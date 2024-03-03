@@ -33,7 +33,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		this.proverServer = new ProxiedWebServerProcess(
 			'prover',
 			WEBSERVER_PATHS.prover(),
-			({ port }) => [`-p`, port.toString()],
+			({ port }) => [`--port`, port.toString()],
 			'/prover/',
 			this.reverseProxy
 		);

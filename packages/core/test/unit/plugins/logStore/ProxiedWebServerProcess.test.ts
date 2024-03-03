@@ -10,7 +10,7 @@ describe('ProxiedWebServerProcess', () => {
 		const proxiedProcess = new ProxiedWebServerProcess(
 			'test',
 			TEST_WEBSERVER_PATH,
-			({ port }) => ['-p', port.toString()],
+			({ port }) => ['--port', port.toString()],
 			'/test',
 			{
 				registerProxyPath: (path1) => {},

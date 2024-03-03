@@ -30,7 +30,7 @@ impl Contract {
 
     // add in a new function to take in an array of messages, decrypt them and emit an event containing some parameters
     // indicating the processes and the success or failure of the process verification
-    pub fn verify_process(e: Env, payload: Payload) -> u32 {
+    pub fn verify_process(_e: Env, payload: Payload) -> u32 {
         payload.age
     }
 

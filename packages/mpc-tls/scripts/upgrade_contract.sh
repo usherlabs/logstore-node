@@ -1,5 +1,7 @@
 #TODO MAKE THE USERNAME AND deploy environment to be envirnmental variables
-#!/bin/bash -e
+#!/bin/bash
+set -e
+
 
 cd ../src/contract
 
