@@ -3,6 +3,12 @@ import { auditTime, map, mergeMap, Subscription } from 'rxjs';
 import { EthereumAddress } from 'streamr-client';
 
 const THRESHOLD = 60 * 1000;
+export interface NodeHeartbeat {
+	latency: number;
+	publishDate: Date;
+	nodeAddress: EthereumAddress;
+	url: string | null;
+}
 
 /**
  * It's a readonly version of the Heartbeat. This class makes available information from the
@@ -10,12 +16,7 @@ const THRESHOLD = 60 * 1000;
  */
 export class HeartbeatMonitor {
 	// It's ordered by latency
-	nodeHeartbeats: {
-		latency: number;
-		publishDate: Date;
-		nodeAddress: EthereumAddress;
-		url: string | null;
-	}[] = [];
+	nodeHeartbeats: NodeHeartbeat[] = [];
 	private heartbeatInfoSubscription: Subscription | undefined;
 
 	constructor(protected readonly logStoreClient: LogStoreClient) {}

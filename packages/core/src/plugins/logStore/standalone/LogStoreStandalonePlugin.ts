@@ -9,7 +9,7 @@ import _ from 'lodash';
 
 import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
 import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
-import { HeartbeatMonitor } from '../HeartbeatMonitor';
+import { HeartbeatMonitor, NodeHeartbeat } from '../HeartbeatMonitor';
 import { WEBSERVER_PATHS } from '../http-proxy/constants';
 import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { LogStorePlugin } from '../LogStorePlugin';
@@ -63,9 +63,28 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		await super.start();
 		await this.proxyRequestProver.start();
 		await this.standaloneQueryRequestManager.start(this.logStore);
-		await this.proverServer.start();
 		await this.hearbeatMonitor.start(await this.streamrClient.getAddress());
 		await this.sinkModule.start(this.logStore);
+
+		// wait until we can get a notary node
+		// poll online nodes for url
+		const notaryNode: NodeHeartbeat = await new Promise((resolve) => {
+			const POLL_INTERVAL_MS = 500;
+			const interval = setInterval(() => {
+				const { onlineNodesInfo } = this.hearbeatMonitor;
+				const onlineHttpNode = onlineNodesInfo.find((node) =>
+					Boolean(node.url)
+				);
+				if (onlineHttpNode) {
+					clearInterval(interval);
+					resolve(onlineHttpNode);
+				}
+			}, POLL_INTERVAL_MS);
+		});
+		// TODO put in the notary port and the node url here
+		// when starting the prover server, we need to provide the notary url to connect to
+		const notaryURL = `${notaryNode.url}/notary`;
+		this.proverServer.start(['--url', notaryURL]);
 	}
 
 	override async stop(): Promise<void> {

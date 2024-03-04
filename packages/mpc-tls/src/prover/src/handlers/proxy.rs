@@ -11,9 +11,8 @@ use actix_web::{
     web::{self},
     HttpRequest, HttpResponseBuilder, Responder,
 };
-use std::env;
 use hyper::body;
-use std::{fs::File, io::Read, sync::Arc};
+use std::sync::Arc;
 use tracing::debug;
 use url::Url;
 

@@ -36,7 +36,8 @@ export class ProxiedWebServerProcess {
 		return this.portPromise;
 	}
 
-	async start() {
+	// add optional parameter
+	async start(extraArgs: string[] = []) {
 		const port = await this.portPromise;
 
 		const args =
@@ -46,7 +47,7 @@ export class ProxiedWebServerProcess {
 			this.subscription = fromProcess({
 				name: this.processName,
 				cmd: this.cmd,
-				args,
+				args: [...args, ...extraArgs],
 			}).subscribe(({ data, error }) => {
 				const prefix = `[${this.processName}] `;
 
