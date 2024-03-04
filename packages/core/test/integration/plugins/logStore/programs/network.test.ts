@@ -15,9 +15,13 @@ import {
 	prepareStakeForStoreManager,
 } from '@logsn/shared';
 import { Tracker } from '@streamr/network-tracker';
-import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
+import {
+	fastWallet,
+	fetchPrivateKeyWithGas,
+	KeyServer,
+} from '@streamr/test-utils';
 import { providers, Wallet } from 'ethers';
-import { defer, firstValueFrom, switchAll } from 'rxjs';
+import { defer, firstValueFrom, switchAll, timeout } from 'rxjs';
 import { switchMap } from 'rxjs/internal/operators/switchMap';
 import StreamrClient, {
 	Stream,
@@ -52,7 +56,8 @@ describe('Network Mode Programs', () => {
 	);
 
 	// Accounts
-	let adminAccount: Wallet;
+	let tokenAdminAccount: Wallet;
+	let tokenReceiverAcoount: Wallet;
 	let logStoreBrokerAccount: Wallet;
 	let publisherAccount: Wallet;
 	let storeOwnerAccount: Wallet;
@@ -82,14 +87,15 @@ describe('Network Mode Programs', () => {
 		);
 
 		// Accounts
-		adminAccount = new Wallet(CONTRACT_OWNER_PRIVATE_KEY, provider);
+		tokenAdminAccount = new Wallet(CONTRACT_OWNER_PRIVATE_KEY, provider);
+		tokenReceiverAcoount = fastWallet();
 		publisherAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeOwnerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 		storeConsumerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 
 		// Contracts
-		nodeAdminManager = await getNodeManagerContract(adminAccount);
-		tokenAdminManager = await getTokenManagerContract(adminAccount);
+		nodeAdminManager = await getNodeManagerContract(tokenAdminAccount);
+		tokenAdminManager = await getTokenManagerContract(tokenAdminAccount);
 		nodeManager = await getNodeManagerContract(logStoreBrokerAccount);
 		storeManager = await getStoreManagerContract(storeOwnerAccount);
 		queryManager = await getQueryManagerContract(storeConsumerAccount);
@@ -105,7 +111,7 @@ describe('Network Mode Programs', () => {
 			tracker = await startTestTracker(TRACKER_PORT);
 		}
 		const nodeMetadata: NodeMetadata = {
-			http: 'http://127.0.0.1:7171',
+			http: 'http://10.200.10.1:7171',
 		};
 
 		await nodeAdminManager
@@ -122,6 +128,24 @@ describe('Network Mode Programs', () => {
 
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
+
+		// Listen to contract event and publish a message to a stream to process by a program
+		tokenAdminManager.on('Transfer', async (...args: Array<any>) => {
+			const log = args[args.length - 1];
+
+			const message = {
+				__logStoreChainId: '8997',
+				__logStoreChannelId: 'evm-validate',
+				address: log.address,
+				blockHash: log.blockHash,
+				data: log.data,
+				logIndex: log.logIndex,
+				topics: log.topics,
+				transactionHash: log.transactionHash,
+			};
+
+			await publisherClient.publish(testStream.id, message);
+		});
 
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
@@ -146,6 +170,11 @@ describe('Network Mode Programs', () => {
 		);
 
 		testStream = await createTestStream(publisherClient, module);
+		// TODO: the consumer must have permission to subscribe to the stream or the strem have to be public
+		await testStream.grantPermissions({
+			public: true,
+			permissions: [StreamPermission.SUBSCRIBE],
+		});
 
 		await prepareStakeForStoreManager(storeOwnerAccount, STAKE_AMOUNT);
 		await storeManager
@@ -157,51 +186,34 @@ describe('Network Mode Programs', () => {
 	});
 
 	afterEach(async () => {
-		await publisherClient.destroy();
-		await consumerClient.destroy();
+		tokenAdminManager.removeAllListeners();
+		await publisherClient?.destroy();
+		await consumerClient?.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
-			nodeManager.leave().then((tx) => tx.wait()),
+			nodeManager?.leave().then((tx) => tx.wait()),
 			tracker?.stop(),
 		]);
 	});
 
 	it('should process the message', async () => {
-		// TODO: the consumer must have permission to subscribe to the stream or the strem have to be public
-		await testStream.grantPermissions({
-			public: true,
-			permissions: [StreamPermission.SUBSCRIBE],
-		});
-
-		const message = {
-			__logStoreChainId: '137',
-			__logStoreChannelId: 'evm-validate',
-			address: '0x365Bdc64E2aDb50E43E56a53B7Cc438d48D0f0DD',
-			blockHash:
-				'0xed6afdb35db598ee08623a9564a5fab3a6e64fea6718c380e7c7342911a4d1a4',
-			data: '0x0000000000000000000000000000000000000000000000000000000000000001',
-			logIndex: 372,
-			topics: [
-				'0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
-				'0x000000000000000000000000aeefa929280b17c81803727dcfb62c5fad511f31',
-				'0x000000000000000000000000c6d330e5b7deb31824b837aa77771178bd8e6713',
-			],
-			transactionHash:
-				'0x4b4b1b1b3c89ac7833926e410c7d39f976fc7e47125d1326d715846f7acf06ef',
-		};
-
 		const topicsMessage$ = defer(() =>
 			consumerClient.getStream(nodeManager.address + '/topics')
 		).pipe(
 			switchMap((stream) => consumerClient.subscribe(stream)),
-			switchAll()
+			switchAll(),
+			timeout(15000)
 		);
 
-		const [topicsMessage] = await Promise.all([
-			firstValueFrom(topicsMessage$),
-			publisherClient.publish(testStream.id, message),
-		]);
+		await tokenAdminManager
+			.transfer(tokenReceiverAcoount.address, '1000000000')
+			.then((tx) => tx.wait());
 
-		expect(topicsMessage.content).toHaveProperty('address', message.address);
+		const topicsMessage = await firstValueFrom(topicsMessage$);
+
+		expect(topicsMessage.content).toHaveProperty(
+			'address',
+			tokenAdminManager.address
+		);
 	});
 });

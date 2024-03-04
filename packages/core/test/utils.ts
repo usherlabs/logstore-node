@@ -144,6 +144,11 @@ export const formLogStorePluginConfig = ({
 						type: 'sqlite',
 						dataPath: db.dbPath ?? ':memory:',
 					},
+		programs: {
+			chainRpcUrls: {
+				'8997': 'http://10.200.10.1:8546',
+			},
+		},
 	};
 };
 
