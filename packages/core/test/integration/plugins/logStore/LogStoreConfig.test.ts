@@ -37,8 +37,12 @@ const localDataCenter = 'datacenter1';
 const keyspace = 'logstore_test';
 
 const STAKE_AMOUNT = BigInt('1000000000000000000');
-const HTTP_PORT = 17770;
-const TRACKER_PORT = 17772;
+
+// There are two options to run the test managed by a value of the TRACKER_PORT constant:
+// 1. TRACKER_PORT = undefined - run the test against the brokers running in dev-env and brokers run by the test script.
+// 2. TRACKER_PORT = 17771 - run the test against only brokers run by the test script.
+//    In this case dev-env doesn't run any brokers and there is no brokers joined the network (NodeManager.totalNodes == 0)
+const TRACKER_PORT = undefined;
 
 describe('LogStoreConfig', () => {
 	const provider = new providers.JsonRpcProvider(
@@ -99,9 +103,11 @@ describe('LogStoreConfig', () => {
 	});
 
 	beforeEach(async () => {
-		tracker = await startTestTracker(TRACKER_PORT);
+		if (TRACKER_PORT) {
+			tracker = await startTestTracker(TRACKER_PORT);
+		}
 		const nodeMetadata: NodeMetadata = {
-			http: 'http://127.0.0.1:7171',
+			http: 'http://10.200.10.1:7171',
 		};
 
 		await nodeAdminManager
@@ -130,6 +136,9 @@ describe('LogStoreConfig', () => {
 					},
 				},
 			},
+			mode: {
+				type: 'network',
+			},
 		});
 
 		publisherClient = await createStreamrClient(
@@ -149,13 +158,13 @@ describe('LogStoreConfig', () => {
 		await publisherClient?.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
-			nodeManager.leave().then((tx) => tx.wait()),
+			nodeManager?.leave().then((tx) => tx.wait()),
 			tracker?.stop(),
 		]);
 	});
 
 	it('when client publishes a message, it is written to the store', async () => {
-		const publishMessage = await publisherClient.publish(testStream.id, {
+		const publishedMessage = await publisherClient.publish(testStream.id, {
 			foo: 'bar',
 		});
 		await waitForCondition(async () => {
@@ -169,9 +178,9 @@ describe('LogStoreConfig', () => {
 			'SELECT * FROM stream_data WHERE stream_id = ? ALLOW FILTERING',
 			[testStream.id]
 		);
-		const storeMessage = StreamMessage.deserialize(
+		const storedMessage = StreamMessage.deserialize(
 			JSON.parse(result.first().payload.toString())
 		);
-		expect(storeMessage.signature).toEqual(publishMessage.signature);
+		expect(storedMessage.signature).toEqual(publishedMessage.signature);
 	});
 });
