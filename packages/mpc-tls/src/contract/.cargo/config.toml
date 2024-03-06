@@ -1,0 +1,19 @@
+# add extra configuration for the contracts 
+# these configurations helps optimize the build size,
+# more info can be found [here](https://soroban.stellar.org/docs/getting-started/hello-world#configure-the-release-profile)
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+
+
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true
+

@@ -8,12 +8,16 @@ import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
+import { BinaryProcess } from '../http-proxy/BinaryProcess';
+import { WEBSERVER_PATHS } from '../http-proxy/constants';
 import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
+import { proverSocketPath } from '../Prover';
 import { Heartbeat } from './Heartbeat';
 import { KyvePool } from './KyvePool';
 import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
 import { MessageMetricsCollector } from './MessageMetricsCollector';
+import { NetworkProver } from './NetworkProver';
 import { NetworkQueryRequestManager } from './NetworkQueryRequestManager';
 import { PropagationDispatcher } from './PropagationDispatcher';
 import { PropagationResolver } from './PropagationResolver';
@@ -23,6 +27,7 @@ import { SystemCache } from './SystemCache';
 import { SystemRecovery } from './SystemRecovery';
 
 const METRICS_INTERVAL = 60 * 1000;
+export const NOTARY_PORT = 7047;
 
 const logger = new Logger(module);
 
@@ -30,7 +35,6 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private readonly systemSubscriber: BroadbandSubscriber;
 	private readonly systemPublisher: BroadbandPublisher;
 	private readonly heartbeatPublisher: BroadbandPublisher;
-	private readonly heartbeatSubscriber: BroadbandSubscriber;
 	private readonly kyvePool: KyvePool;
 	private readonly messageMetricsCollector: MessageMetricsCollector;
 	private readonly heartbeat: Heartbeat;
@@ -41,11 +45,20 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private readonly propagationResolver: PropagationResolver;
 	private readonly propagationDispatcher: PropagationDispatcher;
 	private readonly reportPoller: ReportPoller;
+	private readonly notaryServer: BinaryProcess;
+	private readonly proxyRequestProver: NetworkProver;
 
 	private metricsTimer?: NodeJS.Timer;
 
 	constructor(options: PluginOptions) {
 		super(options);
+
+		this.notaryServer = new BinaryProcess(
+			'notary',
+			WEBSERVER_PATHS.notary(),
+			({ port }) => [`--port`, port.toString()],
+			NOTARY_PORT
+		);
 
 		const networkStrictNodeConfig =
 			this.nodeConfig.mode?.type === 'network'
@@ -71,19 +84,14 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			networkStrictNodeConfig.pool.id
 		);
 
-		this.heartbeatSubscriber = new BroadbandSubscriber(
-			this.streamrClient,
-			this.networkConfig.heartbeatStream
-		);
-
 		this.heartbeatPublisher = new BroadbandPublisher(
 			this.streamrClient,
 			this.networkConfig.heartbeatStream
 		);
 
 		this.heartbeat = new Heartbeat(
-			this.heartbeatPublisher,
-			this.heartbeatSubscriber
+			this.logStoreClient,
+			this.heartbeatPublisher
 		);
 
 		this.messageMetricsCollector = new MessageMetricsCollector(
@@ -131,6 +139,11 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.systemPublisher,
 			this.systemSubscriber
 		);
+
+		this.proxyRequestProver = new NetworkProver(
+			proverSocketPath,
+			this.streamrClient
+		);
 	}
 
 	get networkConfig(): NetworkModeConfig {
@@ -165,6 +178,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		await this.networkQueryRequestManager.start(this.logStore);
 		await this.queryResponseManager.start(clientId);
 		await this.messageMetricsCollector.start();
+		await this.proxyRequestProver.start();
 
 		if (this.pluginConfig.experimental?.enableValidator) {
 			this.addHttpServerEndpoint(
@@ -175,6 +189,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 				)
 			);
 		}
+
+		await this.notaryServer.start();
 
 		this.metricsTimer = setInterval(
 			this.logMetrics.bind(this),
@@ -194,6 +210,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		};
 
 		await Promise.all([
+			super.stop(),
 			this.messageMetricsCollector.stop(),
 			this.heartbeat.stop(),
 			this.propagationResolver.stop(),
@@ -202,6 +219,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.pluginConfig.experimental?.enableValidator
 				? stopValidatorComponents()
 				: Promise.resolve(),
+			this.proxyRequestProver.stop(),
 		]);
 
 		await super.stop();

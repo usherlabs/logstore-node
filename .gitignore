@@ -22,6 +22,7 @@ out
 # production
 build
 dist
+target
 
 # misc
 .DS_Store
@@ -79,5 +80,10 @@ tsconfig.tsbuildinfo
 *.log
 .pnp.*
 coverage.json
-
+notary
+prover
 .cosine
+
+
+**/core/bin/**
+!**/core/bin/logstore-broker.ts

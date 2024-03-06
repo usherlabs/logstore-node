@@ -1,6 +1,6 @@
 {
 	"$schema": "https://schema.streamr.network/config-v2.schema.json",
-	"client": {
+	"streamrClient": {
 		"auth": {
 			"privateKey": "0xbb00000000000000000000000000000000000000000000000000000000000001"
 		}
@@ -9,7 +9,7 @@
 		"type": "standalone",
 		"trackedStreams": [
 			{
-				"id": "0x5e98df807c09a91557d8b3161f2d01852fb005b9/logstore-demo",
+				"id": "0xd37dc4d7e2c1bdf3edd89db0e505394ea69af43d/gas-station/ethereum",
 				"partitions": 1
 			}
 		]
@@ -20,12 +20,8 @@
 	"plugins": {
 		"logStore": {
 			"db": {
-				"type": "cassandra",
-				"hosts": ["http://127.0.0.1:9042"],
-				"username": "",
-				"password": "",
-				"keyspace": "logstore_1",
-				"datacenter": "datacenter1"
+				"type": "sqlite",
+				"dataPath": ".logstore/data/logstore-node.db"
 			},
 			"programs": {
 				"chainRpcUrls": {

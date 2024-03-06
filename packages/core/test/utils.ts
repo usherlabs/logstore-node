@@ -14,6 +14,7 @@ import {
 } from '@streamr/utils';
 import { providers, Wallet } from 'ethers';
 import _ from 'lodash';
+import path from 'path';
 import {
 	Message,
 	Stream,
@@ -285,3 +286,8 @@ export const publishTestMessages = async (
 
 	return messages;
 };
+
+export const TEST_WEBSERVER_PATH = path.join(
+	__dirname,
+	'./assets/test-webserver'
+);

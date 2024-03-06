@@ -20,8 +20,6 @@ import { MessageProcessor } from './MessageProcessor';
 import { NodeStreamsRegistry } from './NodeStreamsRegistry';
 import { ValidationSchemaManager } from './validation-schema/ValidationSchemaManager';
 
-const logger = new Logger(module);
-
 export interface LogStorePluginConfig {
 	db: CassandraOptionsFromConfig | SQLiteDBOptions;
 	logStoreConfig: {
