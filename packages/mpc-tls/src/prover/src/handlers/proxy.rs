@@ -58,12 +58,7 @@ pub async fn handle_notarization_request(
         .headers()
         .get("T-REDACTED")
         .map_or("", |value| value.to_str().unwrap_or_default()); //optional;
-    // let t_should_publish = req
-    //     .headers()
-    //     .get("T-PUBLISH")
-    //     .expect("incomplete headers provided")
-    //     .to_str()
-    //     .unwrap();
+
 
     debug!("received notarization request for {t_proxy_url}");
 
@@ -107,7 +102,6 @@ pub async fn handle_notarization_request(
     let bytes = body::to_bytes(http_response.into_body()).await.unwrap();
     let proof_id = compute_sha256_hash(string_proof.clone()).unwrap();
 
-    let mut buf = String::new();
 
     prover_socket
         .publish_to_proofs(TlsProof {
@@ -115,8 +109,6 @@ pub async fn handle_notarization_request(
             data: string_proof.clone(),
             stream: t_store.to_string(),
             process: t_process_id.to_string(),
-            pubkey: buf,
-            // publish: t_should_publish.to_lowercase() == "true"
         })
         .expect("Failed to publish");
 

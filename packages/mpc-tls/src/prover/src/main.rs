@@ -5,8 +5,8 @@ use clap::{App as ClapApp, Arg};
 
 pub mod core;
 pub mod handlers;
-pub mod proxy;
 pub mod message;
+pub mod proxy;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -25,8 +25,8 @@ async fn main() -> std::io::Result<()> {
         .arg(
             Arg::with_name("u")
                 .long("url")
-                .value_name("ProverURL")
-                .help("Sets full url of the prover server")
+                .value_name("notaryURL")
+                .help("Sets full url of the notary server")
                 .takes_value(true),
         )
         .arg(
@@ -36,12 +36,23 @@ async fn main() -> std::io::Result<()> {
                 .help("Sets full path of the path to use for the socket")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("m")
+                .long("mode")
+                .value_name("mode")
+                .help("Set if you want the prover to run in dev mode"),
+        )
         .get_matches();
 
     // get the port provided
     let port: u64 = get_port(&matches);
     let config: ServerConfig = (&matches).into();
-    println!("PROVER SERVER STARTED ON PORT:{port}");
+
+    println!("{:?}", config);
+    println!(
+        "PROVER SERVER STARTED ON PORT:{port} WITH CONFIG:{:?}",
+        config
+    );
 
     // start the server on the specified port
     let server_result = HttpServer::new(move || {

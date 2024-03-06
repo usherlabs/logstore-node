@@ -1,8 +1,7 @@
 import { Logger } from '@streamr/utils';
 import fs from 'fs';
-import { getPort } from 'get-port-please';
 import { spawn } from 'node:child_process';
-import { Observable, ReplaySubject, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 import tempfile from '../../../utils/tempfile';
 
@@ -54,7 +53,6 @@ export const fromProcess = ({
 			error$.next(data.toString());
 		});
 
-
 		childProcess.on('close', (code) => {
 			logger.info(`${name} exited with code ${code}`);
 
@@ -71,13 +69,11 @@ export const fromProcess = ({
 		};
 	});
 
-// we needed a way to get a random port, but we also need to make sure we don't use the same port twice
-// i.e. if we define the ports before running the node, they could eventually be the same, even if random
 const alreadyUsedPorts = new Set<number>();
-export const getNextAvailablePort = async (): Promise<number> => {
-	const port = await getPort({ random: true });
+export const getNextAvailablePort = (basePort: number): number => {
+	const port = basePort + 1;
 	if (alreadyUsedPorts.has(port)) {
-		return getNextAvailablePort();
+		return getNextAvailablePort(port);
 	}
 
 	alreadyUsedPorts.add(port);

@@ -13,7 +13,6 @@ message TlsProof {
   string data = 2;
   string stream = 3;
   string process = 4;
-  string pubkey = 5;
   // bool publish = 4;
 }
 message TlsProofFilter {

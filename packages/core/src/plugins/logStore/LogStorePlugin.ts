@@ -12,7 +12,6 @@ import {
 	CassandraOptionsFromConfig,
 } from './database/CassandraDBAdapter';
 import { SQLiteDBOptions } from './database/SQLiteDBAdapter';
-import { ReverseProxy } from './http-proxy/ReverseProxy';
 import { createDataQueryEndpoint } from './http/dataQueryEndpoint';
 import { LogStore, startLogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
@@ -20,8 +19,6 @@ import { MessageListener } from './MessageListener';
 import { MessageProcessor } from './MessageProcessor';
 import { NodeStreamsRegistry } from './NodeStreamsRegistry';
 import { ValidationSchemaManager } from './validation-schema/ValidationSchemaManager';
-
-const logger = new Logger(module);
 
 export interface LogStorePluginConfig {
 	db: CassandraOptionsFromConfig | SQLiteDBOptions;
@@ -55,11 +52,9 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 	protected readonly validationManager: ValidationSchemaManager;
 	protected readonly nodeStreamsRegistry: NodeStreamsRegistry;
 	private readonly messageProcessor?: MessageProcessor;
-	protected readonly reverseProxy: ReverseProxy;
 
 	constructor(options: PluginOptions) {
 		super(options);
-		this.reverseProxy = new ReverseProxy(options.nodeConfig);
 		this.validationErrorsStream = options.validationErrorsStream;
 		this.topicsStream = options.topicsStream;
 		this.nodeStreamsRegistry = new NodeStreamsRegistry(this.streamrClient);
@@ -137,15 +132,12 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 		await this.messageListener.start(this.maybeLogStore, this.logStoreConfig);
 
 		this.addHttpServerEndpoint(createDataQueryEndpoint(this.metricsContext));
-
-		await this.reverseProxy.start();
 	}
 
 	async stop(): Promise<void> {
 		this.nodeStreamsRegistry.clear();
 
 		await Promise.all([
-			this.reverseProxy.stop(),
 			this.messageListener.stop(),
 			this.maybeLogStore?.close(),
 			this.validationManager.stop(),

@@ -53,16 +53,12 @@ pub async fn build_proof(
     let res_slice: Vec<&[u8]> = res_redact_items.iter().map(|s| s.as_bytes()).collect();
 
     // Identify the ranges in the outbound data which contain data which we want to disclose
-    let (sent_public_ranges, _) = find_ranges(
-        prover.sent_transcript().data(),
-        req_slice.as_slice(),
-    );
+    let (sent_public_ranges, _) =
+        find_ranges(prover.sent_transcript().data(), req_slice.as_slice());
 
     // Identify the ranges in the inbound data which contain data which we want to disclose
-    let (recv_public_ranges, _) = find_ranges(
-        prover.recv_transcript().data(),
-        res_slice.as_slice(),
-    );
+    let (recv_public_ranges, _) =
+        find_ranges(prover.recv_transcript().data(), res_slice.as_slice());
 
     let builder = prover.commitment_builder();
 
@@ -99,7 +95,9 @@ pub async fn build_proof(
     }
 }
 
-pub async fn setup_notary_connection(config: &ServerConfig) -> (tokio_rustls::client::TlsStream<TcpStream>, String) {
+pub async fn setup_notary_connection(
+    config: &ServerConfig,
+) -> (tokio_rustls::client::TlsStream<TcpStream>, String) {
     // Connect to the Notary via TLS-TCP
     let pem_file =
         str::from_utf8(include_bytes!("../../../notary/fixture/tls/rootCA.crt")).unwrap();
@@ -127,7 +125,7 @@ pub async fn setup_notary_connection(config: &ServerConfig) -> (tokio_rustls::cl
 
     let notary_tls_socket = notary_connector
         // Require the domain name of notary server to be the same as that in the server cert
-        .connect("tlsnotaryserver.io".try_into().unwrap(), notary_socket)
+        .connect(config.cert_url.as_str().try_into().unwrap(), notary_socket)
         .await
         .unwrap();
 
