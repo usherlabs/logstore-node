@@ -10,19 +10,26 @@ import _ from 'lodash';
 import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
 import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
 import { HeartbeatMonitor, NodeHeartbeat } from '../HeartbeatMonitor';
-import { WEBSERVER_PATHS } from '../http-proxy/constants';
-import { ProxiedWebServerProcess } from '../http-proxy/ProxiedWebServerProcess';
 import { LogStorePlugin } from '../LogStorePlugin';
+import { NOTARY_PORT } from '../network/LogStoreNetworkPlugin';
 import { proverSocketPath } from '../Prover';
 import { SinkModule } from '../Sink';
+import { WEBSERVER_PATHS } from '../subprocess/constants';
+import { ProcessManager } from '../subprocess/ProcessManager';
+import { getNextAvailablePort } from '../subprocess/utils';
 import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
 import { StandAloneProver } from './StandAloneProver';
 
 const logger = new Logger(module);
+// TODO make notary connection mode a more global setting?
+// this variable is responsible for the prover's connection to the notary server
+// if it is dev, then the notary server knows to use the default ssl certificate in the fixtures
+// and if it is not, it will use the domain passed in which is that of the closest notary node gotten from the heartbeat
+const MODE: 'dev' | 'prod' = 'dev';
 
 export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
-	private proverServer: ProxiedWebServerProcess;
+	private proverServer: ProcessManager;
 	private hearbeatMonitor: HeartbeatMonitor;
 	private readonly proxyRequestProver: StandAloneProver;
 	private sinkModule: SinkModule;
@@ -30,12 +37,11 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 	constructor(options: PluginOptions) {
 		super(options);
 
-		this.proverServer = new ProxiedWebServerProcess(
+		this.proverServer = new ProcessManager(
 			'prover',
 			WEBSERVER_PATHS.prover(),
 			({ port }) => [`--port`, port.toString()],
-			'/prover/',
-			this.reverseProxy
+			getNextAvailablePort(options.nodeConfig.httpServer.port)
 		);
 
 		this.hearbeatMonitor = new HeartbeatMonitor(this.logStoreClient);
@@ -81,10 +87,11 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 				}
 			}, POLL_INTERVAL_MS);
 		});
-		// TODO put in the notary port and the node url here
+
 		// when starting the prover server, we need to provide the notary url to connect to
-		const notaryURL = `${notaryNode.url}/notary`;
-		this.proverServer.start(['--url', notaryURL]);
+		const notaryNodeURL = new URL(String(notaryNode.url));
+		const notaryURL = `${notaryNodeURL.hostname}:${NOTARY_PORT}`;
+		this.proverServer.start(['--url', notaryURL, '--mode', MODE]);
 	}
 
 	override async stop(): Promise<void> {

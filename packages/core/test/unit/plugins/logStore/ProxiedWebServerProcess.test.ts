@@ -1,20 +1,16 @@
 import fetch from 'node-fetch';
 
-import { ProxiedWebServerProcess } from '../../../../src/plugins/logStore/http-proxy/ProxiedWebServerProcess';
-import { ReverseProxy } from '../../../../src/plugins/logStore/http-proxy/ReverseProxy';
+import { ProcessManager } from '../../../../src/plugins/logStore/subprocess/ProcessManager';
 import { sleep, TEST_WEBSERVER_PATH } from '../../../utils';
 
-describe('ProxiedWebServerProcess', () => {
+describe('ProcessManager', () => {
 	it('should execute the test script', async () => {
 		process.env.LOG_LEVEL = 'debug';
-		const proxiedProcess = new ProxiedWebServerProcess(
+		const proxiedProcess = new ProcessManager(
 			'test',
 			TEST_WEBSERVER_PATH,
 			({ port }) => ['--port', port.toString()],
-			'/test',
-			{
-				registerProxyPath: (path1) => {},
-			} as ReverseProxy
+			8080
 			// this is not working, maybe because the python script streams the output in buffers
 			// (log) => log.includes('Listening on port')
 		);

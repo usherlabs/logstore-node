@@ -1,18 +1,16 @@
 import { Logger } from '@streamr/utils';
 import { Subscription } from 'rxjs';
 
-import { ReverseProxy } from './ReverseProxy';
-import { fromProcess, getNextAvailablePort } from './utils';
+import { fromProcess } from './utils';
 
 const logger = new Logger(module);
 
 /**
- * As a child of this nodeJS process, we will have a thin reverse proxy.
- * This will be used to proxy requests to these processes, which will be started by the nodeJS process too.
- * That's why we register the proxy path here, before we start the node.
+ * This service would be responsible for handling the running of the binary
+ * along with its port and cli args
  */
-export class ProxiedWebServerProcess {
-	private readonly portPromise: Promise<number>;
+export class ProcessManager {
+	private readonly port: number;
 	private subscription?: Subscription;
 
 	constructor(
@@ -20,28 +18,22 @@ export class ProxiedWebServerProcess {
 		private readonly cmd: string,
 		// if args needs to say what port its exposing, it can be a function
 		private readonly args: string[] | ((ctx: { port: number }) => string[]),
-		readonly path: string,
-		readonly reverseProxy: ReverseProxy,
+		basePort: number,
 		readonly isReadyFn?: (log: string) => Promise<boolean> | boolean
 	) {
-		this.portPromise = getNextAvailablePort();
-
-		reverseProxy.registerProxyPath({
-			port: this.portPromise,
-			path,
-		});
+		this.port = basePort;
 	}
 
 	async getPort() {
-		return this.portPromise;
+		return this.port;
 	}
 
 	// add optional parameter
 	async start(extraArgs: string[] = []) {
-		const port = await this.portPromise;
-
 		const args =
-			typeof this.args === 'function' ? this.args({ port }) : this.args;
+			typeof this.args === 'function'
+				? this.args({ port: this.port })
+				: this.args;
 
 		await new Promise<void>((resolve) => {
 			this.subscription = fromProcess({
@@ -52,14 +44,14 @@ export class ProxiedWebServerProcess {
 				const prefix = `[${this.processName}] `;
 
 				// program output will be logged here too
-				const dataSub = data.subscribe((data) => {
-					if (this.isReadyFn?.(data)) {
+				const dataSub = data.subscribe((subData) => {
+					if (this.isReadyFn?.(subData)) {
 						resolve();
 					}
-					logger.debug(prefix + data);
+					logger.debug(prefix + subData);
 				});
-				const errorSub = error.subscribe((error) => {
-					logger.error(prefix + error);
+				const errorSub = error.subscribe((subError) => {
+					logger.error(prefix + subError);
 				});
 
 				this.subscription?.add(() => {
@@ -72,6 +64,10 @@ export class ProxiedWebServerProcess {
 				}
 			});
 		});
+
+		logger.info(
+			`Running MPC-TLS-${this.processName} service on port:${this.port}`
+		);
 	}
 
 	async stop() {

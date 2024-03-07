@@ -25,7 +25,6 @@
 		"ts": "tsc --noEmit",
 		"lint": "eslint ./src/**/*.ts ./test/**/*.ts",
 		"test": "dotenv -e .env jest --",
-		"postinstall": "./scripts/post-install.sh",
 		"generate:proto": "protoc --ts_out ./src/plugins/logStore/protobuff/generated --proto_path ./src/plugins/logStore/protobuff prover.proto"
 	},
 	"dependencies": {
