@@ -11,7 +11,7 @@ import StreamrClient, {
 } from 'streamr-client';
 
 import { LogStoreNode } from '../../../src/node';
-import { WEBSERVER_PATHS } from '../../../src/plugins/logStore/http-proxy/constants';
+import { WEBSERVER_PATHS } from '../../../src/plugins/logStore/subprocess/constants';
 import {
 	createLogStoreClient,
 	createStreamrClient,

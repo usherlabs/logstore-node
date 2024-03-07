@@ -8,11 +8,11 @@ import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
-import { BinaryProcess } from '../http-proxy/BinaryProcess';
-import { WEBSERVER_PATHS } from '../http-proxy/constants';
 import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { proverSocketPath } from '../Prover';
+import { WEBSERVER_PATHS } from '../subprocess/constants';
+import { ProcessManager } from '../subprocess/ProcessManager';
 import { Heartbeat } from './Heartbeat';
 import { KyvePool } from './KyvePool';
 import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
@@ -45,7 +45,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private readonly propagationResolver: PropagationResolver;
 	private readonly propagationDispatcher: PropagationDispatcher;
 	private readonly reportPoller: ReportPoller;
-	private readonly notaryServer: BinaryProcess;
+	private readonly notaryServer: ProcessManager;
 	private readonly proxyRequestProver: NetworkProver;
 
 	private metricsTimer?: NodeJS.Timer;
@@ -53,7 +53,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	constructor(options: PluginOptions) {
 		super(options);
 
-		this.notaryServer = new BinaryProcess(
+		this.notaryServer = new ProcessManager(
 			'notary',
 			WEBSERVER_PATHS.notary(),
 			({ port }) => [`--port`, port.toString()],

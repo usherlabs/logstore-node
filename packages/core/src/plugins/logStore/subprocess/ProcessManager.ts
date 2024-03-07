@@ -6,11 +6,10 @@ import { fromProcess } from './utils';
 const logger = new Logger(module);
 
 /**
- * As a child of this nodeJS process, we will have a thin reverse proxy.
- * This will be used to proxy requests to these processes, which will be started by the nodeJS process too.
- * That's why we register the proxy path here, before we start the node.
+ * This service would be responsible for handling the running of the binary
+ * along with its port and cli args
  */
-export class BinaryProcess {
+export class ProcessManager {
 	private readonly port: number;
 	private subscription?: Subscription;
 
@@ -65,6 +64,10 @@ export class BinaryProcess {
 				}
 			});
 		});
+
+		logger.info(
+			`Running MPC-TLS-${this.processName} service on port:${this.port}`
+		);
 	}
 
 	async stop() {

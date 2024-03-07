@@ -1,12 +1,12 @@
 import fetch from 'node-fetch';
 
-import { BinaryProcess } from '../../../../src/plugins/logStore/http-proxy/BinaryProcess';
+import { ProcessManager } from '../../../../src/plugins/logStore/subprocess/ProcessManager';
 import { sleep, TEST_WEBSERVER_PATH } from '../../../utils';
 
-describe('BinaryProcess', () => {
+describe('ProcessManager', () => {
 	it('should execute the test script', async () => {
 		process.env.LOG_LEVEL = 'debug';
-		const proxiedProcess = new BinaryProcess(
+		const proxiedProcess = new ProcessManager(
 			'test',
 			TEST_WEBSERVER_PATH,
 			({ port }) => ['--port', port.toString()],

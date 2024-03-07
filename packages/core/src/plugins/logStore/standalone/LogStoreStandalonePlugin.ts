@@ -10,13 +10,13 @@ import _ from 'lodash';
 import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
 import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
 import { HeartbeatMonitor, NodeHeartbeat } from '../HeartbeatMonitor';
-import { BinaryProcess } from '../http-proxy/BinaryProcess';
-import { WEBSERVER_PATHS } from '../http-proxy/constants';
-import { getNextAvailablePort } from '../http-proxy/utils';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { NOTARY_PORT } from '../network/LogStoreNetworkPlugin';
 import { proverSocketPath } from '../Prover';
 import { SinkModule } from '../Sink';
+import { WEBSERVER_PATHS } from '../subprocess/constants';
+import { ProcessManager } from '../subprocess/ProcessManager';
+import { getNextAvailablePort } from '../subprocess/utils';
 import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
 import { StandAloneProver } from './StandAloneProver';
 
@@ -29,7 +29,7 @@ const MODE: 'dev' | 'prod' = 'dev';
 
 export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
-	private proverServer: BinaryProcess;
+	private proverServer: ProcessManager;
 	private hearbeatMonitor: HeartbeatMonitor;
 	private readonly proxyRequestProver: StandAloneProver;
 	private sinkModule: SinkModule;
@@ -37,11 +37,11 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 	constructor(options: PluginOptions) {
 		super(options);
 
-		this.proverServer = new BinaryProcess(
+		this.proverServer = new ProcessManager(
 			'prover',
 			WEBSERVER_PATHS.prover(),
 			({ port }) => [`--port`, port.toString()],
-			getNextAvailablePort(options.nodeConfig.httpServer.port + 1)
+			getNextAvailablePort(options.nodeConfig.httpServer.port)
 		);
 
 		this.hearbeatMonitor = new HeartbeatMonitor(this.logStoreClient);
