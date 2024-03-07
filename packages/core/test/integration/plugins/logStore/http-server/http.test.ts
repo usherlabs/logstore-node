@@ -148,16 +148,16 @@ describe('http works', () => {
 
 		await nodeAdminManager
 			.whitelistApproveNode(logStoreBrokerAccount.address)
-			.then((tx) => tx.wait());
+			.then((tx: any) => tx.wait());
 		await tokenAdminManager
 			.addWhitelist(logStoreBrokerAccount.address, nodeManager.address)
-			.then((tx) => tx.wait());
+			.then((tx: any) => tx.wait());
 
 		await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
 
 		await nodeManager
 			.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
-			.then((tx) => tx.wait());
+			.then((tx: any) => tx.wait());
 
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
@@ -190,13 +190,13 @@ describe('http works', () => {
 		await prepareStakeForStoreManager(storeOwnerAccount, STAKE_AMOUNT);
 		await storeManager
 			.stake(testStream.id, STAKE_AMOUNT)
-			.then((tx) => tx.wait());
+			.then((tx: any) => tx.wait());
 
 		Promise.all([
 			// Stakes for querying
 			(async () => {
 				await prepareStakeForQueryManager(storeConsumerAccount, STAKE_AMOUNT);
-				await queryManager.stake(STAKE_AMOUNT).then((tx) => tx.wait());
+				await queryManager.stake(STAKE_AMOUNT).then((tx: any) => tx.wait());
 			})(),
 			// makes it readable by the consumer
 			testStream.grantPermissions({
@@ -214,7 +214,7 @@ describe('http works', () => {
 		consumerLogStoreClient?.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
-			nodeManager?.leave().then((tx) => tx.wait()),
+			nodeManager?.leave().then((tx: any) => tx.wait()),
 			tracker?.stop(),
 		]);
 	});
@@ -305,7 +305,7 @@ describe('http works', () => {
 						Authorization: `Basic ${token}`,
 					},
 				})
-				.then(({ data }) => data);
+				.then(({ data }: { data: any }) => data);
 		};
 
 		test('Query is normally fetched under messages limit', async () => {
@@ -479,7 +479,7 @@ describe('http works', () => {
 					},
 					responseType: 'stream',
 				})
-				.then(({ data }) => data as Readable);
+				.then(({ data }: { data: any }) => data as Readable);
 
 			const response = await streamToMessages(httpStream);
 			return response;
