@@ -8,6 +8,7 @@ import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
+import { createNotaryPubKeyFetchEndpoint } from '../http/notaryGateway';
 import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { proverSocketPath } from '../Prover';
@@ -190,7 +191,9 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			);
 		}
 
+		// start the notary server and create an endpoint to get the keys
 		await this.notaryServer.start();
+		this.addHttpServerEndpoint(createNotaryPubKeyFetchEndpoint());
 
 		this.metricsTimer = setInterval(
 			this.logMetrics.bind(this),

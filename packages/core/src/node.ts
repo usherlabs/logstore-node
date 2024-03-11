@@ -19,7 +19,6 @@ import { startServer as startHttpServer, stopServer } from './httpServer';
 import { HttpServerEndpoint, Plugin, PluginOptions } from './Plugin';
 import { createPlugin } from './pluginRegistry';
 
-
 const logger = new Logger(module);
 
 export interface LogStoreNode {
