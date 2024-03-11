@@ -109,6 +109,7 @@ pub async fn handle_notarization_request(
             data: string_proof.clone(),
             stream: t_store.to_string(),
             process: t_process_id.to_string(),
+            notary: config.notary_gateway.clone(),
         })
         .expect("Failed to publish");
 

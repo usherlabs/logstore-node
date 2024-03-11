@@ -13,9 +13,9 @@ pub mod utils;
 #[tokio::main]
 async fn main() -> Result<(), NotaryServerError> {
     // setup the program to accept CLI parameters
-    let matches: clap::ArgMatches<'_> = ClapApp::new("Prover")
+    let matches: clap::ArgMatches<'_> = ClapApp::new("Notary")
         .version("1.0")
-        .about("The Prover Server for notarization")
+        .about("The Notary Server")
         .arg(
             Arg::with_name("p")
                 .long("port")
