@@ -1,0 +1,11 @@
+services:
+  web:
+    platform: linux/x86_64
+    build:
+      context: ./
+    command: tail -f /dev/null
+    ports:
+      - 7774:7774
+    volumes:
+      - ./packages/core/configs/development-network-1.env.json:/home/node/.logstore/config/default.json
+      - /Users/xander/.logstore/data:/home/node/.logstore/data

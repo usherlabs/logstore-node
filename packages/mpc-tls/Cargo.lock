@@ -2730,7 +2730,7 @@ dependencies = [
  "serde",
  "serde_json",
  "structopt",
- "tlsn-core 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
+ "tlsn-core 0.1.0-alpha.2",
  "tlsn-prover 0.1.0-alpha.3",
  "tlsn-verifier",
  "tokio",
@@ -2768,7 +2768,7 @@ dependencies = [
  "sha1",
  "structopt",
  "thiserror",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
+ "tlsn-tls-core 0.1.0-alpha.2",
  "tlsn-verifier",
  "tokio",
  "tokio-rustls",
@@ -3365,7 +3365,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "time",
- "tlsn-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-core 0.1.0-alpha.2",
  "tlsn-prover 0.1.0-alpha.2",
  "tokio",
  "tokio-rustls",
@@ -4391,27 +4391,9 @@ dependencies = [
  "mpz-garble",
  "serde",
  "thiserror",
- "tlsn-block-cipher 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-stream-cipher 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-universal-hash 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-utils-aio",
-]
-
-[[package]]
-name = "tlsn-aead"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "async-trait",
- "derive_builder 0.12.0",
- "futures",
- "mpz-core",
- "mpz-garble",
- "serde",
- "thiserror",
- "tlsn-block-cipher 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-stream-cipher 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-universal-hash 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-block-cipher 0.1.0-alpha.2",
+ "tlsn-stream-cipher 0.1.0-alpha.2",
+ "tlsn-universal-hash 0.1.0-alpha.2",
  "tlsn-utils-aio",
 ]
 
@@ -4449,19 +4431,6 @@ dependencies = [
 
 [[package]]
 name = "tlsn-block-cipher"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "async-trait",
- "derive_builder 0.12.0",
- "mpz-circuits",
- "mpz-garble",
- "thiserror",
- "tlsn-utils",
-]
-
-[[package]]
-name = "tlsn-block-cipher"
 version = "0.1.0-alpha.3"
 source = "git+https://github.com/tlsnotary/tlsn?branch=dev#ee17919d9c15277c4384e3d975198e2b659a01e3"
 dependencies = [
@@ -4489,28 +4458,7 @@ dependencies = [
  "rs_merkle",
  "serde",
  "thiserror",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-utils",
- "web-time",
- "webpki-roots 0.23.1",
-]
-
-[[package]]
-name = "tlsn-core"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "bimap",
- "bytes",
- "mpz-circuits",
- "mpz-core",
- "mpz-garble-core",
- "opaque-debug",
- "p256",
- "rs_merkle",
- "serde",
- "thiserror",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-tls-core 0.1.0-alpha.2",
  "tlsn-utils",
  "web-time",
  "webpki-roots 0.23.1",
@@ -4542,13 +4490,13 @@ dependencies = [
 [[package]]
 name = "tlsn-formats"
 version = "0.1.0"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
+source = "git+https://github.com/tlsnotary/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
 dependencies = [
  "bytes",
  "serde",
  "spansy",
  "thiserror",
- "tlsn-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-core 0.1.0-alpha.2",
  "tlsn-utils",
 ]
 
@@ -4564,23 +4512,7 @@ dependencies = [
  "mpz-circuits",
  "mpz-garble",
  "thiserror",
- "tlsn-hmac-sha256-circuits 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-utils-aio",
-]
-
-[[package]]
-name = "tlsn-hmac-sha256"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "async-trait",
- "derive_builder 0.12.0",
- "enum-try-as-inner",
- "futures",
- "mpz-circuits",
- "mpz-garble",
- "thiserror",
- "tlsn-hmac-sha256-circuits 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-hmac-sha256-circuits 0.1.0-alpha.2",
  "tlsn-utils-aio",
 ]
 
@@ -4611,14 +4543,6 @@ dependencies = [
 
 [[package]]
 name = "tlsn-hmac-sha256-circuits"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "mpz-circuits",
-]
-
-[[package]]
-name = "tlsn-hmac-sha256-circuits"
 version = "0.1.0-alpha.3"
 source = "git+https://github.com/tlsnotary/tlsn?branch=dev#ee17919d9c15277c4384e3d975198e2b659a01e3"
 dependencies = [
@@ -4641,26 +4565,7 @@ dependencies = [
  "p256",
  "serde",
  "thiserror",
- "tlsn-point-addition 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-utils-aio",
-]
-
-[[package]]
-name = "tlsn-key-exchange"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "async-trait",
- "derive_builder 0.12.0",
- "futures",
- "mpz-circuits",
- "mpz-garble",
- "mpz-ot",
- "mpz-share-conversion-core",
- "p256",
- "serde",
- "thiserror",
- "tlsn-point-addition 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-point-addition 0.1.0-alpha.2",
  "tlsn-utils-aio",
 ]
 
@@ -4699,19 +4604,6 @@ dependencies = [
 
 [[package]]
 name = "tlsn-point-addition"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "async-trait",
- "mpz-core",
- "mpz-share-conversion",
- "mpz-share-conversion-core",
- "p256",
- "thiserror",
-]
-
-[[package]]
-name = "tlsn-point-addition"
 version = "0.1.0-alpha.3"
 source = "git+https://github.com/tlsnotary/tlsn?branch=dev#ee17919d9c15277c4384e3d975198e2b659a01e3"
 dependencies = [
@@ -4727,7 +4619,7 @@ dependencies = [
 [[package]]
 name = "tlsn-prover"
 version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
+source = "git+https://github.com/tlsnotary/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
 dependencies = [
  "bytes",
  "derive_builder 0.12.0",
@@ -4740,15 +4632,15 @@ dependencies = [
  "opaque-debug",
  "rand",
  "thiserror",
- "tlsn-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-core 0.1.0-alpha.2",
  "tlsn-formats",
  "tlsn-tls-client 0.1.0-alpha.2",
  "tlsn-tls-client-async 0.1.0-alpha.2",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-tls-mpc 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-tls-core 0.1.0-alpha.2",
+ "tlsn-tls-mpc 0.1.0-alpha.2",
  "tlsn-utils",
  "tlsn-utils-aio",
- "uid-mux 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "uid-mux 0.1.0-alpha.2",
  "web-time",
  "webpki-roots 0.23.1",
 ]
@@ -4801,22 +4693,6 @@ dependencies = [
 
 [[package]]
 name = "tlsn-stream-cipher"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "aes 0.8.3",
- "async-trait",
- "cipher 0.4.4",
- "ctr 0.9.2",
- "derive_builder 0.12.0",
- "mpz-circuits",
- "mpz-garble",
- "thiserror",
- "tlsn-utils",
-]
-
-[[package]]
-name = "tlsn-stream-cipher"
 version = "0.1.0-alpha.3"
 source = "git+https://github.com/tlsnotary/tlsn?branch=dev#ee17919d9c15277c4384e3d975198e2b659a01e3"
 dependencies = [
@@ -4839,17 +4715,7 @@ source = "git+https://github.com/tlsnotary/tlsn?rev=6152883#61528833cdd101664445
 dependencies = [
  "async-trait",
  "thiserror",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
-]
-
-[[package]]
-name = "tlsn-tls-backend"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "async-trait",
- "thiserror",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-tls-core 0.1.0-alpha.2",
 ]
 
 [[package]]
@@ -4865,7 +4731,7 @@ dependencies = [
 [[package]]
 name = "tlsn-tls-client"
 version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
+source = "git+https://github.com/tlsnotary/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -4878,8 +4744,8 @@ dependencies = [
  "ring 0.16.20",
  "sct",
  "sha2",
- "tlsn-tls-backend 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-tls-backend 0.1.0-alpha.2",
+ "tlsn-tls-core 0.1.0-alpha.2",
  "web-time",
  "webpki",
 ]
@@ -4910,7 +4776,7 @@ dependencies = [
 [[package]]
 name = "tlsn-tls-client-async"
 version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
+source = "git+https://github.com/tlsnotary/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
 dependencies = [
  "bytes",
  "futures",
@@ -4950,23 +4816,6 @@ dependencies = [
 
 [[package]]
 name = "tlsn-tls-core"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "futures",
- "rand",
- "ring 0.16.20",
- "rustls-pemfile",
- "sct",
- "serde",
- "thiserror",
- "tracing",
- "web-time",
- "webpki",
-]
-
-[[package]]
-name = "tlsn-tls-core"
 version = "0.1.0-alpha.3"
 source = "git+https://github.com/tlsnotary/tlsn?branch=dev#ee17919d9c15277c4384e3d975198e2b659a01e3"
 dependencies = [
@@ -4999,42 +4848,15 @@ dependencies = [
  "rand",
  "serde",
  "thiserror",
- "tlsn-aead 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-block-cipher 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-hmac-sha256 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-key-exchange 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-point-addition 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-stream-cipher 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-tls-backend 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-universal-hash 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-utils-aio",
-]
-
-[[package]]
-name = "tlsn-tls-mpc"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "async-trait",
- "derive_builder 0.12.0",
- "futures",
- "mpz-core",
- "mpz-garble",
- "mpz-share-conversion",
- "p256",
- "rand",
- "serde",
- "thiserror",
- "tlsn-aead 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-block-cipher 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-hmac-sha256 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-key-exchange 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-point-addition 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-stream-cipher 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-tls-backend 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-universal-hash 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-aead 0.1.0-alpha.2",
+ "tlsn-block-cipher 0.1.0-alpha.2",
+ "tlsn-hmac-sha256 0.1.0-alpha.2",
+ "tlsn-key-exchange 0.1.0-alpha.2",
+ "tlsn-point-addition 0.1.0-alpha.2",
+ "tlsn-stream-cipher 0.1.0-alpha.2",
+ "tlsn-tls-backend 0.1.0-alpha.2",
+ "tlsn-tls-core 0.1.0-alpha.2",
+ "tlsn-universal-hash 0.1.0-alpha.2",
  "tlsn-utils-aio",
 ]
 
@@ -5072,22 +4894,6 @@ dependencies = [
 name = "tlsn-universal-hash"
 version = "0.1.0-alpha.2"
 source = "git+https://github.com/tlsnotary/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "async-trait",
- "derive_builder 0.12.0",
- "futures",
- "futures-util",
- "mpz-core",
- "mpz-share-conversion",
- "mpz-share-conversion-core",
- "opaque-debug",
- "thiserror",
-]
-
-[[package]]
-name = "tlsn-universal-hash"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
 dependencies = [
  "async-trait",
  "derive_builder 0.12.0",
@@ -5160,11 +4966,11 @@ dependencies = [
  "rand",
  "signature",
  "thiserror",
- "tlsn-core 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-tls-mpc 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
+ "tlsn-core 0.1.0-alpha.2",
+ "tlsn-tls-core 0.1.0-alpha.2",
+ "tlsn-tls-mpc 0.1.0-alpha.2",
  "tlsn-utils-aio",
- "uid-mux 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
+ "uid-mux 0.1.0-alpha.2",
 ]
 
 [[package]]
@@ -5506,17 +5312,6 @@ checksum = "ed646292ffc8188ef8ea4d1e0e0150fb15a5c2e12ad9b8fc191ae7a8a7f3c4b9"
 name = "uid-mux"
 version = "0.1.0-alpha.2"
 source = "git+https://github.com/tlsnotary/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "async-trait",
- "futures",
- "tlsn-utils-aio",
- "yamux",
-]
-
-[[package]]
-name = "uid-mux"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
 dependencies = [
  "async-trait",
  "futures",
