@@ -62,6 +62,7 @@ describe('BucketManager', () => {
 			},
 			commonOpts
 		);
+		await db.start();
 
 		await cassandraClient.connect();
 		bucketManager = db.bucketManager;
@@ -71,6 +72,7 @@ describe('BucketManager', () => {
 	});
 
 	afterEach(async () => {
+		await db.stop();
 		bucketManager.stop();
 		await cassandraClient.shutdown();
 	});

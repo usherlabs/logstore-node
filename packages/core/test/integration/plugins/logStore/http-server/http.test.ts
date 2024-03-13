@@ -54,13 +54,13 @@ const STAKE_AMOUNT = BigInt(1e22);
 const MESSAGE_STORE_TIMEOUT = 9 * 1000;
 const BASE_NUMBER_OF_MESSAGES = 16;
 
-const BROKER_URL = 'http://127.0.0.1:7171';
+const BROKER_URL = 'http://10.200.10.1:7171';
 
 // There are two options to run the test managed by a value of the TRACKER_PORT constant:
 // 1. TRACKER_PORT = undefined - run the test against the brokers running in dev-env and brokers run by the test script.
 // 2. TRACKER_PORT = 17771 - run the test against only brokers run by the test script.
 //    In this case dev-env doesn't run any brokers and there is no brokers joined the network (NodeManager.totalNodes == 0)
-const TRACKER_PORT = 17771;
+const TRACKER_PORT = undefined;
 
 // setting a more easy to test limit
 const mockTestLimit = BASE_NUMBER_OF_MESSAGES + 10;
@@ -148,16 +148,16 @@ describe('http works', () => {
 
 		await nodeAdminManager
 			.whitelistApproveNode(logStoreBrokerAccount.address)
-			.then((tx) => tx.wait());
+			.then((tx: any) => tx.wait());
 		await tokenAdminManager
 			.addWhitelist(logStoreBrokerAccount.address, nodeManager.address)
-			.then((tx) => tx.wait());
+			.then((tx: any) => tx.wait());
 
 		await prepareStakeForNodeManager(logStoreBrokerAccount, STAKE_AMOUNT);
 
 		await nodeManager
 			.join(STAKE_AMOUNT, JSON.stringify(nodeMetadata))
-			.then((tx) => tx.wait());
+			.then((tx: any) => tx.wait());
 
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
@@ -171,6 +171,9 @@ describe('http works', () => {
 						logStore: {
 							db: { type: 'cassandra' },
 						},
+					},
+					mode: {
+						type: 'network',
 					},
 				}),
 				createStreamrClient(tracker, publisherAccount.privateKey),
@@ -187,13 +190,13 @@ describe('http works', () => {
 		await prepareStakeForStoreManager(storeOwnerAccount, STAKE_AMOUNT);
 		await storeManager
 			.stake(testStream.id, STAKE_AMOUNT)
-			.then((tx) => tx.wait());
+			.then((tx: any) => tx.wait());
 
 		Promise.all([
 			// Stakes for querying
 			(async () => {
 				await prepareStakeForQueryManager(storeConsumerAccount, STAKE_AMOUNT);
-				await queryManager.stake(STAKE_AMOUNT).then((tx) => tx.wait());
+				await queryManager.stake(STAKE_AMOUNT).then((tx: any) => tx.wait());
 			})(),
 			// makes it readable by the consumer
 			testStream.grantPermissions({
@@ -201,15 +204,17 @@ describe('http works', () => {
 				permissions: [StreamPermission.SUBSCRIBE],
 			}),
 		]);
+
+		await sleep(10_000);
 	});
 
 	afterEach(async () => {
-		await publisherStreamrClient.destroy();
-		await consumerStreamrClient.destroy();
-		consumerLogStoreClient.destroy();
+		await publisherStreamrClient?.destroy();
+		await consumerStreamrClient?.destroy();
+		consumerLogStoreClient?.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
-			nodeManager.leave().then((tx) => tx.wait()),
+			nodeManager?.leave().then((tx: any) => tx.wait()),
 			tracker?.stop(),
 		]);
 	});
@@ -300,7 +305,7 @@ describe('http works', () => {
 						Authorization: `Basic ${token}`,
 					},
 				})
-				.then(({ data }) => data);
+				.then(({ data }: { data: any }) => data);
 		};
 
 		test('Query is normally fetched under messages limit', async () => {
@@ -360,8 +365,6 @@ describe('http works', () => {
 					performQuery({ queryUrl: queryUrl, token: token })
 				)
 			);
-
-			await sleep(10_000);
 
 			queryResponses.forEach((resp) => {
 				// console.log('HTTP RESPONSE:', resp);
@@ -476,7 +479,7 @@ describe('http works', () => {
 					},
 					responseType: 'stream',
 				})
-				.then(({ data }) => data as Readable);
+				.then(({ data }: { data: any }) => data as Readable);
 
 			const response = await streamToMessages(httpStream);
 			return response;

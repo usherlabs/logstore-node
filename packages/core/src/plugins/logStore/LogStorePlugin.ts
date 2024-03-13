@@ -78,9 +78,8 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 				this.topicsStream
 			);
 
-			this.messageListener.on(
-				'message',
-				(msg) => this.messageProcessor?.process(msg)
+			this.messageListener.on('message', (msg) =>
+				this.messageProcessor?.process(msg)
 			);
 		}
 	}

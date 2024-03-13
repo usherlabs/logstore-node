@@ -19,7 +19,6 @@ import { startServer as startHttpServer, stopServer } from './httpServer';
 import { HttpServerEndpoint, Plugin, PluginOptions } from './Plugin';
 import { createPlugin } from './pluginRegistry';
 
-
 const logger = new Logger(module);
 
 export interface LogStoreNode {
@@ -91,7 +90,7 @@ export const createLogStoreNode = async (
 					recoveryStream: await nodeManagerStream('/recovery'),
 					systemStream: await nodeManagerStream('/system'),
 					nodeManager: await getNodeManagerContract(signer),
-			  }
+				}
 			: config.mode;
 
 	const plugins: Plugin<any>[] = Object.keys(config.plugins).map((name) => {
@@ -159,7 +158,7 @@ export const createLogStoreNode = async (
 					)}`
 				);
 			}
-			logger.info(`Network node ${nodeId} running`);
+			logger.info(`Streamr Network node ${nodeId} running`);
 			logger.info(`Ethereum address ${nodeAddress}`);
 			logger.info(
 				`Tracker Configuration: ${

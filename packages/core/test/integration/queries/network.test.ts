@@ -18,7 +18,6 @@ import { Tracker } from '@streamr/network-tracker';
 import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { waitForCondition } from '@streamr/utils';
 import { providers, Wallet } from 'ethers';
-import { defer, firstValueFrom, map, mergeAll, toArray } from 'rxjs';
 import StreamrClient, {
 	Stream,
 	StreamPermission,
@@ -171,11 +170,11 @@ describe('Network Mode Queries', () => {
 	afterEach(async () => {
 		await publisherStreamrClient?.destroy();
 		await consumerStreamrClient?.destroy();
-		publisherLogStoreClient.destroy();
-		consumerLogStoreClient.destroy();
+		publisherLogStoreClient?.destroy();
+		consumerLogStoreClient?.destroy();
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
-			nodeManager.leave().then((tx) => tx.wait()),
+			nodeManager?.leave().then((tx) => tx.wait()),
 			tracker?.stop(),
 		]);
 	});

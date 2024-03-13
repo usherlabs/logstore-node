@@ -2,63 +2,35 @@
 
 # **Log Store Node**
 
-Welcome to the repository for the Log Store Node – a critical component of the Log Store Network.
+Welcome to the official repository for the Log Store Node – a versatile and foundational element of the Log Store Network that ensures data verifiability across systems.
 
-LS Node enriches your data sources with verifiability.
+The Log Store Node is designed to operate in two distinct modes to enhance the decentralized data availability network that underpins real-time cryptographic attestations:
 
-While primarily a part of the Log Store Network, functioning in **`network`** mode and creating a trustless, decentralized, and verifiable columnar database, we make this code available to you for use in **`standalone`** mode to create your own **Verifiable Columnar Database**.
+**Network Mode**: When running in **network** mode, the Log Store Node contributes to a robust, distributed network. This collective approach provides the backbone for a decentralized system, facilitating the secure and transparent availability and notarisation of data.
 
-## **Getting Started with a Standalone Node**
+**Standalone Mode**: In **standalone** mode, the Log Store Node serves as an interoperable unit within the network. It can independently prove, publish, and collect attestations regarding off-chain data and processes, interacting cohesively with network nodes to maintain the integrity and verifiability of data.
 
-To set up your standalone Log Store Node, follow these steps:
+Both modes are integral to delivering a comprehensive solution that ensures the authenticity and reliability of information within the Log Store Network.
 
-1. **Set Up CassandraDB**:
-	- Install and run CassandraDB, either as a Docker service or on your preferred host.
-	- Refer to **`keyspace.example.cql`** for the expected schema.
-2. **Configure Your Node**
-	- Create a configuration file in **`standalone`** mode.
-	- Define the streams you want to track and query.
-	- Example configurations can be found in our `**config-examples**` directory.
-3. **Clone This Repository**:
-	- Clone the repository to your local machine.
-4. **Build the Docker Image**:
-	- Use the following command:
-	```bash
-	docker build . -f ./dev-network/Dockerfile -t usherlabs/logsn-node
- 	```
-
-5. **Start Your Node**:
-	- Run the following command, replacing the path with your configuration file's location:
-	```bash
-	docker run \
-		-v ./node-config.json:/home/node/.logstore/config/default.json \
-		-p 7774:7774 \
-		-t usherlabs/logsn-node:latest \
-		logstore-broker start
-	```
-
+To delve into the functionalities and deployment of the Log Store Node, start with [the Log Store Node Documentation](https://docs.logstore.usher.so/node/quick-start/install).
 
 ## **Features**
 
-### **Queryable Streams**
+The Standalone Log Store Node is an integral part of the Log Store Network, designed to provide a sophisticated data management and attestation framework. Here are its core features:
 
-- Easily enable querying existing or your own Streamr streams through the endpoint.
-- Learn how to create and publish data through streams with our [documentation](https://docs.logstore.usher.so/).
-- Note: LSAN token staking is ONLY required for Network Nodes. **Standalone Nodes do not require it.**
+1. **Real-time Data Collection**: Effortlessly aggregates data from various third-party sources in real-time, facilitating dynamic and adaptive data handling.
+2. **Off-chain Data and Process Proofs**: Constructs cryptographic proofs for a diverse array of off-chain data and processes, encompassing everything from operational metrics to arbitrary messages and traditional Web2 API data sources.
+3. **Attestation Publishing**: Relays a consistent stream of attestations pertaining to off-chain operations, establishing a transparent and verifiable ledger of activities.
+4. **Data Verifiability**: Guarantees that all data is cryptographically signed and verifiable, forming a reliable base for Smart Contracts and Zero-Knowledge (ZK) Circuits.
+5. **Data Availability**: Enables seamless integration with Log Store Network Nodes to assure that all disseminated data is accessible for queries and validation processes.
+6. **Private and Encrypted**: Provides the capability to emit verifiable attestations and real-world data to private Streams, where data is automatically encrypted and key-based access is controlled through secure invitations.
+7. **Queries**: Facilitates the capability to query collected data within your Node, making it accessible for other services.
+8. **Web2-like Interfaces**: Designed with HTTP and similar network interfaces in mind, the Node offers straightforward integration capabilities, bypassing the need for deep SDK knowledge or reliance on complex embedded components.
+9. **Validation over Data**: Empowers you to define data schemas on-chain, ensuring that your Node acknowledges validation prerequisites prior to finalizing data storage, as detailed here: [Schema Validation Documentation](https://docs.logstore.usher.so/network/sdk/schema).
 
-### **Programs**
+## Explore Further
 
-- Use predefined processes for additional data validations (e.g., verifying Ethereum contract events authenticity).
-- Create and assign a **`topics`** stream for retrieval of validation results.
-
-### **Verifiability**
-
-- Each data item received by the Log Store is cryptographically signed.
-- By using our client, data verification is performed by default on the client side for an additional security layer, ensuring data integrity.
-
-## **Learn More**
-
-Explore the capabilities of running a node by diving into our [documentation](https://docs.logstore.usher.so/). Discover how our technology can and fit into your use cases and unlock powerful possibilities.
+For more detailed insights into each feature and instructions on how to harness the full potential of the Log Store, visit our [comprehensive documentation](https://docs.logstore.usher.so/). Whether you are looking to enhance your decentralized data management strategies or integrate advanced attestation mechanisms, the Log Store provides the tools and guidance necessary to elevate your operations.
 
 ## **Get Involved**
 

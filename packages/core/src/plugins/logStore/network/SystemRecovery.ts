@@ -106,9 +106,9 @@ export class SystemRecovery {
 
 		await this.recoveryStream.publish(recoveryResponseSeralized);
 		logger.debug('Published RecoveryResponse', {
-				requestId: recoveryResponse.requestId,
-				seqNum: recoveryResponse.seqNum,
-				bytes: recoveryResponseSeralized.length,
+			requestId: recoveryResponse.requestId,
+			seqNum: recoveryResponse.seqNum,
+			bytes: recoveryResponseSeralized.length,
 		});
 	}
 
@@ -122,9 +122,9 @@ export class SystemRecovery {
 
 		await this.recoveryStream.publish(recoveryCompleteSeralized);
 		logger.debug('Published RecoveryComplete', {
-				requestId: recoveryComplete.requestId,
-				seqNum: recoveryComplete.seqNum,
-				bytes: recoveryCompleteSeralized.length,
+			requestId: recoveryComplete.requestId,
+			seqNum: recoveryComplete.seqNum,
+			bytes: recoveryCompleteSeralized.length,
 		});
 	}
 }

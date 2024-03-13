@@ -2,7 +2,6 @@ import { and, eq, sql } from 'drizzle-orm';
 import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { int, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-
 export const streamDataTable = sqliteTable(
 	'stream_data',
 	{

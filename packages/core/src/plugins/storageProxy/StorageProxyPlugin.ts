@@ -73,6 +73,7 @@ export class StorageProxyPlugin extends Plugin<StorageProxyPluginConfig> {
 						const amount = BigInt(
 							this.pluginConfig.storageConfig.storeStakeAmount
 						);
+						// TODO: To create round-robin or selection process between Storage Proxies to handle Tx management.
 						const tx = await this.logStoreClient.stakeOrCreateStore(
 							stream.id,
 							amount

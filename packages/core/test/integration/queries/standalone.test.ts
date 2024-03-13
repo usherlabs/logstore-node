@@ -115,8 +115,9 @@ describe('Standalone Mode Queries', () => {
 	});
 
 	afterEach(async () => {
-		await publisherStreamrClient.destroy();
-		consumerLogStoreClient.destroy();
+		await publisherStreamrClient?.destroy();
+		await consumerStreamrClient?.destroy();
+		consumerLogStoreClient?.destroy();
 		await Promise.allSettled([logStoreBroker?.stop(), tracker?.stop()]);
 	});
 

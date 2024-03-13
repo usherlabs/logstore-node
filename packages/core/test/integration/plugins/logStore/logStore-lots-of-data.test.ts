@@ -9,7 +9,6 @@ import {
 import { getTestName, STREAMR_DOCKER_DEV_HOST } from '../../../utils';
 import { buildMsg } from './LogStore.test';
 
-
 const contactPoints = [STREAMR_DOCKER_DEV_HOST];
 const localDataCenter = 'datacenter1';
 const keyspace = 'logstore_dev';

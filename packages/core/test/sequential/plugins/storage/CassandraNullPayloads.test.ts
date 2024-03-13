@@ -11,7 +11,6 @@ import {
 } from '../../../../src/plugins/logStore/LogStore';
 import { STREAMR_DOCKER_DEV_HOST } from '../../../utils';
 
-
 jest.setTimeout(30000);
 
 const { TimeUuid } = cassandraTypes;
