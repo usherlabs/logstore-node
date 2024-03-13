@@ -20,14 +20,13 @@
 FROM rust:bookworm AS builder
 WORKDIR /usr/src/tlsn
 COPY ./packages/mpc-tls .
-COPY ./script.sh ./script.sh
+COPY ./packages/mpc-tls/scripts/protoc.sh ./script.sh
 RUN sh ./script.sh
 
 
 FROM ubuntu:latest
 RUN apt update
 RUN apt install -y libsecret-1-dev cmake
-# RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash && nvm install node 
 
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
@@ -84,8 +83,6 @@ COPY --from=builder /usr/src/tlsn/target/release/notary ./packages/core/bin
 COPY --from=builder /usr/src/tlsn/target/release/prover ./packages/core/bin
 
 
-# RUN  yes | curl https://sh.rustup.rs -sSf | sh -s -- -y && . "$HOME/.cargo/env" && pnpm build
-# USER root
 RUN pnpm build
 
 WORKDIR /home/node
@@ -99,5 +96,6 @@ WORKDIR /home/node
 
 COPY --chown=node:node docker/start-in-docker.sh /home/node/start-in-docker
 
+USER root
 ENTRYPOINT [ "/bin/bash" ]
 CMD [ "start-in-docker" ]

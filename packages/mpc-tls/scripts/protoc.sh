@@ -10,13 +10,8 @@ unzip protoc-3.20.0-linux-x86_64.zip -d export PB_REL="https://github.com/protoc
 curl -LO $PB_REL/download/v3.20.0/protoc-3.20.0-linux-x86_64.zip
 unzip protoc-3.20.0-linux-x86_64.zip -d /usr/local
 
-ls /usr/local/bin/
-
+# add to path
 export PATH="$PATH:/usr/local/bin/"
 
-cargo build
-
-# yes | curl https://sh.rustup.rs -sSf | sh -s -- -y
-# . "$HOME/.cargo/env"
-# rustup default stable
-# pnpm build
+# build project for production
+cargo build --release
