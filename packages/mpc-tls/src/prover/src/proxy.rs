@@ -61,6 +61,7 @@ pub struct ServerConfig {
     pub mode: Modes,
     pub publish_socket: String,
     pub request_socket: String,
+    pub notary_gateway: String,
     pub notary_host: String,
     pub notary_port: u16,
     pub cert_url: String,
@@ -72,6 +73,7 @@ impl ServerConfig {
             mode: Modes::Dev,
             publish_socket: DEFAULT_PUBLISH_SOCKET.to_string(),
             request_socket: DEFAULT_REQUEST_SOCKET.to_string(),
+            notary_gateway: NOTARY_HOST.to_string(),
             notary_host: NOTARY_HOST.to_string(),
             notary_port: NOTARY_PORT,
             cert_url: DEFAULT_CERTIFICATE_DOMAIN.to_string(),
@@ -81,7 +83,7 @@ impl ServerConfig {
 
 impl From<&clap::ArgMatches<'_>> for ServerConfig {
     fn from(value: &clap::ArgMatches<'_>) -> Self {
-        let (notary_url, notary_port) = get_notary_details(value);
+        let (notary_url, notary_port, notary_node_gateway_url) = get_notary_details(value);
         let publish_socket_path = get_pub_socket_path(value);
         let notary_mode = get_mode(value);
 
@@ -92,6 +94,7 @@ impl From<&clap::ArgMatches<'_>> for ServerConfig {
                 mode: Modes::Prod,
                 publish_socket: publish_socket_path,
                 request_socket: DEFAULT_REQUEST_SOCKET.to_string(),
+                notary_gateway: notary_node_gateway_url,
                 notary_host: notary_url.clone(),
                 notary_port: notary_port,
                 cert_url: notary_url.clone(),
@@ -126,15 +129,15 @@ pub fn get_mode(matches: &clap::ArgMatches<'_>) -> Modes {
 }
 
 pub fn get_pub_socket_path(matches: &clap::ArgMatches<'_>) -> String {
-    // ? should we throw an error when an invalid socket is provided or just return default port
+    // ? should we throw an error when an invalid socket is provided or just return default values
     match matches.value_of("s") {
         Some(x) => x.to_owned(),
         None => DEFAULT_PUBLISH_SOCKET.to_owned(),
     }
 }
 
-pub fn get_notary_details(matches: &clap::ArgMatches<'_>) -> (String, u16) {
-    // ? should we throw an error when an invalid port is provided or just return default port
+pub fn get_notary_details(matches: &clap::ArgMatches<'_>) -> (String, u16, String) {
+    // ? should we throw an error when an invalid port is provided or just return default values
     match matches.value_of("u") {
         Some(notary_connection_url) => {
             let notary_parts: Vec<&str> = notary_connection_url.split(':').collect();
@@ -148,9 +151,17 @@ pub fn get_notary_details(matches: &clap::ArgMatches<'_>) -> (String, u16) {
                 .unwrap_or(&"")
                 .parse::<u16>()
                 .unwrap_or(NOTARY_PORT);
-            (notary_host.to_string(), notary_port)
+            (
+                notary_host.to_string(),
+                notary_port,
+                notary_connection_url.to_string(),
+            )
         }
-        None => (NOTARY_HOST.to_string(), NOTARY_PORT),
+        None => (
+            NOTARY_HOST.to_string(),
+            NOTARY_PORT,
+            NOTARY_HOST.to_string(),
+        ),
     }
 }
 
