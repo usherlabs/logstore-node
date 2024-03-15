@@ -1,5 +1,7 @@
+import { LogStoreClient } from '@logsn/client';
 import { Logger } from '@streamr/utils';
 import { catchError, EMPTY, mergeMap, of, Subscription } from 'rxjs';
+import StreamrClient, { Stream, StreamID } from 'streamr-client';
 
 import { getDefaultAjv } from '../../../config/validateConfig';
 import { NodeStreamsRegistry } from '../NodeStreamsRegistry';
@@ -8,8 +10,6 @@ import {
 	InvalidSchemaError,
 	ValidationFunctionMap,
 } from './validationHandler';
-import StreamrClient, {Stream, StreamID} from "streamr-client";
-import {LogStoreClient} from "@logsn/client";
 
 const logger = new Logger(module);
 
@@ -96,7 +96,10 @@ export class ValidationSchemaManager {
 		schemaMap: this.schemaMap,
 	});
 
-	public async publishValidationErrors(streamId: StreamID, errors: readonly string[]) {
+	public async publishValidationErrors(
+		streamId: StreamID,
+		errors: readonly string[]
+	) {
 		if (!this.validationErrorsStream) {
 			// probably a standalone node that didn't configure where to send errors.
 			// by default, we will log it

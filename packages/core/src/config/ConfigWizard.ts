@@ -1,3 +1,8 @@
+/**
+ * * The ConfigWizard is a tool for supporting the generation of a Production configuration for the Node.
+ *
+ * This should not be used for development purposes.
+ */
 import { toEthereumAddress } from '@streamr/utils';
 import chalk from 'chalk';
 import { Wallet } from 'ethers';
@@ -11,6 +16,9 @@ import { getDefaultFile } from './config';
 export interface PrivateKeyAnswers extends Answers {
 	generateOrImportPrivateKey: 'Import' | 'Generate';
 	importPrivateKey?: string;
+}
+export interface NodeAnswers extends Answers {
+	mode: 'Standalone' | 'Network';
 }
 
 export interface StorageAnswers extends Answers {
@@ -30,30 +38,6 @@ const createLogger = () => {
 
 const PRIVATE_KEY_SOURCE_GENERATE = 'Generate';
 const PRIVATE_KEY_SOURCE_IMPORT = 'Import';
-
-export const CONFIG_TEMPLATE: any = {
-	// TODO: config schema URI
-	// $schema: formSchemaUrl(CURRENT_CONFIGURATION_VERSION),
-	logStoreClient: {},
-	streamrClient: {
-		auth: {},
-	},
-	// TODO: configure LogStore plugin by the ConfigWizard
-	plugins: {
-		logStore: {
-			cassandra: {
-				hosts: ['127.0.0.1'],
-				username: '',
-				password: '',
-				keyspace: 'logstore_dev',
-				datacenter: 'datacenter1',
-			},
-			logStoreConfig: {
-				refreshInterval: 10000,
-			},
-		},
-	},
-};
 
 const PRIVATE_KEY_PROMPTS: Array<
 	inquirer.Question | inquirer.ListQuestion | inquirer.CheckboxQuestion
@@ -94,9 +78,16 @@ const PRIVATE_KEY_PROMPTS: Array<
 	},
 ];
 
-export const PROMPTS = {
-	privateKey: PRIVATE_KEY_PROMPTS,
-};
+export const NODE_PROMPTS: Array<
+	inquirer.Question | inquirer.ListQuestion | inquirer.CheckboxQuestion
+> = [
+	{
+		type: 'list',
+		name: 'mode',
+		message: 'Which mode are you running the Node in?',
+		choices: ['Standalone', 'Network'],
+	},
+];
 
 export const storagePathPrompts = [
 	{
@@ -116,21 +107,66 @@ export const storagePathPrompts = [
 	},
 ];
 
-export const getConfig = (privateKey: string): any => {
-	const config = {
-		...CONFIG_TEMPLATE,
-		plugins: { ...CONFIG_TEMPLATE.plugins },
+export const getConfig = (privateKey: string, node: NodeAnswers): any => {
+	const baseConfig = {
+		$schema: 'http://json-schema.org/draft-07/schema#',
+		// Streamr Client
+		streamrClient: {
+			auth: {
+				privateKey,
+			},
+		},
 	};
 
-	// TODO: For development purpose we use CONFIG_TEST. Have to be removed when go to prod.
-	// config.client = {
-	// 	...CONFIG_TEST,
-	// 	auth: {},
-	// };
+	const mode = node.mode.toLowerCase();
 
-	config.client.auth.privateKey = privateKey;
+	if (mode === 'network') {
+		return Object.assign({}, baseConfig, {
+			mode: {
+				type: 'network',
+			},
+			httpServer: {
+				port: 7771,
+			},
+			plugins: {
+				logStore: {
+					db: {
+						type: 'cassandra',
+						hosts: ['http://127.0.0.1:9042'],
+						username: '',
+						password: '',
+						keyspace: 'logstore_1',
+						datacenter: 'datacenter1',
+					},
+				},
+			},
+		});
+	} else if (mode === 'standalone') {
+		return Object.assign({}, baseConfig, {
+			mode: {
+				type: 'standalone',
+				trackedStreams: [
+					{
+						id: '0xeb21022d952e5de09c30bfda9e6352ffa95f67be/heartbeat',
+						partitions: 1,
+					},
+				],
+			},
+			httpServer: {
+				port: 7774,
+			},
+			plugins: {
+				logStore: {
+					db: {
+						type: 'sqlite',
+						dataPath: '.data/logstore-data.db',
+					},
+				},
+			},
+		});
+	}
 
-	return config;
+	throw new Error('Invalid mode provided');
 };
 
 const selectStoragePath = async (): Promise<StorageAnswers> => {
@@ -182,6 +218,8 @@ export const getNodeIdentity = (
 export const startConfigWizard = async (
 	getPrivateKeyAnswers = (): Promise<PrivateKeyAnswers> =>
 		inquirer.prompt(PRIVATE_KEY_PROMPTS) as any,
+	getNodeAnswers = (): Promise<NodeAnswers> =>
+		inquirer.prompt(NODE_PROMPTS) as any,
 	getStorageAnswers = selectStoragePath,
 	logger = createLogger()
 ): Promise<void> => {
@@ -191,17 +229,28 @@ export const startConfigWizard = async (
 		if (privateKeyAnswers.revealGeneratedPrivateKey) {
 			logger.info(`This is your node's private key: ${privateKey}`);
 		}
-		const config = getConfig(privateKey);
+		const nodeAnswers = await getNodeAnswers();
+		const config = getConfig(privateKey, nodeAnswers);
 		const storageAnswers = await getStorageAnswers();
 		const storagePath = await createStorageFile(config, storageAnswers);
 		logger.info('Welcome to the LogStore Network');
 		const { mnemonic, networkExplorerUrl } = getNodeIdentity(privateKey);
-		logger.info(`Your node's generated name is ${mnemonic}.`);
-		logger.info('View your node in the Network Explorer:');
-		logger.info(networkExplorerUrl);
+		if (nodeAnswers.mode.toLowerCase() === 'network') {
+			logger.info('Your Node is running in Network Mode!');
+			logger.info(`Your Node's generated name is ${mnemonic}.`);
+			logger.info('View your node in the Network Explorer:');
+			logger.info(networkExplorerUrl);
+		} else {
+			logger.info('Your Node is running in Standalone Mode!');
+			logger.info(
+				`Configure the Streams to track and subscribe to, by editing the \`trackedStreams\` property at: ${storagePath}`
+			);
+		}
 		logger.info('You can start the logStore node now with');
-		logger.info(`logstore-broker ${storagePath}`);
+		logger.info(`logstore-broker -c ${storagePath}`);
 	} catch (e: any) {
-		logger.error('LogStore Node Config Wizard encountered an error:\n' + e.message);
+		logger.error(
+			'LogStore Node Config Wizard encountered an error:\n' + e.message
+		);
 	}
 };

@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 
-import { createLogStoreNode } from '../node';
 import { overrideConfigToEnvVarsIfGiven } from '../config/config';
 import { readConfigAndMigrateIfNeeded } from '../config/migration';
+import { createLogStoreNode } from '../node';
 import { configOption } from './options';
 
 export const startCommand = new Command('start')

@@ -274,6 +274,9 @@ export class PropagationResolver {
 		// Because messages are batched by the BatchManager,
 		// a promise returned by logStore.store() resolves when the batch stores.
 		// Therefore, we call logStore.store() for all the messages, and await all the returned promises.
+		//
+		// ? As profiled in https://linear.app/usherlabs/issue/LABS-476/solve-insert-management-for-query-propagate#comment-f7f277df
+		// All promises in the array resolve simultaneously once the Batch calls it's insert() method for the batched messages.
 		await Promise.all(
 			messagesToBeStored.map(([_, messageStr]) => {
 				const message = StreamMessage.deserialize(messageStr);

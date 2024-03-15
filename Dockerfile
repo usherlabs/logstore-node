@@ -22,6 +22,10 @@ COPY --chown=node:node ./packages/program/package.json ./packages/program/
 COPY --chown=node:node ./packages/program-evm-validate/package.json ./packages/program-evm-validate/
 COPY --chown=node:node ./packages/program-solana-validate/package.json ./packages/program-solana-validate/
 
+# Include storage-proxy as core has a devDependency on it.
+# devDeps are required to actually build the monorepo.
+COPY --chown=node:node ./packages/storage-proxy/package.json ./packages/storage-proxy/
+
 RUN pnpm install
 
 COPY --chown=node:node ./ ./

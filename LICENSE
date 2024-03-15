@@ -1,82 +1,80 @@
-Copyright 2023, Usher Labs Pty Ltd.
+Copyright (c) 2023, Usher Labs Pty Ltd.
 
 ---
 
-STREAMR NETWORK OPEN SOURCE LICENSE
------------------------------------
+# USHER LABS NETWORK OPEN SOURCE LICENSE
 
-PREAMBLE
+---
 
-This software is licensed under the Streamr Network Open
-Source License. The Streamr Network Open Source License is
-based on the GNU Affero General Public License, version 3
-(19 November 2007), but it contains a few additional
-limitations and requirements.
+## PREAMBLE
 
-The main addition is the introduction of operating parameters
-which apply to the software. These parameters may induce the
-use of specific cryptographic tokens (such as the Streamr
-DATAcoin) in the operations of the Streamr Network. Doing so
-protects the considerable effort already undertaken by the
-Streamr community.
+This software, developed by Usher Labs Pty Ltd, is licensed under the Usher Labs Network
+Open Source License. This license is adapted from the Streamr Network Open Source License,
+which in turn is based on the GNU Affero General Public License, version 3 (19 November 2007),
+with additional limitations and requirements tailored for The Network by
+Usher Labs Pty Ltd.
 
-These license terms allow you to create, modify and propagate
-new versions of the Streamr Network software (“Program”). Any
-copy or modified version shall always comply with certain
-network operating parameters, as amended from time to time.
-In a manner to be determined in the future, it is Streamr’s
-intention to decentralize the governance and decision-making
-processes relating to the network operating parameters. The
-Streamr Network is also available under a proprietary
-commercial license pursuant to a dual licensing scheme.
-Please contact Streamr directly at contact@streamr.network if
-you are interested in such a proprietary license.
+This license introduces operating parameters specific to The Network, potentially involving
+the use of blockchain-enabled cryptocurrency tokens (such as "LSAN", "LSN" or "TSP").
+These operating parameters are designed to protect the intellectual property
+and collaborative effort invested in The Network. It aims to foster a healthy, interoperable ecosystem
+supportive of The Network's goals and Usher Labs' interests.
 
-ADDITIONAL TERMS
+## LICENSE SCOPE AND OPERATING PARAMETERS
 
-1. These additional terms (“Additional Terms”) shall be in
-addition to and have precedence over the GNU Affero General
-Public License, Version 3 (“License Terms”). The License Terms
-shall be deemed to be incorporated herein as a material part
-of these Additional Terms. Any capitalized terms herein shall
-have the meaning given to them in the License Terms.
+1. This license permits the creation, modification, and distribution of the software (“Program”)
+   provided it adheres to the operating parameters defined herein, aimed at ensuring the Program's
+   compatibility and interoperability within The Network ecosystem.
 
-2. Unless explicitly otherwise stated in these Additional
-Terms, the License Terms shall be applicable on and govern
-your use, modification and propagation of the Program.
+2. "The Network" refers to the Log Store Network or any future iterations or rebrandings of the
+   network under the oversight of Usher Labs Pty Ltd. The terms of this license will continue
+   to apply to The Network, irrespective of any changes to its name or branding, ensuring
+   continuity and protection of Usher Labs' intellectual property and efforts.
 
-3. Definitions:
+3. Operating Parameters:
 
-    a. “Supported Parameters” means the operating parameters
-    of the Program that are indicated in the smart contract
-    pointed to by Ethereum Name Service (ENS) registry entry
-    network-parameters.streamr.eth from time to time.
+   a. **Interoperability**: The Program must maintain interoperability with The Network, supporting
+   and enhancing its functionality, performance, and security standards.
 
-    b. “Reference Versions” means the minimum version number
-    of the Program that is indicated in the Supported Parameters
-    as well as any newer version of the Program (as indicated
-    by a higher version number).
+   b. **Prohibition Against Independent Networks**: The Program, or any derivative works, shall not be
+   used to create, facilitate, or operate an independent and non-interoperable decentralized network
+   that is separate from or competitive with The Network, nor shall it be used in a manner that
+   undermines the interests of Usher Labs Pty Ltd or The Network's ecosystem.
 
-    c. “DATA” means the Streamr DATAcoin cryptographic token,
-    in each case as set out in and as supported by the Supported
-    Parameters from time to time.
+   c. **Contribution to The Network's Goals**: Modifications or enhancements to the Program should
+   contribute positively to The Network's goals, including but not limited to scalability, security,
+   and user adoption.
 
-4. Subject to Section 5, any modified version of the Program
-shall incorporate and implement all of, and only operate in
-accordance with, the Supported Parameters, as implemented in
-the Reference Versions. For the avoidance of doubt, as an
-example, if the modified version involves the use of crypto-
-graphic tokens (such as DATA), such tokens must be set out in
-the Supported Parameters. Any breach of this Section 4 is
-considered a material breach of these Additional Terms.
+4. Commercial Licensing: Notwithstanding the above, entities interested in using the Program beyond
+   the scope allowed under this license may contact Usher Labs Pty Ltd for a commercial licensing agreement
+   at ryan@usher.so. This includes use cases that may require operating outside the defined operating
+   parameters for specific commercial purposes.
 
-5. Notwithstanding anything to the contrary in Section 4,
-modification and propagation of the Program for development
-and testing purposes (meaning e.g., creation of small-scale
-prototypes or proofs of concept) is allowed without implementing
-the Supported Parameters; provided, however, that the use of
-such modified version shall be limited only to the time period
-necessary for such development or testing purposes.
+## INTEROPERABILITY WITH STREAMR NETWORK
 
-6. Any violation or breach of these Additional Terms shall be
-deemed a violation or breach of the License Terms.
+This Program is designed as an extension to and may be used in conjunction with the Streamr Node,
+operating under the Streamr Network Open Source License. Our licensing applies exclusively to the
+software developed and copyrighted by Usher Labs Pty Ltd, intended for use within The Network.
+Any use of Streamr Node software, or other software licensed under the Streamr Network Open Source License,
+remains subject to the terms of that license. See the included `LICENSE-STREAMR.txt` for the Streamr license terms.
+
+## ADDITIONAL TERMS
+
+1. These additional terms shall be in addition to and take precedence over the GNU Affero General
+   Public License, Version 3, in the context of the software developed by Usher Labs Pty Ltd. The
+   License Terms of the GNU Affero General Public License, Version 3, are incorporated herein by
+   reference for the software developed under this license.
+
+2. Modifications to the Program for the purpose of development, testing, or prototyping are
+   permitted, provided they do not breach the operating parameters or the intellectual property
+   rights of Usher Labs Pty Ltd.
+
+3. Violations of these terms regarding software developed and copyrighted by Usher Labs Pty Ltd
+   are considered breaches of this license and may result in revocation of the rights granted herein.
+
+---
+
+Note: This license has been specifically crafted for the software developed by Usher Labs Pty Ltd as
+an extension to the Streamr Node. Users and developers are encouraged to review the terms of the Streamr
+Network Open Source License for any software components developed by Streamr that may be used in conjunction
+with our Program.

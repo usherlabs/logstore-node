@@ -2,10 +2,11 @@ import { LogStoreClient } from '@logsn/client';
 import { Tracker } from '@streamr/network-tracker';
 import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { providers, Wallet } from 'ethers';
+import { defer, firstValueFrom, map, mergeAll, toArray } from 'rxjs';
 import StreamrClient, {
-	CONFIG_TEST as STREAMR_CONFIG_TEST,
 	Stream,
 	StreamPermission,
+	CONFIG_TEST as STREAMR_CONFIG_TEST,
 } from 'streamr-client';
 
 import { LogStoreNode } from '../../../src/node';
@@ -17,7 +18,6 @@ import {
 	startLogStoreBroker,
 	startTestTracker,
 } from '../../utils';
-import { defer, firstValueFrom, map, mergeAll, toArray } from 'rxjs';
 
 jest.setTimeout(60000);
 

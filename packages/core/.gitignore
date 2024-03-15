@@ -1,1 +1,3 @@
 .data
+src/plugins/logStore/programs
+!.env.test.example
