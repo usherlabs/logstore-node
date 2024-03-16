@@ -12,8 +12,8 @@ tokio-util = "0.7"
 serde = { version = "1.0.159", features = ["derive"] }
 futures-util = "0.3.30"
 hyper = { version = "0.14", features = ["client", "http1"] }
-tlsn-core = { git = "https://github.com/tlsnotary/tlsn", rev = "6152883" }
-tlsn-prover = { git = "https://github.com/tlsnotary/tlsn", rev = "6152883" }
+tlsn-core = { git = "https://github.com/usherlabs/tlsn", rev = "6152883" }
+tlsn-prover = { git = "https://github.com/usherlabs/tlsn", rev = "6152883" }
 time = { version = "0.3", features = ["wasm-bindgen"] }
 tokio = { version = "1", features = ["full"] }
 web-time = "0.2"

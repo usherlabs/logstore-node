@@ -21,11 +21,14 @@ import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
 import { StandAloneProver } from './StandAloneProver';
 
 const logger = new Logger(module);
+type proverModeType = 'dev' | 'prod';
 // TODO make notary connection mode a more global setting?
 // this variable is responsible for the prover's connection to the notary server
 // if it is dev, then the notary server knows to use the default ssl certificate in the fixtures
 // and if it is not, it will use the domain passed in which is that of the closest notary node gotten from the heartbeat
-const MODE: 'dev' | 'prod' = 'dev';
+const PROVER_MODE: proverModeType =
+	process.env.PROVER_MODE == 'dev' ? 'dev' : 'prod';
+const OVERRIDE_NOTARY_URL = process.env.NOTARY_URL;
 
 export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
@@ -90,8 +93,9 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 
 		// when starting the prover server, we need to provide the notary url to connect to
 		const notaryNodeURL = new URL(String(notaryNode.url));
-		const notaryURL = `${notaryNodeURL.hostname}:${NOTARY_PORT}`;
-		this.proverServer.start(['--url', notaryURL, '--mode', MODE]);
+		const notaryURL =
+			OVERRIDE_NOTARY_URL || `${notaryNodeURL.hostname}:${NOTARY_PORT}`;
+		this.proverServer.start(['--url', notaryURL, '--mode', PROVER_MODE]);
 	}
 
 	override async stop(): Promise<void> {

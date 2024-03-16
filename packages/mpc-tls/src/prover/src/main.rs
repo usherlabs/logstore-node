@@ -1,12 +1,24 @@
 use crate::handlers::proxy::handle_notarization_request;
 use crate::proxy::{get_port, ServerConfig};
-use actix_web::{web, App, HttpServer};
+use actix_web::{route, web, App, HttpResponse, HttpServer, Responder};
 use clap::{App as ClapApp, Arg};
 
 pub mod core;
 pub mod handlers;
 pub mod message;
 pub mod proxy;
+
+#[route(
+    "/",
+    method = "GET",
+    method = "POST",
+    method = "PUT",
+    method = "PATCH",
+    method = "DELETE"
+)]
+async fn ping() -> impl Responder {
+    HttpResponse::Created().body("pong\n")
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -59,8 +71,9 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(config.clone()))
             .service(handle_notarization_request)
+            .service(ping)
     })
-    .bind(format!("127.0.0.1:{port}"))?
+    .bind(format!("0.0.0.0:{port}"))?
     .run()
     .await;
 

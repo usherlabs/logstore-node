@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # install gcompat, because protoc needs a real glibc or compatible layer
-apk add gcompat
+# gcompat install failing? is it really needed? because protoc builds fine without it
+# apt-get install gcompat
 
 # install a recent protoc (use a version that fits your needs)
 export PB_REL="https://github.com/protocolbuffers/protobuf/releases"

@@ -96,6 +96,5 @@ WORKDIR /home/node
 
 COPY --chown=node:node docker/start-in-docker.sh /home/node/start-in-docker
 
-USER root
 ENTRYPOINT [ "/bin/bash" ]
 CMD [ "start-in-docker" ]
