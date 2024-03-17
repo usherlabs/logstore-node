@@ -24,7 +24,10 @@ supportive of The Network's goals and Usher Labs' interests.
 
 1. This license permits the creation, modification, and distribution of the software (“Program”)
    provided it adheres to the operating parameters defined herein, aimed at ensuring the Program's
-   compatibility and interoperability within The Network ecosystem.
+   compatibility and interoperability within The Network ecosystem. These terms shall be in addition
+   to and take precedence over the GNU Affero General Public License, Version 3, in the context of
+   the software developed by Usher Labs Pty Ltd. The License Terms of the GNU Affero General Public
+   License, Version 3, are incorporated herein by reference for the software developed under this license.
 
 2. "The Network" refers to the Log Store Network or any future iterations or rebrandings of the
    network under the oversight of Usher Labs Pty Ltd. The terms of this license will continue
@@ -50,6 +53,13 @@ supportive of The Network's goals and Usher Labs' interests.
    at ryan@usher.so. This includes use cases that may require operating outside the defined operating
    parameters for specific commercial purposes.
 
+5. Modifications to the Program for the purpose of development, testing, or prototyping are
+   permitted, provided they do not breach the operating parameters or the intellectual property
+   rights of Usher Labs Pty Ltd.
+
+6. Violations of these terms regarding software developed and copyrighted by Usher Labs Pty Ltd
+   are considered breaches of this license and may result in revocation of the rights granted herein.
+
 ## INTEROPERABILITY WITH STREAMR NETWORK
 
 This Program is designed as an extension to and may be used in conjunction with the Streamr Node,
@@ -57,20 +67,6 @@ operating under the Streamr Network Open Source License. Our licensing applies e
 software developed and copyrighted by Usher Labs Pty Ltd, intended for use within The Network.
 Any use of Streamr Node software, or other software licensed under the Streamr Network Open Source License,
 remains subject to the terms of that license. See the included `LICENSE-STREAMR.txt` for the Streamr license terms.
-
-## ADDITIONAL TERMS
-
-1. These additional terms shall be in addition to and take precedence over the GNU Affero General
-   Public License, Version 3, in the context of the software developed by Usher Labs Pty Ltd. The
-   License Terms of the GNU Affero General Public License, Version 3, are incorporated herein by
-   reference for the software developed under this license.
-
-2. Modifications to the Program for the purpose of development, testing, or prototyping are
-   permitted, provided they do not breach the operating parameters or the intellectual property
-   rights of Usher Labs Pty Ltd.
-
-3. Violations of these terms regarding software developed and copyrighted by Usher Labs Pty Ltd
-   are considered breaches of this license and may result in revocation of the rights granted herein.
 
 ---
 
