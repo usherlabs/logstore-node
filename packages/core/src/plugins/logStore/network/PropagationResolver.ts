@@ -1,4 +1,3 @@
-import { verify } from '@logsn/client';
 import {
 	QueryPropagate,
 	QueryRequest,
@@ -6,13 +5,14 @@ import {
 	SystemMessage,
 	SystemMessageType,
 } from '@logsn/protocol';
-import { createSignaturePayload, StreamMessage } from '@streamr/protocol';
-import { EthereumAddress, Logger, toEthereumAddress } from '@streamr/utils';
+import { StreamMessage } from '@streamr/protocol';
+import { Logger } from '@streamr/utils';
 import { MessageMetadata } from 'streamr-client';
 
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import { LogStore } from '../LogStore';
 import { Heartbeat } from './Heartbeat';
+import { QueryResolutionState } from './QueryResolutionState';
 
 const logger = new Logger(module);
 
@@ -20,127 +20,131 @@ type RequestId = string;
 const TIMEOUT = 30 * 1000;
 const RESPONSES_THRESHOLD = 1.0;
 
-class QueryPropagationState {
-	private primaryResponseHashMap: Map<string, string> | null = null;
-	private awaitingMessageIds: Map<string, string>;
-	public nodesResponseState: Map<EthereumAddress, boolean>;
-	private foreignResponseBuffer: [QueryResponse, MessageMetadata][] = [];
-	private propagateBuffer: QueryPropagate[] = [];
-	public messagesReadyToBeStored: [string, string][] = [];
+// class QueryPropagationState {
+// 	private primaryResponseHashMap: Map<string, string> | null = null;
+// 	private awaitingMessageIds: Map<string, string>;
+// 	public nodesResponseState: Map<EthereumAddress, boolean>;
+// 	private foreignResponseBuffer: [QueryResponse, MessageMetadata][] = [];
+// 	private propagateBuffer: QueryPropagate[] = [];
+// 	public messagesReadyToBeStored: [string, string][] = [];
 
-	constructor(onlineNodes: EthereumAddress[]) {
-		this.awaitingMessageIds = new Map<string, string>();
-		this.nodesResponseState = new Map<EthereumAddress, boolean>(
-			onlineNodes.map((node) => [node, false])
-		);
-	}
+// 	constructor(onlineNodes: EthereumAddress[]) {
+// 		this.awaitingMessageIds = new Map<string, string>();
+// 		this.nodesResponseState = new Map<EthereumAddress, boolean>(
+// 			onlineNodes.map((node) => [node, false])
+// 		);
+// 	}
 
-	public onPrimaryQueryResponse(primaryResponse: QueryResponse) {
-		// this should happen only once
-		if (this.primaryResponseHashMap) {
-			logger.error('Primary response already set');
-			return;
-		}
+// 	public onPrimaryQueryResponse(primaryResponse: QueryResponse) {
+// 		// this should happen only once
+// 		if (this.primaryResponseHashMap) {
+// 			logger.error('Primary response already set');
+// 			return;
+// 		}
 
-		this.nodesResponseState.set(
-			toEthereumAddress(primaryResponse.requestPublisherId),
-			true
-		);
+// 		this.nodesResponseState.set(
+// 			toEthereumAddress(primaryResponse.requestPublisherId),
+// 			true
+// 		);
 
-		this.primaryResponseHashMap = primaryResponse.hashMap;
-		this.foreignResponseBuffer.forEach((args) =>
-			this.onForeignQueryResponse(...args)
-		);
-		this.propagateBuffer.forEach((queryPropagate) =>
-			this.onPropagate(queryPropagate)
-		);
-	}
+// 		this.primaryResponseHashMap = primaryResponse.hashMap;
+// 		this.foreignResponseBuffer.forEach((args) =>
+// 			this.onForeignQueryResponse(...args)
+// 		);
+// 		this.propagateBuffer.forEach((queryPropagate) =>
+// 			this.onPropagate(queryPropagate)
+// 		);
+// 	}
 
-	public onForeignQueryResponse(
-		queryResponse: QueryResponse,
-		metadata: MessageMetadata
-	) {
-		if (!this.primaryResponseHashMap) {
-			this.foreignResponseBuffer.push([queryResponse, metadata]);
-			return;
-		}
+// 	public onForeignQueryResponse(
+// 		queryResponse: QueryResponse,
+// 		metadata: MessageMetadata
+// 	) {
+// 		if (!this.primaryResponseHashMap) {
+// 			this.foreignResponseBuffer.push([queryResponse, metadata]);
+// 			return;
+// 		}
 
-		// We add here the messageIds that are not in the primary response
-		for (const [messageId, messageHash] of queryResponse.hashMap) {
-			if (!this.primaryResponseHashMap.has(messageId)) {
-				this.awaitingMessageIds.set(messageId, messageHash);
-			}
-		}
+// 		// We add here the messageIds that are not in the primary response
+// 		for (const [messageId, messageHash] of queryResponse.hashMap) {
+// 			if (!this.primaryResponseHashMap.has(messageId)) {
+// 				this.awaitingMessageIds.set(messageId, messageHash);
+// 			}
+// 		}
 
-		this.nodesResponseState.set(metadata.publisherId, true);
-	}
+// 		this.nodesResponseState.set(metadata.publisherId, true);
+// 	}
 
-	public onPropagate(queryPropagate: QueryPropagate) {
-		if (!this.primaryResponseHashMap) {
-			this.propagateBuffer.push(queryPropagate);
-			// we don't have the primary response yet, so we can't verify the propagated messages and store them
-			return;
-		}
-		for (const [messageIdStr, serializedMessage] of queryPropagate.payload) {
-			if (this.awaitingMessageIds.has(messageIdStr)) {
-				const isVerified = this.verifyPropagatedMessage(serializedMessage);
-				if (isVerified) {
-					this.messagesReadyToBeStored.push([messageIdStr, serializedMessage]);
-				}
+// 	public onPropagate(queryPropagate: QueryPropagate) {
+// 		if (!this.primaryResponseHashMap) {
+// 			this.propagateBuffer.push(queryPropagate);
+// 			// we don't have the primary response yet, so we can't verify the propagated messages and store them
+// 			return;
+// 		}
+// 		for (const [messageIdStr, serializedMessage] of queryPropagate.payload) {
+// 			if (this.awaitingMessageIds.has(messageIdStr)) {
+// 				const isVerified = this.verifyPropagatedMessage(serializedMessage);
+// 				if (isVerified) {
+// 					this.messagesReadyToBeStored.push([messageIdStr, serializedMessage]);
+// 				}
 
-				// we delete the message from the awaiting list regardless of verification result
-				this.awaitingMessageIds.delete(messageIdStr);
-			}
-		}
-	}
+// 				// we delete the message from the awaiting list regardless of verification result
+// 				this.awaitingMessageIds.delete(messageIdStr);
+// 			}
+// 		}
+// 	}
 
-	private verifyPropagatedMessage(serializedMessage: string) {
-		const message = StreamMessage.deserialize(serializedMessage);
-		const messageId = message.getMessageID();
-		const prevMsgRef = message.getPreviousMessageRef() ?? undefined;
-		const newGroupKey = message.getNewGroupKey() ?? undefined;
-		const serializedContent = message.getSerializedContent();
+// 	private verifyPropagatedMessage(serializedMessage: string) {
+// 		const message = StreamMessage.deserialize(serializedMessage);
+// 		const messageId = message.getMessageID();
+// 		const prevMsgRef = message.getPreviousMessageRef() ?? undefined;
+// 		const newGroupKey = message.getNewGroupKey() ?? undefined;
+// 		const serializedContent = message.getSerializedContent();
 
-		const messagePayload = createSignaturePayload({
-			messageId,
-			serializedContent,
-			prevMsgRef,
-			newGroupKey,
-		});
+// 		const messagePayload = createSignaturePayload({
+// 			messageId,
+// 			serializedContent,
+// 			prevMsgRef,
+// 			newGroupKey,
+// 		});
 
-		const messagePublisherAddress = message.getPublisherId();
-		const messageSignature = message.signature;
+// 		const messagePublisherAddress = message.getPublisherId();
+// 		const messageSignature = message.signature;
 
-		return verify(messagePublisherAddress, messagePayload, messageSignature);
-	}
+// 		return verify(messagePublisherAddress, messagePayload, messageSignature);
+// 	}
 
-	/**
-	 * We know if we are ready if we have received responses from sufficient nodes
-	 * that previously said that this query was missing messages
-	 */
-	public get isReady() {
-		// this means there's no one identified as online. This node is alone and there's no chance to receive a propagate.
-		if (this.nodesResponseState.size === 0) {
-			return true;
-		}
+// 	/**
+// 	 * We know if we are ready if we have received responses from sufficient nodes
+// 	 * that previously said that this query was missing messages
+// 	 */
+// 	public get isReady() {
+// 		// this means there's no one identified as online. This node is alone and there's no chance to receive a propagate.
+// 		if (this.nodesResponseState.size === 0) {
+// 			return true;
+// 		}
 
-		const respondedCount = Array.from(this.nodesResponseState.values()).filter(
-			Boolean
-		).length;
-		const percentResponded = respondedCount / this.nodesResponseState.size;
+// 		const respondedCount = Array.from(this.nodesResponseState.values()).filter(
+// 			Boolean
+// 		).length;
+// 		const percentResponded = respondedCount / this.nodesResponseState.size;
 
-		return (
-			percentResponded >= RESPONSES_THRESHOLD &&
-			this.awaitingMessageIds.size === 0
-		);
-	}
-}
+// 		return (
+// 			percentResponded >= RESPONSES_THRESHOLD &&
+// 			this.awaitingMessageIds.size === 0
+// 		);
+// 	}
+// }
 
 export class PropagationResolver {
-	private readonly queryPropagationStateMap: Map<
+	private readonly queryResolutionStateMap: Map<
 		RequestId,
-		QueryPropagationState
+		QueryResolutionState
 	>;
+	// private readonly queryPropagationStateMap: Map<
+	// 	RequestId,
+	// 	QueryResolutionStateOld
+	// >;
 	private readonly queryCallbacks: Map<
 		RequestId,
 		(participatedNodes: string[]) => void
@@ -151,7 +155,11 @@ export class PropagationResolver {
 		private readonly heartbeat: Heartbeat,
 		private readonly subscriber: BroadbandSubscriber
 	) {
-		this.queryPropagationStateMap = new Map<RequestId, QueryPropagationState>();
+		this.queryResolutionStateMap = new Map<RequestId, QueryResolutionState>();
+		// this.queryPropagationStateMap = new Map<
+		// 	RequestId,
+		// 	QueryResolutionStateOld
+		// >();
 		this.queryCallbacks = new Map<RequestId, () => void>();
 	}
 
@@ -182,7 +190,7 @@ export class PropagationResolver {
 						requestId: queryRequest.requestId,
 					});
 					logger.debug('Current state of the query on timeout', {
-						state: this.queryPropagationStateMap.get(queryRequest.requestId),
+						state: this.queryResolutionStateMap.get(queryRequest.requestId),
 					});
 					this.clean(queryRequest.requestId);
 					reject('Propagation timeout');
@@ -215,19 +223,19 @@ export class PropagationResolver {
 	 * to be the primary node handling the request.
 	 * @param queryResponse
 	 */
-	public setPrimaryResponse(queryResponse: QueryResponse) {
-		const queryState = this.getOrCreateQueryState(queryResponse.requestId);
-		queryState.onPrimaryQueryResponse(queryResponse);
+	public setPrimaryHashMap(requestId: RequestId, hashMap: Map<string, string>) {
+		const queryState = this.getOrCreateQueryState(requestId);
+		queryState.setPrimaryHashMap(hashMap);
 
 		// it may be ready if there are no other nodes responding here
-		this.finishIfReady(queryState, queryResponse.requestId);
+		this.finishIfReady(queryState, requestId);
 	}
 
 	private getOrCreateQueryState(requestId: RequestId) {
 		const queryState =
-			this.queryPropagationStateMap.get(requestId) ??
-			new QueryPropagationState(this.heartbeat.onlineNodes);
-		this.queryPropagationStateMap.set(requestId, queryState);
+			this.queryResolutionStateMap.get(requestId) ??
+			new QueryResolutionState(this.heartbeat.onlineNodes);
+		this.queryResolutionStateMap.set(requestId, queryState);
 		return queryState;
 	}
 
@@ -242,7 +250,7 @@ export class PropagationResolver {
 		metadata: MessageMetadata
 	) {
 		const queryState = this.getOrCreateQueryState(queryResponse.requestId);
-		queryState.onForeignQueryResponse(queryResponse, metadata);
+		queryState.addForeignResponse(metadata.publisherId, queryResponse);
 
 		// May be ready if this response was the last one missing, and it produced
 		// no propagation requirement
@@ -257,19 +265,20 @@ export class PropagationResolver {
 			return;
 		}
 
-		const queryState = this.queryPropagationStateMap.get(
+		const queryState = this.queryResolutionStateMap.get(
 			queryPropagate.requestId
 		);
+		// const queryState = this.queryPropagationStateMap.get(
+		// 	queryPropagate.requestId
+		// );
 		if (!queryState) {
 			return;
 		}
 
-		queryState.onPropagate(queryPropagate);
-		// we copy, so any async operation don't cause racing conditions
-		// making we store twice in meanwhile
-		const messagesToBeStored = [...queryState.messagesReadyToBeStored];
-		// we just don't want to process them twice
-		queryState.messagesReadyToBeStored = [];
+		const propagatedMessages = queryState.addPropagation(
+			metadata.publisherId,
+			queryPropagate
+		);
 
 		// Because messages are batched by the BatchManager,
 		// a promise returned by logStore.store() resolves when the batch stores.
@@ -278,7 +287,7 @@ export class PropagationResolver {
 		// ? As profiled in https://linear.app/usherlabs/issue/LABS-476/solve-insert-management-for-query-propagate#comment-f7f277df
 		// All promises in the array resolve simultaneously once the Batch calls it's insert() method for the batched messages.
 		await Promise.all(
-			messagesToBeStored.map(([_, messageStr]) => {
+			propagatedMessages.map((messageStr) => {
 				const message = StreamMessage.deserialize(messageStr);
 				return this.logStore.store(message);
 			})
@@ -292,20 +301,22 @@ export class PropagationResolver {
 	// - we received all necessary responses from sufficient nodes
 	// - we have no more missing messages waiting for propagation.
 	private finishIfReady(
-		queryState: QueryPropagationState,
+		queryState: QueryResolutionState,
 		requestId: RequestId
 	) {
 		if (queryState.isReady) {
 			const callback = this.queryCallbacks.get(requestId);
 			this.clean(requestId);
 			if (callback) {
-				callback(Array.from(queryState.nodesResponseState.keys()));
+				callback(queryState.participatedNodes);
+				// callback(Array.from(queryState.nodesResponseState.keys()));
 			}
 		}
 	}
 
 	private clean(requestId: RequestId) {
-		this.queryPropagationStateMap.delete(requestId);
+		this.queryResolutionStateMap.delete(requestId);
+		// this.queryPropagationStateMap.delete(requestId);
 		this.queryCallbacks.delete(requestId);
 	}
 }

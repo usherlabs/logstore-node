@@ -268,7 +268,7 @@ describe(PropagationResolver, () => {
 					msgHashMap_2,
 					msgHashMap_3,
 				]);
-				propagationResolver.setPrimaryResponse(primaryResponse);
+				propagationResolver.setPrimaryHashMap(primaryResponse);
 			});
 
 			await queryRequestManager.publishQueryRequestAndWaitForPropagateResolution(
@@ -292,7 +292,7 @@ describe(PropagationResolver, () => {
 					msgHashMap_2,
 					msgHashMap_3,
 				]);
-				propagationResolver.setPrimaryResponse(primaryResponse);
+				propagationResolver.setPrimaryHashMap(primaryResponse);
 
 				emulateQueryResponse(primaryBrokerId, foreignBrokerId_1, [
 					msgHashMap_1,
@@ -326,7 +326,7 @@ describe(PropagationResolver, () => {
 				const primaryResponse = buildQueryResponse(primaryBrokerId, [
 					msgHashMap_1,
 				]);
-				propagationResolver.setPrimaryResponse(primaryResponse);
+				propagationResolver.setPrimaryHashMap(primaryResponse);
 
 				emulateQueryResponse(primaryBrokerId, foreignBrokerId_1, [
 					msgHashMap_1,
@@ -372,7 +372,7 @@ describe(PropagationResolver, () => {
 				const primaryResponse = buildQueryResponse(primaryBrokerId, [
 					msgHashMap_1,
 				]);
-				propagationResolver.setPrimaryResponse(primaryResponse);
+				propagationResolver.setPrimaryHashMap(primaryResponse);
 
 				emulateQueryResponse(primaryBrokerId, foreignBrokerId_1, [
 					msgHashMap_1,
@@ -422,7 +422,7 @@ describe(PropagationResolver, () => {
 				const primaryResponse = buildQueryResponse(primaryBrokerId, [
 					msgHashMap_1,
 				]);
-				propagationResolver.setPrimaryResponse(primaryResponse);
+				propagationResolver.setPrimaryHashMap(primaryResponse);
 			});
 
 			try {

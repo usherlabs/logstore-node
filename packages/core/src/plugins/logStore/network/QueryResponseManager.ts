@@ -67,17 +67,26 @@ export class QueryResponseManager {
 		}
 	}
 
-	public async publishQueryResponse(queryResponse: QueryResponse) {
+	public async publishQueryResponse(
+		queryResponse: QueryResponse,
+		hashMap: Map<string, string>
+	) {
 		await this.publisher.publish(queryResponse.serialize());
 
 		if (queryResponse.requestPublisherId === this.clientId) {
 			// We are now responding to our own QueryRequest, so we need to add it to the resolver
 			// as we may need to wait for other nodes to respond and wait their propagations
-			this.propagationResolver.setPrimaryResponse(queryResponse);
+			this.propagationResolver.setPrimaryHashMap(
+				queryResponse.requestId,
+				hashMap
+			);
 		} else {
 			// We are responding to a QueryRequest issued by another node, so we need to add it to the dispatcher
 			// as we will need to compare this to the response we receive from the primary node
-			await this.propagationDispatcher.setForeignResponse(queryResponse);
+			await this.propagationDispatcher.setForeignHashMap(
+				queryResponse.requestId,
+				hashMap
+			);
 		}
 	}
 }

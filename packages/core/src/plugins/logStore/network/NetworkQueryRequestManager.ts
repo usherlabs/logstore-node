@@ -6,6 +6,7 @@ import {
 } from '@logsn/protocol';
 import { createSignaturePayload, StreamMessage } from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
+import { ScalableBloomFilter } from 'bloom-filters';
 import { keccak256 } from 'ethers/lib/utils';
 import { Readable } from 'stream';
 import { MessageMetadata } from 'streamr-client';
@@ -53,14 +54,21 @@ export class NetworkQueryRequestManager extends BaseQueryRequestManager {
 		});
 		const readableStream = this.getDataForQueryRequest(queryRequest);
 
-		const hashMap = await this.getHashMap(readableStream);
+		const { hash, hashMap, bloomFilter } = await this.getHashMap(
+			readableStream
+		);
 		const queryResponse = new QueryResponse({
 			requestId: queryRequest.requestId,
 			requestPublisherId: metadata.publisherId,
-			hashMap,
+			hash,
+			// hashMap,
+			bloomFilter: JSON.stringify(bloomFilter),
 		});
 
-		await this.queryResponseManager.publishQueryResponse(queryResponse);
+		await this.queryResponseManager.publishQueryResponse(
+			queryResponse,
+			hashMap
+		);
 	}
 
 	public async publishQueryRequestAndWaitForPropagateResolution(
@@ -73,7 +81,9 @@ export class NetworkQueryRequestManager extends BaseQueryRequestManager {
 	}
 
 	private async getHashMap(data: Readable) {
+		let hash = keccak256([]);
 		const hashMap: Map<string, string> = new Map();
+		const bloomFilter = new ScalableBloomFilter();
 
 		for await (const chunk of data) {
 			const streamMessage = chunk as StreamMessage;
@@ -87,9 +97,11 @@ export class NetworkQueryRequestManager extends BaseQueryRequestManager {
 			const messageId = streamMessage.getMessageID().serialize();
 			const messageHash = keccak256(Uint8Array.from(Buffer.from(payload)));
 
+			hash = keccak256(Uint8Array.from(Buffer.from(hash + messageHash)));
 			hashMap.set(messageId, messageHash);
+			bloomFilter.add(messageHash);
 		}
 
-		return hashMap;
+		return { hash, hashMap, bloomFilter: bloomFilter.saveAsJSON() };
 	}
 }
