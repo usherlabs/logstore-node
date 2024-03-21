@@ -1,5 +1,9 @@
 [workspace]
 resolver = "2"
+members = ["src/prover", "src/notary"]
+
+[profile.release]
+lto = true
+opt-level = 3
 
 
-members = ["src/prover", "src/notary", 'src/contract']

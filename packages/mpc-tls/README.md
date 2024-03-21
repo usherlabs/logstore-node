@@ -22,7 +22,6 @@ sh ./start_prover.sh
 curl -X POST http://localhost:7775/proxy \
 -H "T-PROXY-URL: https://jsonplaceholder.typicode.com/posts" \
 -H "T-STORE: 0x392bd2cb87f5670f321ad521397d30a00c582b34/mpctlsproofspublic" \
--H "T-PROCESS-ID: SAMPLE_PROCESS" \
 -H "T-REDACTED: res:body:id,req:body:userId,res:body:userId, req:header:x-api-key" \
 -H "Content-Type: application/json" \
 -H "X-API-KEY: secret" \
