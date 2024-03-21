@@ -15,4 +15,4 @@ unzip protoc-3.20.0-linux-x86_64.zip -d /usr/local
 export PATH="$PATH:/usr/local/bin/"
 
 # build project for production
-cargo build --release
+cargo build --release --target x86_64-unknown-linux-gnu
