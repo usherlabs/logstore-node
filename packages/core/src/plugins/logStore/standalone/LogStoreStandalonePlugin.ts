@@ -50,7 +50,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		};
 	}
 
-	public async validateUserQueryAccess() {
+	public async validateQueryRequest() {
 		return { valid: true } as const;
 	}
 

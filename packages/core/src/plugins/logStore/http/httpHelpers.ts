@@ -74,9 +74,13 @@ export const sendSuccess = (
 	});
 };
 
-export const sendError = (message: string, res: Response) => {
+export const sendError = (
+	message: string,
+	res: Response,
+	errorCode?: number
+) => {
 	logger.error(message);
-	res.status(400).json({
+	res.status(errorCode ?? 400).json({
 		error: message,
 	});
 };

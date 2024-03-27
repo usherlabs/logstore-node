@@ -1,7 +1,8 @@
 import { QueryRequest } from '@logsn/protocol';
 import { StreamPartID, StreamPartIDUtils, toStreamID } from '@streamr/protocol';
-import { EthereumAddress, Logger } from '@streamr/utils';
+import { Logger, toEthereumAddress } from '@streamr/utils';
 import { Schema } from 'ajv';
+import { Request } from 'express';
 import { Stream, StreamID } from 'streamr-client';
 
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
@@ -291,18 +292,32 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		};
 	}
 
-	public async validateUserQueryAccess(address: EthereumAddress) {
-		const balance = await this.logStoreClient.getQueryBalanceOf(address);
+	public async validateQueryRequest(req: Request) {
+		const consumerAddress = toEthereumAddress(req.consumer!);
+
+		const balance = await this.logStoreClient.getQueryBalanceOf(
+			consumerAddress
+		);
 		if (balance <= 0) {
 			return {
 				valid: false,
 				message: 'Not enough balance staked for query',
-			} as const;
-		} else {
-			return {
-				valid: true,
+				errorCode: 402,
 			} as const;
 		}
+
+		const streamId = req.params.id;
+		const isStreamIncluded = this.isStreamIncluded(toStreamID(streamId));
+
+		if (!isStreamIncluded) {
+			return {
+				valid: false,
+				message: 'Stream is excluded by the network configuration',
+				errorCode: 404,
+			} as const;
+		}
+
+		return { valid: true } as const;
 	}
 
 	private logMetrics() {
