@@ -58,6 +58,7 @@ export interface LogStorePluginTestConfig {
 				type: 'sqlite';
 				dbPath?: string;
 		  };
+
 	refreshInterval?: number;
 }
 
