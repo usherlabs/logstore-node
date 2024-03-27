@@ -101,6 +101,13 @@
 							"type": "string",
 							"enum": ["network"]
 						},
+						"includeOnly": {
+							"type": "array",
+							"description": "List of glob-like patterns representing the streams to be tracked by this node. Note: it act as a filter, if the list is empty, all streams fetched from the contract will be tracked.",
+							"items": {
+								"type": "string"
+							}
+						},
 						"pool": {
 							"type": "object",
 							"description": "Kyve Pool configuration for network participant mode",
