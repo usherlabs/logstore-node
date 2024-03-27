@@ -7,6 +7,7 @@ import {
 import { createSignaturePayload, StreamMessage } from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
 import { keccak256 } from 'ethers/lib/utils';
+import { EMPTY } from 'rxjs';
 import { Readable } from 'stream';
 import { MessageMetadata } from 'streamr-client';
 
@@ -24,7 +25,12 @@ export class NetworkQueryRequestManager extends BaseQueryRequestManager {
 		private readonly queryResponseManager: QueryResponseManager,
 		private readonly propagationResolver: PropagationResolver,
 		private readonly publisher: BroadbandPublisher,
-		private readonly subscriber: BroadbandSubscriber
+		private readonly subscriber: BroadbandSubscriber,
+		// This function is used to determine whether the query response should be published.
+		// There are cases in which this node can choose not to participate in the query response propagation.
+		private readonly shouldPublishQueryResponseFn: (
+			queryRequest: QueryRequest
+		) => boolean
 	) {
 		//
 		super();
@@ -51,7 +57,9 @@ export class NetworkQueryRequestManager extends BaseQueryRequestManager {
 			content,
 			metadata,
 		});
-		const readableStream = this.getDataForQueryRequest(queryRequest);
+		const readableStream = this.shouldPublishQueryResponseFn(queryRequest)
+			? this.getDataForQueryRequest(queryRequest)
+			: Readable.from(EMPTY);
 
 		const hashMap = await this.getHashMap(readableStream);
 		const queryResponse = new QueryResponse({

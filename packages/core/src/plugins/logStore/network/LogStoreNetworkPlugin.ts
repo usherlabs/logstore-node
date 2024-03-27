@@ -1,8 +1,8 @@
 import { QueryRequest } from '@logsn/protocol';
-import { StreamPartID, StreamPartIDUtils } from '@streamr/protocol';
+import { StreamPartID, StreamPartIDUtils, toStreamID } from '@streamr/protocol';
 import { EthereumAddress, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
-import { Stream } from 'streamr-client';
+import { Stream, StreamID } from 'streamr-client';
 
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
@@ -122,7 +122,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.queryResponseManager,
 			this.propagationResolver,
 			this.systemPublisher,
-			this.systemSubscriber
+			this.systemSubscriber,
+			(queryRequest) => this.isStreamIncluded(toStreamID(queryRequest.streamId))
 		);
 
 		this.reportPoller = new ReportPoller(
@@ -132,6 +133,14 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.systemPublisher,
 			this.systemSubscriber
 		);
+	}
+
+	private isStreamIncluded(streamId: StreamID): boolean {
+		const includeOnlyGlobs = this.networkConfig.includeOnly;
+		if (!includeOnlyGlobs) {
+			return true;
+		}
+		return globsMatch(streamId, ...includeOnlyGlobs);
 	}
 
 	get networkConfig(): NetworkModeConfig {
@@ -176,7 +185,6 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 				)
 			);
 		}
-
 		this.metricsTimer = setInterval(
 			this.logMetrics.bind(this),
 			METRICS_INTERVAL
@@ -218,16 +226,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	): Promise<LogStoreNetworkConfig> {
 		const node = await this.streamrClient.getNode();
 
-		const streamFilter = (streamPart: StreamPartID): boolean => {
-			const includeOnlyGlobs = this.networkConfig.includeOnly;
-			if (!includeOnlyGlobs) {
-				return true;
-			}
-			return globsMatch(
-				StreamPartIDUtils.getStreamID(streamPart),
-				...includeOnlyGlobs
-			);
-		};
+		const streamFilter = (streamPartId: StreamPartID) =>
+			this.isStreamIncluded(StreamPartIDUtils.getStreamID(streamPartId));
 
 		const logStoreConfig = new LogStoreNetworkConfig(
 			this.pluginConfig.cluster.clusterSize,
