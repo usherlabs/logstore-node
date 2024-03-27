@@ -1,5 +1,5 @@
 import { QueryRequest } from '@logsn/protocol';
-import { StreamPartIDUtils } from '@streamr/protocol';
+import { StreamPartID, StreamPartIDUtils } from '@streamr/protocol';
 import { EthereumAddress, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
 import { Stream } from 'streamr-client';
@@ -7,6 +7,7 @@ import { Stream } from 'streamr-client';
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
+import { globsMatch } from '../../../utils/filterByGlob';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
 import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
@@ -217,6 +218,17 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	): Promise<LogStoreNetworkConfig> {
 		const node = await this.streamrClient.getNode();
 
+		const streamFilter = (streamPart: StreamPartID): boolean => {
+			const includeOnlyGlobs = this.networkConfig.includeOnly;
+			if (!includeOnlyGlobs) {
+				return true;
+			}
+			return globsMatch(
+				StreamPartIDUtils.getStreamID(streamPart),
+				...includeOnlyGlobs
+			);
+		};
+
 		const logStoreConfig = new LogStoreNetworkConfig(
 			this.pluginConfig.cluster.clusterSize,
 			this.pluginConfig.cluster.myIndexInCluster,
@@ -257,7 +269,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 						StreamPartIDUtils.getStreamID(streamPart)
 					);
 				},
-			}
+			},
+			streamFilter
 		);
 		await logStoreConfig.start();
 		return logStoreConfig;
