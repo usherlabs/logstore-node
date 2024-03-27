@@ -49,6 +49,7 @@ export class LogStoreNetworkConfig implements LogStoreConfig {
 		logStoreClient: LogStoreClient,
 		streamrClient: StreamrClient,
 		listener: LogStoreConfigListener,
+		// helps us not even include stream parts that we're not interested in
 		streamFilter?: (streamPart: StreamPartID) => boolean
 	) {
 		this.clusterSize = clusterSize;
@@ -60,6 +61,7 @@ export class LogStoreNetworkConfig implements LogStoreConfig {
 			(streams, block) => {
 				const streamParts = streams
 					.flatMap((stream: Stream) => [...this.createMyStreamParts(stream)])
+					// if there's a filter, apply it, otherwise include everything
 					.filter((streamPart) => streamFilter?.(streamPart) ?? true);
 				this.handleDiff(
 					this.synchronizer.ingestSnapshot(
