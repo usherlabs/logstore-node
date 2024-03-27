@@ -15,7 +15,7 @@ import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { Heartbeat } from './Heartbeat';
 import { KyvePool } from './KyvePool';
-import { createIncompatibleNodeUrlLogger } from './log-utils/checkConfigLogger';
+import { createIncompatibleNodeUrlLogger } from './log-utils/checkNodeUrlCompatibility';
 import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
 import { MessageMetricsCollector } from './MessageMetricsCollector';
 import { NetworkQueryRequestManager } from './NetworkQueryRequestManager';
