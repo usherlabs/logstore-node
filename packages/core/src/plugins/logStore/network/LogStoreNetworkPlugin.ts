@@ -1,17 +1,21 @@
 import { QueryRequest } from '@logsn/protocol';
-import { StreamPartIDUtils } from '@streamr/protocol';
-import { EthereumAddress, Logger } from '@streamr/utils';
+import { StreamPartID, StreamPartIDUtils, toStreamID } from '@streamr/protocol';
+import { Logger, toEthereumAddress } from '@streamr/utils';
 import { Schema } from 'ajv';
-import { Stream } from 'streamr-client';
+import { Request } from 'express';
+import { Subscription } from 'rxjs';
+import { Stream, StreamID } from 'streamr-client';
 
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
+import { globsMatch } from '../../../utils/filterByGlob';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
 import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { Heartbeat } from './Heartbeat';
 import { KyvePool } from './KyvePool';
+import { createIncompatibleNodeUrlLogger } from './log-utils/checkNodeUrlCompatibility';
 import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
 import { MessageMetricsCollector } from './MessageMetricsCollector';
 import { NetworkQueryRequestManager } from './NetworkQueryRequestManager';
@@ -41,6 +45,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private readonly propagationResolver: PropagationResolver;
 	private readonly propagationDispatcher: PropagationDispatcher;
 	private readonly reportPoller: ReportPoller;
+	private readonly otherSubscriptions: Subscription[] = [];
 
 	private metricsTimer?: NodeJS.Timer;
 
@@ -121,7 +126,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.queryResponseManager,
 			this.propagationResolver,
 			this.systemPublisher,
-			this.systemSubscriber
+			this.systemSubscriber,
+			(queryRequest) => this.isStreamIncluded(toStreamID(queryRequest.streamId))
 		);
 
 		this.reportPoller = new ReportPoller(
@@ -131,6 +137,22 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.systemPublisher,
 			this.systemSubscriber
 		);
+
+		this.otherSubscriptions.push(
+			createIncompatibleNodeUrlLogger(
+				this.logStoreClient,
+				this.streamrClient,
+				this.networkConfig
+			).subscribe()
+		);
+	}
+
+	private isStreamIncluded(streamId: StreamID): boolean {
+		const includeOnlyGlobs = this.networkConfig.includeOnly;
+		if (!includeOnlyGlobs) {
+			return true;
+		}
+		return globsMatch(streamId, ...includeOnlyGlobs);
 	}
 
 	get networkConfig(): NetworkModeConfig {
@@ -175,7 +197,6 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 				)
 			);
 		}
-
 		this.metricsTimer = setInterval(
 			this.logMetrics.bind(this),
 			METRICS_INTERVAL
@@ -204,6 +225,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 				: Promise.resolve(),
 		]);
 
+		this.otherSubscriptions.forEach((s) => s.unsubscribe());
+
 		await super.stop();
 	}
 
@@ -216,6 +239,9 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		systemStream: Stream
 	): Promise<LogStoreNetworkConfig> {
 		const node = await this.streamrClient.getNode();
+
+		const streamFilter = (streamPartId: StreamPartID) =>
+			this.isStreamIncluded(StreamPartIDUtils.getStreamID(streamPartId));
 
 		const logStoreConfig = new LogStoreNetworkConfig(
 			this.pluginConfig.cluster.clusterSize,
@@ -257,7 +283,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 						StreamPartIDUtils.getStreamID(streamPart)
 					);
 				},
-			}
+			},
+			streamFilter
 		);
 		await logStoreConfig.start();
 		return logStoreConfig;
@@ -278,18 +305,32 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		};
 	}
 
-	public async validateUserQueryAccess(address: EthereumAddress) {
-		const balance = await this.logStoreClient.getQueryBalanceOf(address);
+	public async validateQueryRequest(req: Request) {
+		const consumerAddress = toEthereumAddress(req.consumer!);
+
+		const balance = await this.logStoreClient.getQueryBalanceOf(
+			consumerAddress
+		);
 		if (balance <= 0) {
 			return {
 				valid: false,
 				message: 'Not enough balance staked for query',
-			} as const;
-		} else {
-			return {
-				valid: true,
+				errorCode: 402,
 			} as const;
 		}
+
+		const streamId = req.params.id;
+		const isStreamIncluded = this.isStreamIncluded(toStreamID(streamId));
+
+		if (!isStreamIncluded) {
+			return {
+				valid: false,
+				message: 'Stream is excluded by the network configuration',
+				errorCode: 404,
+			} as const;
+		}
+
+		return { valid: true } as const;
 	}
 
 	private logMetrics() {

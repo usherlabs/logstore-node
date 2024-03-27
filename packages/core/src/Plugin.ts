@@ -14,6 +14,7 @@ export type NetworkModeConfig = {
 	recoveryStream: Stream;
 	systemStream: Stream;
 	nodeManager: LogStoreNodeManager;
+	includeOnly?: string[];
 };
 
 export type StandaloneModeConfig = {

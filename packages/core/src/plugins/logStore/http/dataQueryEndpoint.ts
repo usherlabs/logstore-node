@@ -1,12 +1,7 @@
 /**
  * Endpoints for RESTful data requests
  */
-import {
-	MetricsContext,
-	MetricsDefinition,
-	RateMetric,
-	toEthereumAddress,
-} from '@streamr/utils';
+import { MetricsContext, MetricsDefinition, RateMetric } from '@streamr/utils';
 import { Request, RequestHandler, Response } from 'express';
 
 import { HttpServerEndpoint } from '../../../Plugin';
@@ -111,8 +106,6 @@ const createHandler = (metrics: MetricsDefinition): RequestHandler => {
 
 		const format = getFormat(req.query.format as string | undefined);
 
-		const consumer = toEthereumAddress(req.consumer!);
-
 		const store = logStoreContext.getStore();
 		if (!store) {
 			throw new Error('LogStore context was not initialized');
@@ -120,9 +113,9 @@ const createHandler = (metrics: MetricsDefinition): RequestHandler => {
 
 		const { logStorePlugin } = store;
 
-		const validation = await logStorePlugin.validateUserQueryAccess(consumer);
+		const validation = await logStorePlugin.validateQueryRequest(req);
 		if (!validation.valid) {
-			sendError(validation.message, res);
+			sendError(validation.message, res, validation.errorCode);
 			return;
 		}
 

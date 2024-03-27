@@ -19,6 +19,7 @@ import { MessageListener } from './MessageListener';
 import { MessageProcessor } from './MessageProcessor';
 import { NodeStreamsRegistry } from './NodeStreamsRegistry';
 import { ValidationSchemaManager } from './validation-schema/ValidationSchemaManager';
+import { Request } from 'express';
 
 const logger = new Logger(module);
 
@@ -156,9 +157,9 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 		data: Readable;
 	}>;
 
-	public abstract validateUserQueryAccess(
-		address: EthereumAddress
-	): Promise<{ valid: true } | { valid: false; message: string }>;
+	public abstract validateQueryRequest(
+		request: Request
+	): Promise<{ valid: true } | { valid: false; message: string, errorCode?: number }>;
 
 	private async startStorage(
 		metricsContext: MetricsContext

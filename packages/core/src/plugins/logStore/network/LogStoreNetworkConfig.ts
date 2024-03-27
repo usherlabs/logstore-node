@@ -48,7 +48,9 @@ export class LogStoreNetworkConfig implements LogStoreConfig {
 		pollInterval: number,
 		logStoreClient: LogStoreClient,
 		streamrClient: StreamrClient,
-		listener: LogStoreConfigListener
+		listener: LogStoreConfigListener,
+		// helps us not even include stream parts that we're not interested in
+		streamFilter?: (streamPart: StreamPartID) => boolean
 	) {
 		this.clusterSize = clusterSize;
 		this.myIndexInCluster = myIndexInCluster;
@@ -57,9 +59,10 @@ export class LogStoreNetworkConfig implements LogStoreConfig {
 			pollInterval,
 			logStoreClient,
 			(streams, block) => {
-				const streamParts = streams.flatMap((stream: Stream) => [
-					...this.createMyStreamParts(stream),
-				]);
+				const streamParts = streams
+					.flatMap((stream: Stream) => [...this.createMyStreamParts(stream)])
+					// if there's a filter, apply it, otherwise include everything
+					.filter((streamPart) => streamFilter?.(streamPart) ?? true);
 				this.handleDiff(
 					this.synchronizer.ingestSnapshot(
 						new Set<StreamPartID>(streamParts),

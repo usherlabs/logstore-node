@@ -15,6 +15,8 @@ export type NetworkParticipantMode = {
 		url: string;
 		pollInterval: number;
 	};
+	// glob pattern like list of streams that should be tracked by this node
+	includeOnly?: string[];
 };
 type StandaloneMode = {
 	type: 'standalone';
