@@ -3,6 +3,7 @@ import { StreamPartID, StreamPartIDUtils, toStreamID } from '@streamr/protocol';
 import { Logger, toEthereumAddress } from '@streamr/utils';
 import { Schema } from 'ajv';
 import { Request } from 'express';
+import { Subscription } from 'rxjs';
 import { Stream, StreamID } from 'streamr-client';
 
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
@@ -14,6 +15,7 @@ import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { Heartbeat } from './Heartbeat';
 import { KyvePool } from './KyvePool';
+import { createIncompatibleNodeUrlLogger } from './log-utils/checkConfigLogger';
 import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
 import { MessageMetricsCollector } from './MessageMetricsCollector';
 import { NetworkQueryRequestManager } from './NetworkQueryRequestManager';
@@ -43,6 +45,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private readonly propagationResolver: PropagationResolver;
 	private readonly propagationDispatcher: PropagationDispatcher;
 	private readonly reportPoller: ReportPoller;
+	private readonly otherSubscriptions: Subscription[] = [];
 
 	private metricsTimer?: NodeJS.Timer;
 
@@ -134,6 +137,14 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.systemPublisher,
 			this.systemSubscriber
 		);
+
+		this.otherSubscriptions.push(
+			createIncompatibleNodeUrlLogger(
+				this.logStoreClient,
+				this.streamrClient,
+				this.networkConfig
+			).subscribe()
+		);
 	}
 
 	private isStreamIncluded(streamId: StreamID): boolean {
@@ -213,6 +224,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 				? stopValidatorComponents()
 				: Promise.resolve(),
 		]);
+
+		this.otherSubscriptions.forEach((s) => s.unsubscribe());
 
 		await super.stop();
 	}
