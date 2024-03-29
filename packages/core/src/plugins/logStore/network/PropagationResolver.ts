@@ -6,9 +6,9 @@ import {
 	SystemMessage,
 	SystemMessageType,
 } from '@logsn/protocol';
-import { createSignaturePayload, StreamMessage } from '@streamr/protocol';
+import { StreamMessage } from '@streamr/protocol';
+import { MessageMetadata } from '@streamr/sdk';
 import { EthereumAddress, Logger, toEthereumAddress } from '@streamr/utils';
-import { MessageMetadata } from 'streamr-client';
 
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import { LogStore } from '../LogStore';

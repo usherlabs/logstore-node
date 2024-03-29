@@ -4,9 +4,9 @@ import {
 	prepareStakeForNodeManager,
 	withRetry,
 } from '@logsn/shared';
+import { PrivateKeyAuthConfig } from '@streamr/sdk';
 import { Command } from 'commander';
 import { ethers } from 'ethers';
-import { PrivateKeyAuthConfig } from 'streamr-client';
 
 import { overrideConfigToEnvVarsIfGiven } from '../config/config';
 import NODE_CONFIG_SCHEMA from '../config/config.schema.json';

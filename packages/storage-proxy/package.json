@@ -19,10 +19,10 @@
 		"format": "prettier --write ."
 	},
 	"dependencies": {
-		"@streamr/utils": "^8.5.5",
+		"@streamr/sdk": "^100.1.2",
+		"@streamr/utils": "^100.1.2",
 		"commander": "^11.1.0",
-		"dotenv": "^16.3.1",
-		"streamr-client": "^8.5.5"
+		"dotenv": "^16.3.1"
 	},
 	"devDependencies": {
 		"@types/node": "^16.18.39",

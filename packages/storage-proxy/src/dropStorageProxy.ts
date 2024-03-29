@@ -1,5 +1,5 @@
+import { formStorageNodeAssignmentStreamId } from '@streamr/sdk';
 import { Logger } from '@streamr/utils';
-import { formStorageNodeAssignmentStreamId } from 'streamr-client';
 
 import { getStreamrClient } from './utils/getStreamrClient';
 

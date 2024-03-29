@@ -3,8 +3,8 @@ import {
 	SystemMessage,
 	SystemMessageType,
 } from '@logsn/protocol';
+import { MessageMetadata } from '@streamr/sdk';
 import { EthereumAddress, Logger } from '@streamr/utils';
-import { MessageMetadata } from 'streamr-client';
 
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';

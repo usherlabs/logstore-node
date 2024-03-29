@@ -5,12 +5,12 @@ import {
 	SystemMessage,
 	SystemMessageType,
 } from '@logsn/protocol';
-import { Logger } from '@streamr/utils';
 import StreamrClient, {
 	MessageMetadata,
 	Stream,
 	Subscription,
-} from 'streamr-client';
+} from '@streamr/sdk';
+import { Logger } from '@streamr/utils';
 
 import { SystemCache } from './SystemCache';
 

@@ -1,7 +1,4 @@
-import StreamrClient, {
-	CONFIG_TEST,
-	StreamrClientConfig,
-} from 'streamr-client';
+import StreamrClient, { CONFIG_TEST, StreamrClientConfig } from '@streamr/sdk';
 
 interface Options {
 	devNetwork?: boolean;

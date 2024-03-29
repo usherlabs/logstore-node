@@ -1,7 +1,7 @@
 import { LogStoreClient } from '@logsn/client';
 import { StreamPartID } from '@streamr/protocol';
+import StreamrClient, { Stream } from '@streamr/sdk';
 import { keyToArrayIndex, Logger } from '@streamr/utils';
-import StreamrClient, { Stream } from 'streamr-client';
 
 import {
 	Diff,

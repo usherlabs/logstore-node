@@ -5,6 +5,14 @@ import {
 } from '@logsn/client';
 import { TEST_CONFIG } from '@streamr/network-node';
 import { startTracker, Tracker } from '@streamr/network-tracker';
+import {
+	Message,
+	Stream,
+	StreamMetadata,
+	CONFIG_TEST as STREAMR_CLIENT_CONFIG_TEST,
+	StreamrClient,
+	StreamrClientConfig,
+} from '@streamr/sdk';
 import { fetchPrivateKeyWithGas } from '@streamr/test-utils';
 import {
 	EthereumAddress,
@@ -14,14 +22,6 @@ import {
 } from '@streamr/utils';
 import { providers, Wallet } from 'ethers';
 import _ from 'lodash';
-import {
-	Message,
-	Stream,
-	StreamMetadata,
-	CONFIG_TEST as STREAMR_CLIENT_CONFIG_TEST,
-	StreamrClient,
-	StreamrClientConfig,
-} from 'streamr-client';
 
 import { Config } from '../src/config/config';
 import {

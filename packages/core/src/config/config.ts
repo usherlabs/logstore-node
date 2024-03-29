@@ -1,8 +1,8 @@
 import { LogStoreClientConfig } from '@logsn/client';
+import { StreamrClientConfig } from '@streamr/sdk';
 import { camelCase, set } from 'lodash';
 import * as os from 'os';
 import path from 'path';
-import { StreamrClientConfig } from 'streamr-client';
 import { DeepRequired } from 'ts-essentials';
 
 import { LogStorePluginConfig } from '../plugins/logStore/LogStorePlugin';

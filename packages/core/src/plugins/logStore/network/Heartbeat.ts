@@ -1,4 +1,4 @@
-import { EthereumAddress, MessageMetadata } from 'streamr-client';
+import { EthereumAddress, MessageMetadata } from '@streamr/sdk';
 
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';

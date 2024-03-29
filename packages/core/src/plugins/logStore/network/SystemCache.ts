@@ -1,6 +1,6 @@
 import { SystemMessage, SystemMessageType } from '@logsn/protocol';
+import { MessageMetadata } from '@streamr/sdk';
 import { Logger } from '@streamr/utils';
-import { MessageMetadata } from 'streamr-client';
 
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import { KyvePool } from './KyvePool';

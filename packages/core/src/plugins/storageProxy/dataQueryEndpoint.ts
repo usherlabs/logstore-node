@@ -2,6 +2,7 @@
  * Endpoints for RESTful data requests
  */
 import LogStoreClient from '@logsn/client';
+import { StreamMessage } from '@streamr/sdk';
 import {
 	Logger,
 	MetricsContext,
@@ -9,8 +10,7 @@ import {
 	RateMetric,
 } from '@streamr/utils';
 import { Request, RequestHandler, Response } from 'express';
-import { pipeline, Readable } from 'stream';
-import { StreamMessage } from 'streamr-client';
+import { Readable, pipeline } from 'stream';
 
 import { HttpServerEndpoint } from '../../Plugin';
 import { Format } from '../logStore/http/DataQueryFormat';

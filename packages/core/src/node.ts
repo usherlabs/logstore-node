@@ -4,11 +4,11 @@ import {
 } from '@logsn/client';
 import { getNodeManagerContract } from '@logsn/shared';
 import { toStreamID } from '@streamr/protocol';
+import { NetworkNodeStub, StreamrClient } from '@streamr/sdk';
 import { Logger, toEthereumAddress } from '@streamr/utils';
 import { Server as HttpServer } from 'http';
 import { Server as HttpsServer } from 'https';
 import _ from 'lodash';
-import { NetworkNodeStub, StreamrClient } from 'streamr-client';
 
 import { version as CURRENT_VERSION } from '../package.json';
 import { Config } from './config/config';

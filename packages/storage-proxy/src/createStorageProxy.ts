@@ -1,9 +1,9 @@
-import { Logger } from '@streamr/utils';
 import {
 	formStorageNodeAssignmentStreamId,
 	StorageNodeMetadata,
 	StreamPermission,
-} from 'streamr-client';
+} from '@streamr/sdk';
+import { Logger } from '@streamr/utils';
 
 import { getStreamrClient } from './utils/getStreamrClient';
 

@@ -1,7 +1,7 @@
 import { LogStoreNodeProgram, LogStoreNodeProgramModule } from '@logsn/program';
 import { StreamMessage } from '@streamr/protocol';
+import StreamrClient, { Stream } from '@streamr/sdk';
 import { Logger } from '@streamr/utils';
-import StreamrClient, { Stream } from 'streamr-client';
 
 import { LogStorePluginConfig } from './LogStorePlugin';
 

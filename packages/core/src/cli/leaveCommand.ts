@@ -1,8 +1,8 @@
 import { validateConfig as validateLogStoreClientConfig } from '@logsn/client';
 import { getNodeManagerContract, withRetry } from '@logsn/shared';
+import { PrivateKeyAuthConfig } from '@streamr/sdk';
 import { Command } from 'commander';
 import { ethers } from 'ethers';
-import { PrivateKeyAuthConfig } from 'streamr-client';
 
 import { overrideConfigToEnvVarsIfGiven } from '../config/config';
 import LOGSTORE_NODE_CONFIG_SCHEMA from '../config/config.schema.json';

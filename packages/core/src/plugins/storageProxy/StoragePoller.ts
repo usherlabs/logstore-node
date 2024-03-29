@@ -1,5 +1,5 @@
+import { Stream, StreamrClient } from '@streamr/sdk';
 import { Logger, scheduleAtInterval } from '@streamr/utils';
-import { Stream, StreamrClient } from 'streamr-client';
 
 const logger = new Logger(module);
 

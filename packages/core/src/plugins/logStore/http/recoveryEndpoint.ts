@@ -1,7 +1,7 @@
 import { RecoveryRequest } from '@logsn/protocol';
+import { Stream } from '@streamr/sdk';
 import { Logger, MetricsContext, RateMetric } from '@streamr/utils';
 import express, { Request, RequestHandler, Response } from 'express';
-import { Stream } from 'streamr-client';
 
 import { HttpServerEndpoint } from '../../../Plugin';
 import { Heartbeat } from '../network/Heartbeat';

@@ -2,7 +2,7 @@ import StreamrClient, {
 	MessageListener,
 	Stream,
 	Subscription,
-} from 'streamr-client';
+} from '@streamr/sdk';
 
 export class BroadbandSubscriber {
 	private readonly partitions: number;

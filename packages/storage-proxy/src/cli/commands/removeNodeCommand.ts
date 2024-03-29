@@ -1,6 +1,6 @@
+import { EthereumAddress } from '@streamr/sdk';
 import { Logger } from '@streamr/utils';
 import { Command, program } from 'commander';
-import { EthereumAddress } from 'streamr-client';
 
 import { removeNodeFromStorageProxy } from '../../removeNodeFromStorageProxy';
 import { nodeArgument } from '../arguments';

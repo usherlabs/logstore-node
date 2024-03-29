@@ -1,7 +1,7 @@
 import { LogStoreClient } from '@logsn/client';
+import StreamrClient, { Stream, StreamID } from '@streamr/sdk';
 import { Logger } from '@streamr/utils';
 import { catchError, EMPTY, mergeMap, of, Subscription } from 'rxjs';
-import StreamrClient, { Stream, StreamID } from 'streamr-client';
 
 import { getDefaultAjv } from '../../../config/validateConfig';
 import { NodeStreamsRegistry } from '../NodeStreamsRegistry';

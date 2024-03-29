@@ -1,4 +1,4 @@
-import StreamrClient, { Stream } from 'streamr-client';
+import StreamrClient, { Stream } from '@streamr/sdk';
 
 export class BroadbandPublisher {
 	private readonly partitions: number;

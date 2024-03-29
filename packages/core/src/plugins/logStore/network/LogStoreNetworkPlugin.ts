@@ -1,8 +1,8 @@
 import { QueryRequest } from '@logsn/protocol';
 import { StreamPartIDUtils } from '@streamr/protocol';
+import { Stream } from '@streamr/sdk';
 import { EthereumAddress, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
-import { Stream } from 'streamr-client';
 
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';

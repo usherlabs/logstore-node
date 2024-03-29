@@ -1,8 +1,8 @@
-import { EthereumAddress, Logger } from '@streamr/utils';
 import {
 	formStorageNodeAssignmentStreamId,
 	StreamPermission,
-} from 'streamr-client';
+} from '@streamr/sdk';
+import { EthereumAddress, Logger } from '@streamr/utils';
 
 import { getStreamrClient } from './utils/getStreamrClient';
 

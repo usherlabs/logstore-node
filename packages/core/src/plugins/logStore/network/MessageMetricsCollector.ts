@@ -3,7 +3,7 @@ import StreamrClient, {
 	MessageMetadata,
 	Stream,
 	Subscription,
-} from 'streamr-client';
+} from '@streamr/sdk';
 
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import {

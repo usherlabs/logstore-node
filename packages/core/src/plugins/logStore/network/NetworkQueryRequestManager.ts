@@ -5,10 +5,10 @@ import {
 	SystemMessageType,
 } from '@logsn/protocol';
 import { createSignaturePayload, StreamMessage } from '@streamr/protocol';
+import { MessageMetadata } from '@streamr/sdk';
 import { Logger } from '@streamr/utils';
 import { keccak256 } from 'ethers/lib/utils';
 import { Readable } from 'stream';
-import { MessageMetadata } from 'streamr-client';
 
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';

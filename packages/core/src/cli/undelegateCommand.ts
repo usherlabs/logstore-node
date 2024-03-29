@@ -2,9 +2,9 @@ import {
 	getNodeManagerContract,
 	prepareStakeForNodeManager,
 } from '@logsn/shared';
+import { PrivateKeyAuthConfig } from '@streamr/sdk';
 import { Command } from 'commander';
 import { ethers } from 'ethers';
-import { PrivateKeyAuthConfig } from 'streamr-client';
 
 import { readConfigAndMigrateIfNeeded } from '../config/migration';
 import {
