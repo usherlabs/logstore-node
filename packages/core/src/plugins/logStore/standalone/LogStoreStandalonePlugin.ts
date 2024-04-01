@@ -13,11 +13,11 @@ import { HeartbeatMonitor, NodeHeartbeat } from '../HeartbeatMonitor';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { NOTARY_PORT } from '../network/LogStoreNetworkPlugin';
 import { proverSocketPath } from '../Prover';
-import { SinkModule } from '../Sink';
 import { WEBSERVER_PATHS } from '../subprocess/constants';
 import { ProcessManager } from '../subprocess/ProcessManager';
 import { getNextAvailablePort } from '../subprocess/utils';
 import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
+import { SinkModule } from './sink';
 import { StandAloneProver } from './StandAloneProver';
 
 const logger = new Logger(module);
