@@ -92,7 +92,7 @@ pub async fn notarize_request(
     let (req_redact_items, res_redact_items) = redactor.get_redacted_values(redacted_parameters);
 
     let proof = build_proof(prover, req_redact_items, res_redact_items).await;
-    let stringified_proof = serde_json::to_string_pretty(&proof).unwrap();
+    let stringified_proof = serde_json::to_string(&proof).unwrap();
     // // Dump the proof to a file.
     // let mut file = tokio::fs::File::create("proof.json").await.unwrap();
     // file.write_all(serde_json::to_string_pretty(&proof).unwrap().as_bytes())

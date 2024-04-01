@@ -1,11 +1,14 @@
 // TODO: Compatibility with cassandra DB
 import { JsonValue } from '@protobuf-ts/runtime';
+import { Networks } from '@stellar/stellar-sdk';
 import { Logger } from '@streamr/utils';
 import { StreamMessage } from 'streamr-client';
 import { z } from 'zod';
 
 import { LogStore } from './LogStore';
 import { TlsProof } from './protobuff/generated/prover';
+import { SorobanContract } from './standalone/soroban';
+import { MessagePayload } from './standalone/soroban/types';
 
 const DEFAULT_PROCESS = 'LS_PROCESS';
 
@@ -24,6 +27,7 @@ const MESSAGE_TYPE: Record<MessageType, MessageType> = {
 type ValidMessage = {
 	message: ValidMessageData;
 	type: MessageType;
+	streamrMessage: MessagePayload;
 };
 
 // Define a schema for SinkMessage
@@ -97,9 +101,22 @@ class Process {
 export class SinkModule {
 	private _logStore: LogStore | undefined;
 	private activeProcessesMap: Map<string, Process>;
+	private verifierContract: SorobanContract;
 
 	constructor() {
 		this.activeProcessesMap = new Map<string, Process>();
+
+		// TODO Move secrets to config file
+		const secret = 'SCH67D4MVGQCIE3NOLND5TY25EN6NVAZAASYD5CQKEC3UY3REMJJMCCO';
+		const contractAddress =
+			'CDPSU7OK7AUC2KQGGAOUWA5VKZDR4WRFEL6K6QLYDO53QEPHSH2R6YZK';
+		const rpcURL = 'https://soroban-testnet.stellar.org:443';
+
+		this.verifierContract = new SorobanContract(secret, {
+			address: contractAddress,
+			networkRPC: rpcURL,
+			network: Networks.TESTNET,
+		});
 	}
 
 	async start(logStore: LogStore) {
@@ -139,14 +156,20 @@ export class SinkModule {
 	}
 
 	async sendToContract(messages: ValidMessage[], processId: string) {
-		console.log({
-			messages,
-			processId,
-		});
+		logger.info(
+			`Process:${processId} has been completed and ${messages.length} proofs are prepared to be sent to the soroban contract`
+		);
+		const messagePayload = messages.map((m) => m.streamrMessage);
 		// smart contract submission logic
+		const tx = await this.verifierContract.buildVerificationTransaction(
+			messagePayload,
+			processId
+		);
+		const response = await this.verifierContract.submitTransaction(tx);
+		logger.info(`gotten a response:${response}`);
 	}
 
-	// stop
+	// ? stop
 	async stop() {
 		// stop insert listener
 		// delete all processes? does it matter it will be cleared from memory either way
@@ -158,22 +181,32 @@ export class SinkModule {
 		message: StreamMessage<unknown>
 	): Promise<ValidMessage | undefined> {
 		// is it a tlsproof message received over the stream
+		const streamrMessage: MessagePayload = {
+			...message,
+			// we serialize this field before sending it over
+			newGroupKey: message.newGroupKey?.serialize(),
+		};
 		const tlsn = this.safeParse(() =>
 			TlsProof.fromJson(message.getContent() as JsonValue)
 		);
-		if (tlsn) return { message: tlsn, type: MESSAGE_TYPE.proof };
+		if (tlsn)
+			return { message: tlsn, type: MESSAGE_TYPE.proof, streamrMessage };
 
 		// is it a relevant sink message received over the stream?
 		const sinkMessage = this.safeParse(() =>
 			sinkMessageSchema.parse(message.getContent())
 		);
-		if (sinkMessage) return { message: sinkMessage, type: MESSAGE_TYPE.sink };
+		if (sinkMessage)
+			return { message: sinkMessage, type: MESSAGE_TYPE.sink, streamrMessage };
 
 		// its just a random message on this stream that we need to do nothing about
 	}
 
 	getOrCreateProcess(processMessage: ValidMessage) {
 		const processOrDefault = processMessage.message?.process || DEFAULT_PROCESS;
+		logger.info(
+			`Gotten a '${processMessage.type}' message for process:${processOrDefault}`
+		);
 		const currentProcess =
 			// ?new process should take in a process id?
 			this.activeProcessesMap.get(processOrDefault) ?? new Process();
