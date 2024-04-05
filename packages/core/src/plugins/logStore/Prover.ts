@@ -35,7 +35,7 @@ export abstract class Prover {
 
 	abstract handleNewProof(proof: TlsProof): void;
 
-	start() {
+	run() {
 		const proofSubscription = this.socketClient.subscribeToProofs({});
 		proofSubscription.responses.onNext(
 			(proof: undefined | TlsProof) => proof && this.handleNewProof(proof)

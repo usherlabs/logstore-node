@@ -79,3 +79,32 @@ export const getNextAvailablePort = (basePort: number): number => {
 	alreadyUsedPorts.add(port);
 	return port;
 };
+
+export async function executeProcess(params: {
+	name: string;
+	cmd: string;
+	args: string[];
+}): Promise<{ data: string }> {
+	return new Promise((resolve, reject) => {
+		const child = spawn(params.cmd, [...params.args]);
+
+		let outputData = '';
+		let errorData = '';
+
+		child.stdout.on('data', (logData: string) => {
+			outputData += logData;
+		});
+
+		child.stderr.on('data', (errData: string) => {
+			errorData += errData;
+		});
+
+		child.on('close', (_code) => {
+			errorData
+				? reject({ message: errorData })
+				: resolve({ data: outputData });
+			// console.log(`${params.name} -- process exited with code ${code}`);
+			// Here you can use outputData or errorData as needed
+		});
+	});
+}

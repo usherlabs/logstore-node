@@ -62,13 +62,10 @@ export class SorobanContract {
 			fee: BASE_FEE,
 			networkPassphrase: this.network,
 		})
-			// The invocation of the `increment` function of our contract is added
-			// to the transaction. Note: `increment` doesn't require any parameters,
-			// but many contract functions do. You would need to provide those here.
 			.addOperation(
 				this.contract.call(functionName, payload, parsedProcessName)
 			)
-			// This transaction will be valid for the next 30 seconds
+			// This transaction will be valid for the next 50 seconds
 			.setTimeout(50)
 			.build();
 

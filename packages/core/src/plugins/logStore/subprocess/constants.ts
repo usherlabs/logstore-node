@@ -6,4 +6,5 @@ import { projectRootDirectory } from '../../../utils/paths';
 export const WEBSERVER_PATHS = {
 	notary: () => path.join(projectRootDirectory, './bin/notary'),
 	prover: () => path.join(projectRootDirectory, './bin/prover'),
+	verifier: () => path.join(projectRootDirectory, './bin/verifier'),
 };

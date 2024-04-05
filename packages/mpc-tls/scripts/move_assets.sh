@@ -6,7 +6,7 @@
 set -e
 
 
-################################## move the builds to the logstore repo and binary config to the logstore repo
+################################## move the builds to the logstore repo and binary config to the logstore absolute path
 binary_source="../target/release"
 
 binary_destination="../../core/bin"
@@ -21,6 +21,7 @@ fi
 
 cp "$binary_source/notary" "$binary_destination"
 cp "$binary_source/prover" "$binary_destination"
+cp "$binary_source/verifier" "$binary_destination"
 
 cp -r ../src/notary/config "$root_destination"
 cp -r ../src/notary/fixture "$root_destination"
@@ -28,4 +29,4 @@ cp -r ../src/notary/fixture "$root_destination"
 
 echo "Notary and prover copied to $binary_destination"
 echo "Config files copied to $root_destination"
-################################## move the builds to the logstore repo and binary config to the logstore repo
+################################## move the builds to the logstore repo and binary config to the logstore absolute repo

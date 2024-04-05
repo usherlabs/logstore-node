@@ -71,7 +71,6 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		this.maybeLogStoreConfig = await this.startStandaloneLogStoreConfig();
 		// this should be called after the logStoreConfig is initialized
 		await super.start();
-		await this.proxyRequestProver.start();
 		await this.standaloneQueryRequestManager.start(this.logStore);
 		await this.hearbeatMonitor.start(await this.streamrClient.getAddress());
 		await this.sinkModule.start(this.logStore);
@@ -94,11 +93,13 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 
 		// when starting the prover server, we need to provide the notary url to connect to
 		const notaryNodeURL = new URL(String(notaryNode.url));
-
 		// TODO: In the future: Selection should be dynamic and the number of notaries can be configured for parallel processing.
-		const notaryURL =
-			OVERRIDE_NOTARY_URL || `${notaryNodeURL.hostname}:${NOTARY_PORT}`;
+		const notaryURL = OVERRIDE_NOTARY_URL
+			? `${OVERRIDE_NOTARY_URL.split(':')[0]}:${NOTARY_PORT}`
+			: `${notaryNodeURL.hostname}:${NOTARY_PORT}`;
 		this.proverServer.start(['--url', notaryURL, '--mode', PROVER_MODE]);
+
+		await this.proxyRequestProver.start(notaryNode);
 	}
 
 	override async stop(): Promise<void> {
@@ -109,7 +110,6 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 			this.proxyRequestProver.stop(),
 			this.hearbeatMonitor.stop(),
 		]);
-		await this.proxyRequestProver.start();
 	}
 
 	public async processQueryRequest(queryRequest: QueryRequest) {

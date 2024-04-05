@@ -3,6 +3,9 @@ import { TlsProof } from '../protobuf/generated/prover';
 import { Prover } from '../Prover';
 
 export class NetworkProver extends Prover {
+	async start() {
+		super.run();
+	}
 	async handleNewProof(proof: TlsProof) {
 		this.logger.info(`A new proof with id: ${proof.id} has been receieved`);
 		try {

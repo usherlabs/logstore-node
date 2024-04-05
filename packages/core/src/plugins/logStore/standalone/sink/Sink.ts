@@ -1,24 +1,29 @@
 // TODO: This Sink module is to be eventually separated into a standalone optional package for the Log Store Node - alongside all dependencies
-import { JsonValue } from '@protobuf-ts/runtime';
 import { Networks } from '@stellar/stellar-sdk';
 import { Logger } from '@streamr/utils';
 import { StreamMessage } from 'streamr-client';
 import { z } from 'zod';
 
 import { LogStore } from '../../LogStore';
-import { TlsProof } from '../../protobuf/generated/prover';
 import { SorobanContract } from './soroban';
 import { MessagePayload } from './soroban/types';
 
-const DEFAULT_PROCESS = 'LS_PROCESS';
+export const DEFAULT_PROCESS = 'LS_PROCESS';
 
 type SinkMessageType = {
 	action: 'start' | 'stop' | 'meta';
 	process?: string;
 	metadata?: string;
 };
+type ProofMessageType = {
+	messageHash: string;
+	signature: string;
+	process: string;
+	node: string;
+};
+
 type MessageType = 'proof' | 'sink';
-type ValidMessageData = TlsProof | SinkMessageType;
+type ValidMessageData = ProofMessageType | SinkMessageType;
 
 const MESSAGE_TYPE: Record<MessageType, MessageType> = {
 	proof: 'proof',
@@ -35,6 +40,14 @@ const sinkMessageSchema = z.object({
 	action: z.enum(['start', 'stop', 'meta']),
 	process: z.string().optional(),
 	metadata: z.string().optional(),
+});
+
+// Define a schema for proofs
+const proofMessageSchema = z.object({
+	messageHash: z.string(),
+	signature: z.string(),
+	node: z.string(),
+	process: z.string(),
 });
 
 const logger = new Logger(module);
@@ -187,7 +200,7 @@ export class SinkModule {
 			newGroupKey: message.newGroupKey?.serialize(),
 		};
 		const tlsn = this.safeParse(() =>
-			TlsProof.fromJson(message.getContent() as JsonValue)
+			proofMessageSchema.parse(message.getContent())
 		);
 		if (tlsn)
 			return { message: tlsn, type: MESSAGE_TYPE.proof, streamrMessage };

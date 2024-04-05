@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["src/prover", "src/notary"]
+members = ["src/prover", "src/notary", "src/verifier"]
 
 [profile.release]
 lto = true
