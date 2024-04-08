@@ -72,7 +72,9 @@ class Process {
 			const sinkMessage = newProcessMessage.message;
 			// check if it is a start, stop or meta
 			if (sinkMessage.action === 'start') {
-				if (this.status !== ProcessStatus.CREATED)
+				if (
+					![ProcessStatus.CREATED, ProcessStatus.STOPPED].includes(this.status)
+				)
 					return logger.error('Process already started');
 				this.status = ProcessStatus.STARTED;
 			}
@@ -163,23 +165,32 @@ export class SinkModule {
 		const messages = process.messages;
 
 		if (!messages.length) return logger.error('no proofs to submit');
-		this.sendToContract(messages, processId);
 		// send process to spraban smart contract where events would be emitted
-		// after process has been submitted then delete the process from memory
+		if (await this.sendToContract(messages, processId)) {
+			// after process has been submitted then delete the process from memory
+			this.activeProcessesMap.delete(processId);
+		}
 	}
 
 	async sendToContract(messages: ValidMessage[], processId: string) {
-		logger.info(
-			`Process:${processId} has been completed and ${messages.length} proofs are prepared to be sent to the soroban contract`
-		);
-		const messagePayload = messages.map((m) => m.streamrMessage);
-		// smart contract submission logic
-		const tx = await this.verifierContract.buildVerificationTransaction(
-			messagePayload,
-			processId
-		);
-		const response = await this.verifierContract.submitTransaction(tx);
-		logger.info(`gotten a response:${response}`);
+		try {
+			logger.info(
+				`Process:${processId} has been completed and ${messages.length} proofs are prepared to be sent to the soroban contract`
+			);
+			const messagePayload = messages.map((m) => m.streamrMessage);
+			// smart contract submission logic
+			const tx = await this.verifierContract.buildVerificationTransaction(
+				messagePayload,
+				processId
+			);
+			logger.info(`Built transaction ${tx} and submitting to smart contract`);
+			const response = await this.verifierContract.submitTransaction(tx);
+			logger.info(`gotten a response:${response}`);
+			return response;
+		} catch (e) {
+			logger.error(e.message);
+			return false;
+		}
 	}
 
 	// ? stop
