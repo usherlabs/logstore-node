@@ -9,6 +9,10 @@ import { SorobanContract } from './soroban';
 import { MessagePayload } from './soroban/types';
 
 export const DEFAULT_PROCESS = 'LS_PROCESS';
+export const SINK_STELLAR_VERIFIER_CONTRACT =
+	'CDPSU7OK7AUC2KQGGAOUWA5VKZDR4WRFEL6K6QLYDO53QEPHSH2R6YZK';
+export const SINK_STELLAR_SECRET = process.env.SINK_STELLAR_SECRET;
+export const SINK_STELLAR_RPC = process.env.SINK_STELLAR_RPC;
 
 type SinkMessageType = {
 	action: 'start' | 'stop' | 'meta';
@@ -120,12 +124,14 @@ export class SinkModule {
 
 	constructor() {
 		this.activeProcessesMap = new Map<string, Process>();
+		const secret = String(SINK_STELLAR_SECRET);
+		const rpcURL = String(SINK_STELLAR_RPC);
+		const contractAddress = SINK_STELLAR_VERIFIER_CONTRACT;
 
-		// TODO Move secrets to config file
-		const secret = 'SCH67D4MVGQCIE3NOLND5TY25EN6NVAZAASYD5CQKEC3UY3REMJJMCCO';
-		const contractAddress =
-			'CDPSU7OK7AUC2KQGGAOUWA5VKZDR4WRFEL6K6QLYDO53QEPHSH2R6YZK';
-		const rpcURL = 'https://soroban-testnet.stellar.org:443';
+		if (!secret || !rpcURL)
+			throw new Error(
+				"Provide env vars 'SINK_STELLAR_SECRET' and 'SINK_STELLAR_RPC'"
+			);
 
 		this.verifierContract = new SorobanContract(secret, {
 			address: contractAddress,
