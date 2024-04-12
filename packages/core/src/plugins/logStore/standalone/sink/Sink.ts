@@ -9,10 +9,10 @@ import { SorobanContract } from './soroban';
 import { MessagePayload } from './soroban/types';
 
 export const DEFAULT_PROCESS = 'LS_PROCESS';
-export const SINK_STELLAR_VERIFIER_CONTRACT =
+export const SINK_STELLAR_ECDSA_VERIFIER_CONTRACT =
 	'CDPSU7OK7AUC2KQGGAOUWA5VKZDR4WRFEL6K6QLYDO53QEPHSH2R6YZK';
+export const SINK_STELLAR_RPC = 'https://soroban-testnet.stellar.org:443';
 export const SINK_STELLAR_SECRET = process.env.SINK_STELLAR_SECRET;
-export const SINK_STELLAR_RPC = process.env.SINK_STELLAR_RPC;
 
 type SinkMessageType = {
 	action: 'start' | 'stop' | 'meta';
@@ -126,7 +126,7 @@ export class SinkModule {
 		this.activeProcessesMap = new Map<string, Process>();
 		const secret = String(SINK_STELLAR_SECRET);
 		const rpcURL = String(SINK_STELLAR_RPC);
-		const contractAddress = SINK_STELLAR_VERIFIER_CONTRACT;
+		const contractAddress = SINK_STELLAR_ECDSA_VERIFIER_CONTRACT;
 
 		if (!secret || !rpcURL)
 			throw new Error(
