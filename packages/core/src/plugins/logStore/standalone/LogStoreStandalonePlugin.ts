@@ -91,6 +91,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		// when starting the prover server, we need to provide the notary url to connect to
 		const notaryNodeURL = new URL(String(notaryNode.url));
 		const notaryURL = `${notaryNodeURL.hostname}:${NOTARY_PORT}`;
+		// TODO: In the future: Selection should be dynamic and the number of notaries can be configured for parallel processing.
 		this.proverServer.start(['--url', notaryURL, '--mode', MODE]);
 	}
 
