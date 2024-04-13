@@ -9,7 +9,7 @@ import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
 import { createNotaryPubKeyFetchEndpoint } from '../http/notaryGateway';
-import { createNotaryVerifyEndpoint } from '../http/notaryVerifier.ts';
+import { createNotaryVerifyEndpoint } from '../http/notaryVerifier';
 import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { proverSocketPath } from '../Prover';
