@@ -13,12 +13,12 @@ import { HeartbeatMonitor, NodeHeartbeat } from '../HeartbeatMonitor';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { NOTARY_PORT } from '../network/LogStoreNetworkPlugin';
 import { proverSocketPath } from '../Prover';
-import { SinkModule } from '../Sink';
 import { WEBSERVER_PATHS } from '../subprocess/constants';
 import { ProcessManager } from '../subprocess/ProcessManager';
 import { getNextAvailablePort } from '../subprocess/utils';
 import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
-import { StandAloneProver } from './StandAloneProver';
+import { SinkModule } from './sink';
+import { StandaloneProver } from './StandaloneProver';
 
 const logger = new Logger(module);
 type ProverModeType = 'dev' | 'prod';
@@ -30,12 +30,14 @@ type ProverModeType = 'dev' | 'prod';
 const PROVER_MODE: ProverModeType =
 	process.env.PROVER_MODE == 'dev' ? 'dev' : 'prod';
 const OVERRIDE_NOTARY_URL = process.env.NOTARY_URL;
+const EXPERIMENTAL_SOROBAN_SINK =
+	process.env.EXPERIMENTAL_SOROBAN_SINK === 'true';
 
 export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
 	private proverServer: ProcessManager;
 	private hearbeatMonitor: HeartbeatMonitor;
-	private readonly proxyRequestProver: StandAloneProver;
+	private readonly proxyRequestProver: StandaloneProver;
 	private sinkModule: SinkModule;
 
 	constructor(options: PluginOptions) {
@@ -51,9 +53,11 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		this.hearbeatMonitor = new HeartbeatMonitor(this.logStoreClient);
 
 		this.standaloneQueryRequestManager = new BaseQueryRequestManager();
-		this.proxyRequestProver = new StandAloneProver(
+
+		this.proxyRequestProver = new StandaloneProver(
 			proverSocketPath,
-			this.streamrClient
+			this.streamrClient,
+			EXPERIMENTAL_SOROBAN_SINK
 		);
 		this.sinkModule = new SinkModule();
 	}
@@ -71,10 +75,13 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		this.maybeLogStoreConfig = await this.startStandaloneLogStoreConfig();
 		// this should be called after the logStoreConfig is initialized
 		await super.start();
-		await this.proxyRequestProver.start();
 		await this.standaloneQueryRequestManager.start(this.logStore);
 		await this.hearbeatMonitor.start(await this.streamrClient.getAddress());
-		await this.sinkModule.start(this.logStore);
+
+		// TODO: Determine how experiment sits in wider repository.
+		if (EXPERIMENTAL_SOROBAN_SINK) {
+			await this.sinkModule.start(this.logStore);
+		}
 
 		// wait until we can get a notary node
 		// poll online nodes for url
@@ -94,11 +101,13 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 
 		// when starting the prover server, we need to provide the notary url to connect to
 		const notaryNodeURL = new URL(String(notaryNode.url));
-
 		// TODO: In the future: Selection should be dynamic and the number of notaries can be configured for parallel processing.
-		const notaryURL =
-			OVERRIDE_NOTARY_URL || `${notaryNodeURL.hostname}:${NOTARY_PORT}`;
+		const notaryURL = OVERRIDE_NOTARY_URL
+			? `${OVERRIDE_NOTARY_URL.split(':')[0]}:${NOTARY_PORT}`
+			: `${notaryNodeURL.hostname}:${NOTARY_PORT}`;
 		this.proverServer.start(['--url', notaryURL, '--mode', PROVER_MODE]);
+
+		await this.proxyRequestProver.start(notaryNode);
 	}
 
 	override async stop(): Promise<void> {
@@ -109,7 +118,6 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 			this.proxyRequestProver.stop(),
 			this.hearbeatMonitor.stop(),
 		]);
-		await this.proxyRequestProver.start();
 	}
 
 	public async processQueryRequest(queryRequest: QueryRequest) {

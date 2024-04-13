@@ -125,6 +125,9 @@ importers:
       '@protobuf-ts/runtime-rpc':
         specifier: ^2.9.3
         version: 2.9.3
+      '@stellar/stellar-sdk':
+        specifier: ^11.3.0
+        version: 11.3.0
       '@streamr/protocol':
         specifier: ^8.5.5
         version: 8.5.5
@@ -2825,6 +2828,37 @@ packages:
       '@stablelib/wipe': 1.0.1
     dev: false
 
+  /@stellar/js-xdr@3.1.1:
+    resolution: {integrity: sha512-3gnPjAz78htgqsNEDkEsKHKosV2BF2iZkoHCNxpmZwUxiPsw+2VaXMed8RRMe0rGk3d5GZe7RrSba8zV80J3Ag==}
+    dev: false
+
+  /@stellar/stellar-base@11.0.1:
+    resolution: {integrity: sha512-VQh+1KEtFjegD6spx08+lENt8tQOkQQQZoLtqExjpRXyWlqDhEe+bXMlBTYKDc5MIynHyD42RPEib27UG17trA==}
+    dependencies:
+      '@stellar/js-xdr': 3.1.1
+      base32.js: 0.1.0
+      bignumber.js: 9.1.2
+      buffer: 6.0.3
+      sha.js: 2.4.11
+      tweetnacl: 1.0.3
+    optionalDependencies:
+      sodium-native: 4.1.1
+    dev: false
+
+  /@stellar/stellar-sdk@11.3.0:
+    resolution: {integrity: sha512-i+heopibJNRA7iM8rEPz0AXphBPYvy2HDo8rxbDwWpozwCfw8kglP9cLkkhgJe8YicgLrdExz/iQZaLpqLC+6w==}
+    dependencies:
+      '@stellar/stellar-base': 11.0.1
+      axios: 1.6.8
+      bignumber.js: 9.1.2
+      eventsource: 2.0.2
+      randombytes: 2.1.0
+      toml: 3.0.0
+      urijs: 1.19.11
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
   /@streamr/network-contracts@7.1.1:
     resolution: {integrity: sha512-mHnzNGZMNCdEUj+Z2uECphI9a7Num6M0kVBDGtAMROa5FKxSlCpVgdAnaVwXpWGF/SBfEX9No/ivq9p5Z7pzhQ==}
     dependencies:
@@ -4255,6 +4289,16 @@ packages:
       - debug
     dev: false
 
+  /axios@1.6.8:
+    resolution: {integrity: sha512-v/ZHtJDU39mDpyBoFVkETcd/uNdxrWRrg3bKpOKzXFA6Bvqopts6ALSMU3y6ijYxbw2B+wPrIv46egTzJXCLGQ==}
+    dependencies:
+      follow-redirects: 1.15.6
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
   /babel-jest@29.7.0(@babel/core@7.23.9):
     resolution: {integrity: sha512-BrvGY3xZSwEcCzKvKsCi2GgHqDqsYkOP4/by5xCgIwGXQxIEh+8ew3gmrE1y7XRR6LHZIj6yLYnUi/mm2KXKBg==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -4334,6 +4378,11 @@ packages:
     resolution: {integrity: sha512-H7JU6iBHTal1gp56aKoaa//YUxEaAOUiydvrV/pILqIHXTtqxSkATOnDA2u+jZ/61sD+L/412+7kzXRtWukhpQ==}
     dependencies:
       safe-buffer: 5.2.1
+    dev: false
+
+  /base32.js@0.1.0:
+    resolution: {integrity: sha512-n3TkB02ixgBOhTvANakDb4xaMXnYUVkNoRFJjQflcqMQhyEKxEHdj3E6N8t8sUQ0mjH/3/JxzlXuz3ul/J90pQ==}
+    engines: {node: '>=0.12.0'}
     dev: false
 
   /base64-js@1.5.1:
@@ -6139,6 +6188,11 @@ packages:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
 
+  /eventsource@2.0.2:
+    resolution: {integrity: sha512-IzUmBGPR3+oUG9dUeXynyNmf91/3zUSJg1lCktzKw47OXuhco54U3r9B7O4XX+Rb1Itm9OZ2b0RkTs10bICOxA==}
+    engines: {node: '>=12.0.0'}
+    dev: false
+
   /evp_bytestokey@1.0.3:
     resolution: {integrity: sha512-/f2Go4TognH/KvCISP7OUsHn85hT9nUkxxA9BEWxFn+Oj9o8ZNLm/40hdlgSLyuOimsrTKLUMEorQexp/aPQeA==}
     dependencies:
@@ -6419,6 +6473,16 @@ packages:
 
   /follow-redirects@1.15.5:
     resolution: {integrity: sha512-vSFWUON1B+yAw1VN4xMfxgn5fTUiaOzAJCKBwIIgT/+7CuGy9+r+5gITvP62j3RmaD5Ph65UaERdOSRGUzZtgw==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+    dev: false
+
+  /follow-redirects@1.15.6:
+    resolution: {integrity: sha512-wWN62YITEaOpSK584EZXJafH1AGpO8RVgElfkuXbTOrPX4fIfOyEpW/CsiNd8JdYrAoOvafRTOEnvsO++qCqFA==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -10492,6 +10556,14 @@ packages:
     dev: false
     optional: true
 
+  /sodium-native@4.1.1:
+    resolution: {integrity: sha512-LXkAfRd4FHtkQS4X6g+nRcVaN7mWVNepV06phIsC6+IZFvGh1voW5TNQiQp2twVaMf05gZqQjuS+uWLM6gHhNQ==}
+    requiresBuild: true
+    dependencies:
+      node-gyp-build: 4.8.0
+    dev: false
+    optional: true
+
   /solidity-comments-extractor@0.0.7:
     resolution: {integrity: sha512-wciNMLg/Irp8OKGrh3S2tfvZiZ0NEyILfcRCXCD4mp7SgK/i9gzLfhY2hY7VMCQJ3kH9UB9BzNdibIVMchzyYw==}
     dev: true
@@ -10575,9 +10647,6 @@ packages:
   /sqlite3@5.1.7:
     resolution: {integrity: sha512-GGIyOiFaG+TUra3JIfkI/zGP8yZYLPQ0pl1bH+ODjiX57sPhrLU5sQJn1y9bDKZUFYkX1crlrPfSYt0BKKdkog==}
     requiresBuild: true
-    peerDependenciesMeta:
-      node-gyp:
-        optional: true
     dependencies:
       bindings: 1.5.0
       node-addon-api: 7.1.0
@@ -11099,6 +11168,10 @@ packages:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
     engines: {node: '>=0.6'}
 
+  /toml@3.0.0:
+    resolution: {integrity: sha512-y/mWCZinnvxjTKYhJ+pYxwD0mRLVvOtdS2Awbgxln6iEnt4rk0yBxeSBHkGJcPucRiG0e55mwWp+g/05rsrd6w==}
+    dev: false
+
   /tr46@0.0.3:
     resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
 
@@ -11561,6 +11634,10 @@ packages:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
     dependencies:
       punycode: 2.3.1
+
+  /urijs@1.19.11:
+    resolution: {integrity: sha512-HXgFDgDommxn5/bIv0cnQZsPhHDA90NPHD6+c/v21U5+Sx5hoP8+dP9IZXBU1gIfvdRfhG8cel9QNPeionfcCQ==}
+    dev: false
 
   /use-sync-external-store@1.2.0(react@18.2.0):
     resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}

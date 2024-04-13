@@ -9,7 +9,7 @@ services:
       context: ./
     environment:
       - PROVER_MODE=dev
-      - NOTARY_URL=notary:7047
+      - NOTARY_URL=notary:7779
     ports:
       # - 7047:7047
       - 7774:7774
