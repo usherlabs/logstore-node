@@ -1,3 +1,6 @@
+# ! Docker Compose File for DEVELOPMENT PURPOSES
+# ! Do not use in Production
+
 version: '3'
 services:
   prover:
