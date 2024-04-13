@@ -1,0 +1,20 @@
+[package]
+name = "verifier"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde_json = "1.0.107"
+
+# Core
+tlsn-core = { git = "https://github.com/tlsnotary/tlsn", rev = "6152883" }
+
+
+# Verifier
+elliptic-curve = { version = "0.13.5", features = ["pkcs8"] }
+chrono = "0.4.31"
+p256 = { version = "0.13", features = ["ecdsa"] }
+getrandom = { version = "0.2", features = ["js"] }
+

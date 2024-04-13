@@ -1,0 +1,6 @@
+services:
+  nginx:
+    build:
+      context: .
+    ports:
+      - 8123:80

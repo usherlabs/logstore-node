@@ -23,7 +23,8 @@
 		"start:fresh": "npm-run-all -s build start",
 		"ts": "tsc --noEmit",
 		"lint": "eslint ./src/**/*.ts ./test/**/*.ts",
-		"test": "jest --runInBand"
+		"test": "dotenv -e .env jest --runInBand",
+		"generate:proto": "protoc --ts_out ./src/plugins/logStore/protobuf/generated --proto_path ./src/plugins/logStore/protobuf prover.proto"
 	},
 	"dependencies": {
 		"@ethersproject/abstract-signer": "^5.7.0",
@@ -39,8 +40,13 @@
 		"@logsn/program": "workspace:*",
 		"@logsn/protocol": "0.0.19",
 		"@logsn/shared": "0.0.19",
+		"@protobuf-ts/plugin": "^2.9.3",
+		"@protobuf-ts/runtime": "^2.9.3",
+		"@protobuf-ts/runtime-rpc": "^2.9.3",
+		"@stellar/stellar-sdk": "^11.3.0",
 		"@streamr/protocol": "^8.5.5",
 		"@streamr/utils": "^8.5.5",
+		"@usherlabs/protobuf-zmq-ts-transport": "^0.0.1",
 		"ajv": "8.8.2",
 		"ajv-formats": "^2.1.1",
 		"axios": "^1.4.0",
@@ -53,6 +59,7 @@
 		"ethers": "^5.4.7",
 		"eventemitter3": "^4.0.7",
 		"express": "^4.18.2",
+		"get-port-please": "^3.1.2",
 		"heap": "^0.2.7",
 		"inquirer": "^8.1.1",
 		"js-base64": "^3.7.5",
@@ -69,7 +76,9 @@
 		"tslog": "^4.8.2",
 		"tsyringe": "^4.7.0",
 		"uuid": "^9.0.0",
-		"zlib": "^1.0.5"
+		"zeromq": "6.0.0-beta.19",
+		"zlib": "^1.0.5",
+		"zod": "^3.22.4"
 	},
 	"devDependencies": {
 		"@logsn/storage-proxy": "workspace:*",

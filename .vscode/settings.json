@@ -1,0 +1,7 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "packages/mpc-tls/src/prover/Cargo.toml",
+        "packages/mpc-tls/src/notary/Cargo.toml",
+        "packages/mpc-tls/src/verifier/Cargo.toml",
+    ]
+}

@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+
+import http.server
+import socketserver
+import sys
+
+class RequestHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        response_message = f"Path: {self.path}\nOK, got it!"
+        self.wfile.write(response_message.encode('utf-8'))
+
+    def do_POST(self):
+        self.send_error(405, "Method Not Allowed")
+
+    def do_PUT(self):
+        self.send_error(405, "Method Not Allowed")
+
+    def do_DELETE(self):
+        self.send_error(405, "Method Not Allowed")
+
+    def do_HEAD(self):
+        self.send_error(405, "Method Not Allowed")
+
+
+def run(server_class=http.server.HTTPServer, handler_class=RequestHandler, port=8000):
+    server_address = ('', port)
+    httpd = server_class(server_address, handler_class)
+    print(f"Starting httpd on port {port}...")
+    httpd.serve_forever()
+
+if __name__ == '__main__':
+    if len(sys.argv) == 3 and sys.argv[1] == '-p':
+        port = int(sys.argv[2])
+    else:
+        port = 8000
+    run(port=port)

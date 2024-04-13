@@ -5,10 +5,9 @@
 **/dist*
 **/node_modules*
 
-dev-network
-!dev-network/assets/validator/cli
-
 docs
+
+image-test
 
 packages/contracts/.openzeppelin
 packages/contracts/artifacts

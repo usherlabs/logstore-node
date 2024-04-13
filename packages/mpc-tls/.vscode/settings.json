@@ -1,0 +1,7 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "src/contract/Cargo.toml",
+        "src/prover/Cargo.toml",
+        "src/notary/Cargo.toml",
+    ]
+}

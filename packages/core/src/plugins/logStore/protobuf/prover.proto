@@ -1,0 +1,34 @@
+// TODO: make both node and rust services use the same protofile
+syntax = "proto3";
+package socket;
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.MethodOptions {
+  optional string zmq_type = 50000;
+}
+
+
+message TlsProof {
+  string id = 1;
+  string data = 2;
+  string stream = 3;
+  string process = 4;
+  string notary = 5;
+  // bool publish = 4;
+}
+
+message TlsProofFilter {
+}
+
+message ValidationResult {
+}
+
+
+service Socket {
+  rpc subscribeToProofs(TlsProofFilter) returns (stream TlsProof) {
+    option (zmq_type) = 'sub';
+  }
+  rpc validate(TlsProof) returns (ValidationResult) {
+    option (zmq_type) = 'reply';
+  }
+}

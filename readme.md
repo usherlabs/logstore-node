@@ -12,7 +12,28 @@ The Log Store Node is designed to operate in two distinct modes to enhance the d
 
 Both modes are integral to delivering a comprehensive solution that ensures the authenticity and reliability of information within the Log Store Network.
 
-To delve into the functionalities and deployment of the Log Store Node, start with [the Log Store Node Documentation](https://docs.logstore.usher.so/node/quick-start/install).
+To delve into the functionalities and deployment of the Log Store Node in standalone mode, start with [the Log Store Node Documentation](https://docs.logstore.usher.so/node/quick-start/install).
+
+To set up your standalone Log Store Node, follow these steps:
+
+1. **Configure Your Node**
+   - Create a configuration file in **`standalone`** mode.
+   - Define the streams you want to track and query.
+   - Example configurations can be found in our `config-examples` directory.
+2. **Start Your Node**:
+   - Run the following command, replacing the path with your configuration file's location:
+   ```sh
+   docker run
+   		 -v ./path/to/logstore-config.json:/home/node/.logstore/config/default.json \
+   		 -v ./path/to/data:/home/node/.logstore/data \
+   		 -p 7774:7774 \
+   		 ghcr.io/usherlabs/logstore-node:latest
+   ```
+   Notes:
+   - `-v ./path/to/data:/home/node/.logstore/data`: this line binds your local directory to where we store messages inside the docker container. It's optional, but useful to persist data and easily inspect the database from the host.
+   - `-p 7774:7774`: this line publishes the 7774 port to the host. The port may be modified in `logstore-config.json`.
+
+That's it. Your node will start listening and storing streams determined on the configuration file.
 
 ## **Features**
 
@@ -28,7 +49,32 @@ The Standalone Log Store Node is an integral part of the Log Store Network, desi
 8. **Web2-like Interfaces**: Designed with HTTP and similar network interfaces in mind, the Node offers straightforward integration capabilities, bypassing the need for deep SDK knowledge or reliance on complex embedded components.
 9. **Validation over Data**: Empowers you to define data schemas on-chain, ensuring that your Node acknowledges validation prerequisites prior to finalizing data storage, as detailed here: [Schema Validation Documentation](https://docs.logstore.usher.so/network/sdk/schema).
 
+<<<<<<< HEAD
+
 ## Explore Further
+
+=======
+
+## **Pushing to GitHub Docker Registry**
+
+1. Build an image for the `Dockerfile` present at the root of this project
+   ```sh
+   docker build -t ghcr.io/usherlabs/logstore-node:<desired-tag> -f ./Dockerfile .
+   ```
+2. Follow [this guide](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic) to get your authentication token, then login to the GitHub Container Registry:
+   ```sh
+   export CR_PAT=YOUR_TOKEN
+   echo $CR_PAT | docker login ghcr.io -u <username> --password-stdin
+   ```
+3. Push the image
+   ```sh
+   docker push ghcr.io/usherlabs/logstore-node:<desired-tag>
+   ```
+4. Done! The image is now available on the GitHub Container Registry.
+
+## **Learn More**
+
+> > > > > > > feature/t-node
 
 For more detailed insights into each feature and instructions on how to harness the full potential of the Log Store, visit our [comprehensive documentation](https://docs.logstore.usher.so/). Whether you are looking to enhance your decentralized data management strategies or integrate advanced attestation mechanisms, the Log Store provides the tools and guidance necessary to elevate your operations.
 
