@@ -18,7 +18,7 @@ const createHandler = (): RequestHandler => {
 		try {
 			// load up the keys from memory
 			const fileContent = fs.readFileSync(filePath, 'utf-8');
-			res.json({ data: fileContent, errorr: null });
+			res.json({ data: fileContent, error: null });
 		} catch (err) {
 			res.json({ data: null, error: err.message });
 		}
