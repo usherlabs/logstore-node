@@ -12,14 +12,12 @@ import { createNotaryPubKeyFetchEndpoint } from '../http/notaryGateway';
 import { createNotaryVerifyEndpoint } from '../http/notaryVerifier';
 import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
-import { proverSocketPath } from '../Prover';
 import { WEBSERVER_PATHS } from '../subprocess/constants';
 import { ProcessManager } from '../subprocess/ProcessManager';
 import { Heartbeat } from './Heartbeat';
 import { KyvePool } from './KyvePool';
 import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
 import { MessageMetricsCollector } from './MessageMetricsCollector';
-import { NetworkProver } from './NetworkProver';
 import { NetworkQueryRequestManager } from './NetworkQueryRequestManager';
 import { PropagationDispatcher } from './PropagationDispatcher';
 import { PropagationResolver } from './PropagationResolver';
@@ -48,7 +46,6 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private readonly propagationDispatcher: PropagationDispatcher;
 	private readonly reportPoller: ReportPoller;
 	private readonly notaryServer: ProcessManager;
-	private readonly proxyRequestProver: NetworkProver;
 
 	private metricsTimer?: NodeJS.Timer;
 
@@ -141,11 +138,6 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.systemPublisher,
 			this.systemSubscriber
 		);
-
-		this.proxyRequestProver = new NetworkProver(
-			proverSocketPath,
-			this.streamrClient
-		);
 	}
 
 	get networkConfig(): NetworkModeConfig {
@@ -180,7 +172,6 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		await this.networkQueryRequestManager.start(this.logStore);
 		await this.queryResponseManager.start(clientId);
 		await this.messageMetricsCollector.start();
-		await this.proxyRequestProver.start();
 
 		if (this.pluginConfig.experimental?.enableValidator) {
 			this.addHttpServerEndpoint(
@@ -224,7 +215,6 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.pluginConfig.experimental?.enableValidator
 				? stopValidatorComponents()
 				: Promise.resolve(),
-			this.proxyRequestProver.stop(),
 		]);
 
 		await super.stop();
