@@ -1,0 +1,32 @@
+# ! Docker Compose File for DEVELOPMENT PURPOSES
+# ! Do not use in Production
+
+version: '3'
+services:
+  prover:
+    platform: linux/x86_64
+    build:
+      context: ./
+    environment:
+      - PROVER_MODE=dev
+      - NOTARY_URL=notary:7047
+    ports:
+      # - 7047:7047
+      - 7774:7774
+      - 7775:7775
+      - 8080:8080
+    volumes:
+      - ./packages/core/configs/development-standalone-1.env.json:/home/node/.logstore/config/default.json
+      - ~/.logstore/data:/home/node/.logstore/data
+
+  notary:
+    platform: linux/x86_64
+    build:
+      context: ./
+    ports:
+      - 7047:7047
+      # - 7774:7774
+      # - 7775:7775
+      # - 8080:8080
+    volumes:
+      - ./packages/core/configs/development-network-1.env.json:/home/node/.logstore/config/default.json

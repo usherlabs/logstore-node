@@ -87,18 +87,18 @@ impl From<&clap::ArgMatches<'_>> for ServerConfig {
         let publish_socket_path = get_pub_socket_path(value);
         let notary_mode = get_mode(value);
 
-        if let Modes::Dev = notary_mode {
-            Self::default()
-        } else {
-            Self {
-                mode: Modes::Prod,
-                publish_socket: publish_socket_path,
-                request_socket: DEFAULT_REQUEST_SOCKET.to_string(),
-                notary_gateway: notary_node_gateway_url,
-                notary_host: notary_url.clone(),
-                notary_port: notary_port,
-                cert_url: notary_url.clone(),
-            }
+        Self {
+            mode: notary_mode.clone(),
+            publish_socket: publish_socket_path,
+            request_socket: DEFAULT_REQUEST_SOCKET.to_string(),
+            notary_gateway: notary_node_gateway_url,
+            notary_host: notary_url.clone(),
+            notary_port: notary_port,
+            cert_url: if let Modes::Dev = notary_mode.clone() {
+                DEFAULT_CERTIFICATE_DOMAIN.to_string()
+            } else {
+                notary_url.clone()
+            },
         }
     }
 }
