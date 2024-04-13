@@ -3,8 +3,8 @@ import { ZMQClientTransport } from '@usherlabs/protobuf-zmq-ts-transport';
 import StreamrClient from 'streamr-client';
 import * as zmq from 'zeromq';
 
-import { TlsProof } from './protobuff/generated/prover';
-import { SocketClient } from './protobuff/generated/prover.client';
+import { TlsProof } from './protobuf/generated/prover';
+import { SocketClient } from './protobuf/generated/prover.client';
 
 // TODO extract these to global configs and global constants
 export type NetworkType = 'network' | 'standalone';

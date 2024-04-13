@@ -1,5 +1,5 @@
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
-import { TlsProof } from '../protobuff/generated/prover';
+import { TlsProof } from '../protobuf/generated/prover';
 import { Prover } from '../Prover';
 
 export class StandAloneProver extends Prover {

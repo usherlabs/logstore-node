@@ -1,15 +1,26 @@
 use std::io::Result;
 use protobuf_zmq_rust_generator::ZmqServerGenerator;
+use pathsearch::find_executable_in_path;
 
-// ! assuming protoc is installed and added to path
-const PROTOC_PATH: &str = "/usr/local/bin/protoc";
+macro_rules! p {
+	($($tokens: tt)*) => {
+			println!("cargo:warning={}", format!($($tokens)*))
+	}
+}
 
 fn main() -> Result<()> {
-    std::env::set_var("PROTOC", PROTOC_PATH);
-    prost_build::Config::new()
-        .out_dir("src/message/")
-        .service_generator(Box::new(ZmqServerGenerator {}))
-        .compile_protos(&["prover.proto"], &["proto/"])?;
+		if let Some(exe) = find_executable_in_path("protoc") {
+			let path_to_exe = exe.display().to_string();
+			p!("Found protoc compiler at {}", path_to_exe);
+			std::env::set_var("PROTOC", path_to_exe);
+			prost_build::Config::new()
+					.out_dir("src/message/")
+					.service_generator(Box::new(ZmqServerGenerator {}))
+					.compile_protos(&["prover.proto"], &["proto/"])?;
 
-    Ok(())
+			} else {
+				p!("Cannot find protoc compiler on operating system. Please install protoc");
+			}
+
+		Ok(())
 }

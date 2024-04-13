@@ -5,7 +5,7 @@ import { StreamMessage } from 'streamr-client';
 import { z } from 'zod';
 
 import { LogStore } from './LogStore';
-import { TlsProof } from './protobuff/generated/prover';
+import { TlsProof } from './protobuf/generated/prover';
 
 const DEFAULT_PROCESS = 'LS_PROCESS';
 

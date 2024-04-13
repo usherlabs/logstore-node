@@ -25,7 +25,7 @@
 		"ts": "tsc --noEmit",
 		"lint": "eslint ./src/**/*.ts ./test/**/*.ts",
 		"test": "dotenv -e .env jest --",
-		"generate:proto": "protoc --ts_out ./src/plugins/logStore/protobuff/generated --proto_path ./src/plugins/logStore/protobuff prover.proto"
+		"generate:proto": "protoc --ts_out ./src/plugins/logStore/protobuf/generated --proto_path ./src/plugins/logStore/protobuf prover.proto"
 	},
 	"dependencies": {
 		"@ethersproject/abstract-signer": "^5.7.0",

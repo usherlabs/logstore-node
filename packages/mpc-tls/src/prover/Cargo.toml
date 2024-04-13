@@ -31,5 +31,6 @@ sha2 = "0.10.8"
 
 
 [build-dependencies]
+pathsearch = "0.2.0"
 prost-build = "0.12.3"
 protobuf-zmq-rust-generator = "0.1.1"

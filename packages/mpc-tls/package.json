@@ -4,7 +4,7 @@
 	"description": "Notarize requests by passing them through a proxy which forms an mpc tls connection to notarize data.",
 	"scripts": {
 		"build": "cargo build --release",
-    "postbuild": "cd scripts && sh ./move_assets.sh"
+		"postbuild": "cd scripts && sh ./move_assets.sh"
 	},
 	"keywords": [],
 	"author": "",
