@@ -84,8 +84,9 @@ COPY --chown=node:node ./ ./
 # run the script to move the assets
 RUN cd ./packages/mpc-tls/scripts && chmod +x ./move_assets.sh && sh ./move_assets.sh
 RUN rm -rf packages/mpc-tls
-COPY --from=builder /usr/src/tlsn/target/release/notary ./packages/core/bin
-COPY --from=builder /usr/src/tlsn/target/release/prover ./packages/core/bin
+COPY --from=builder /usr/src/tlsn/target/x86_64-unknown-linux-gnu/release/notary ./packages/core/bin
+COPY --from=builder /usr/src/tlsn/target/x86_64-unknown-linux-gnu/release/prover ./packages/core/bin
+COPY --from=builder /usr/src/tlsn/target/x86_64-unknown-linux-gnu/release/verifier ./packages/core/bin
 
 
 RUN pnpm build
