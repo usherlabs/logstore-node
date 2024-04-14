@@ -12,7 +12,8 @@ export const DEFAULT_PROCESS = 'LS_PROCESS';
 export const SINK_STELLAR_TRANSPARENCY_CONTRACT =
 	'CDPSU7OK7AUC2KQGGAOUWA5VKZDR4WRFEL6K6QLYDO53QEPHSH2R6YZK';
 export const SINK_STELLAR_RPC = 'https://soroban-testnet.stellar.org:443';
-export const SINK_STELLAR_SECRET = process.env.SINK_STELLAR_SECRET;
+export const SINK_STELLAR_WALLET_PRIVATE_KEY =
+	process.env.SINK_STELLAR_WALLET_PRIVATE_KEY;
 
 type SinkMessageType = {
 	action: 'start' | 'stop' | 'meta';
@@ -125,13 +126,13 @@ export class SinkModule {
 	constructor() {
 		this.activeProcessesMap = new Map<string, Process>();
 		// TODO: I don't think this secret key is to be public - we can leave public as we're using Testnet but in the future, the Node operator will provide the Secret Key alongside their Wallet Private Key
-		const secret = String(SINK_STELLAR_SECRET);
+		const secret = String(SINK_STELLAR_WALLET_PRIVATE_KEY);
 		const rpcURL = String(SINK_STELLAR_RPC);
 		const contractAddress = SINK_STELLAR_TRANSPARENCY_CONTRACT;
 
 		if (!secret || !rpcURL)
 			throw new Error(
-				"Provide env vars 'SINK_STELLAR_SECRET' and 'SINK_STELLAR_RPC'"
+				"Provide env vars 'SINK_STELLAR_WALLET_PRIVATE_KEY' and 'SINK_STELLAR_RPC'"
 			);
 
 		this.verifierContract = new SorobanContract(secret, {
