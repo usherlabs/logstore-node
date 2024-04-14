@@ -10,6 +10,7 @@ services:
     environment:
       - PROVER_MODE=dev
       - NOTARY_URL=notary:7779
+      - SINK_STELLAR_SECRET=
     ports:
       # - 7047:7047
       - 7774:7774
