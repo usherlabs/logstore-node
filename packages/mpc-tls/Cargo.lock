@@ -2517,7 +2517,7 @@ dependencies = [
  "serde",
  "serde_json",
  "structopt",
- "tlsn-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-core 0.1.0-alpha.2",
  "tlsn-prover 0.1.0-alpha.3",
  "tlsn-verifier",
  "tokio",
@@ -2555,7 +2555,7 @@ dependencies = [
  "sha1",
  "structopt",
  "thiserror",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-tls-core 0.1.0-alpha.2",
  "tlsn-verifier",
  "tokio",
  "tokio-rustls",
@@ -3157,7 +3157,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "time",
- "tlsn-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-core 0.1.0-alpha.2",
  "tlsn-prover 0.1.0-alpha.2",
  "tokio",
  "tokio-rustls",
@@ -3994,27 +3994,6 @@ dependencies = [
 [[package]]
 name = "tlsn-core"
 version = "0.1.0-alpha.2"
-source = "git+https://github.com/tlsnotary/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "bimap",
- "bytes",
- "mpz-circuits",
- "mpz-core",
- "mpz-garble-core",
- "opaque-debug",
- "p256",
- "rs_merkle",
- "serde",
- "thiserror",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
- "tlsn-utils",
- "web-time",
- "webpki-roots 0.23.1",
-]
-
-[[package]]
-name = "tlsn-core"
-version = "0.1.0-alpha.2"
 source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
 dependencies = [
  "bimap",
@@ -4027,7 +4006,7 @@ dependencies = [
  "rs_merkle",
  "serde",
  "thiserror",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-tls-core 0.1.0-alpha.2",
  "tlsn-utils",
  "web-time",
  "webpki-roots 0.23.1",
@@ -4065,7 +4044,7 @@ dependencies = [
  "serde",
  "spansy",
  "thiserror",
- "tlsn-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-core 0.1.0-alpha.2",
  "tlsn-utils",
 ]
 
@@ -4197,11 +4176,11 @@ dependencies = [
  "opaque-debug",
  "rand",
  "thiserror",
- "tlsn-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-core 0.1.0-alpha.2",
  "tlsn-formats",
  "tlsn-tls-client 0.1.0-alpha.2",
  "tlsn-tls-client-async 0.1.0-alpha.2",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-tls-core 0.1.0-alpha.2",
  "tlsn-tls-mpc 0.1.0-alpha.2",
  "tlsn-utils",
  "tlsn-utils-aio",
@@ -4279,7 +4258,7 @@ source = "git+https://github.com/usherlabs/tlsn?rev=6152883#61528833cdd101664445
 dependencies = [
  "async-trait",
  "thiserror",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-tls-core 0.1.0-alpha.2",
 ]
 
 [[package]]
@@ -4309,7 +4288,7 @@ dependencies = [
  "sct",
  "sha2",
  "tlsn-tls-backend 0.1.0-alpha.2",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-tls-core 0.1.0-alpha.2",
  "web-time",
  "webpki",
 ]
@@ -4359,23 +4338,6 @@ dependencies = [
  "thiserror",
  "tlsn-tls-client 0.1.0-alpha.3",
  "tokio-util",
-]
-
-[[package]]
-name = "tlsn-tls-core"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/tlsnotary/tlsn?rev=6152883#61528833cdd1016644453d3bd28ce82fcf8b6266"
-dependencies = [
- "futures",
- "rand",
- "ring 0.16.20",
- "rustls-pemfile",
- "sct",
- "serde",
- "thiserror",
- "tracing",
- "web-time",
- "webpki",
 ]
 
 [[package]]
@@ -4434,7 +4396,7 @@ dependencies = [
  "tlsn-point-addition 0.1.0-alpha.2",
  "tlsn-stream-cipher 0.1.0-alpha.2",
  "tlsn-tls-backend 0.1.0-alpha.2",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-tls-core 0.1.0-alpha.2",
  "tlsn-universal-hash 0.1.0-alpha.2",
  "tlsn-utils-aio",
 ]
@@ -4541,8 +4503,8 @@ dependencies = [
  "rand",
  "signature",
  "thiserror",
- "tlsn-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
- "tlsn-tls-core 0.1.0-alpha.2 (git+https://github.com/usherlabs/tlsn?rev=6152883)",
+ "tlsn-core 0.1.0-alpha.2",
+ "tlsn-tls-core 0.1.0-alpha.2",
  "tlsn-tls-mpc 0.1.0-alpha.2",
  "tlsn-utils-aio",
  "uid-mux 0.1.0-alpha.2",
@@ -5032,7 +4994,7 @@ dependencies = [
  "getrandom",
  "p256",
  "serde_json",
- "tlsn-core 0.1.0-alpha.2 (git+https://github.com/tlsnotary/tlsn?rev=6152883)",
+ "tlsn-core 0.1.0-alpha.2",
 ]
 
 [[package]]
