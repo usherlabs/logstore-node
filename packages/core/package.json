@@ -41,7 +41,7 @@
 		"@logsn/protocol": "0.0.19",
 		"@logsn/shared": "0.0.19",
 		"@protobuf-ts/plugin": "^2.9.3",
-		"@protobuf-ts/runtime": "^2.9.3",
+		"@protobuf-ts/runtime": "^2.9.4",
 		"@protobuf-ts/runtime-rpc": "^2.9.3",
 		"@stellar/stellar-sdk": "^11.3.0",
 		"@streamr/protocol": "^8.5.5",
