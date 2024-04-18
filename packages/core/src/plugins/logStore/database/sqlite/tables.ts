@@ -1,6 +1,12 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import { int, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+	blob,
+	int,
+	primaryKey,
+	sqliteTable,
+	text,
+} from 'drizzle-orm/sqlite-core';
 
 export const streamDataTable = sqliteTable(
 	'stream_data',
@@ -12,7 +18,7 @@ export const streamDataTable = sqliteTable(
 		publisher_id: text('publisher_id').notNull(),
 		msg_chain_id: text('msg_chain_id').notNull(),
 		content_bytes: int('content_bytes').notNull(),
-		payload: text('payload', { mode: 'json' }).notNull(),
+		payload: blob('payload').notNull(),
 		decrypted_content: text('decrypted_content', { mode: 'json' }),
 	},
 	(table) => ({
@@ -40,7 +46,7 @@ export const createTableStatement = sql`
 		publisher_id      TEXT    NOT NULL,
 		msg_chain_id      TEXT    NOT NULL,
 		content_bytes     INTEGER NOT NULL,
-		payload           TEXT    NOT NULL,
+		payload           BLOB    NOT NULL,
 		decrypted_content TEXT,
 		PRIMARY KEY (
 								 stream_id, partition, ts, sequence_no,

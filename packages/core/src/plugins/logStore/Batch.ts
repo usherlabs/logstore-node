@@ -1,4 +1,3 @@
-import type { StreamMessage } from '@streamr/protocol';
 import { Logger } from '@streamr/utils';
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,6 +7,16 @@ import { BucketId } from './Bucket';
 export type BatchId = string;
 export type State = string;
 export type DoneCallback = (err?: Error) => void;
+
+export interface InsertRecord {
+	streamId: string;
+	partition: number;
+	timestamp: number;
+	sequenceNo: number;
+	publisherId: string;
+	msgChainId: string;
+	payload: Buffer; // cassandra-driver expects Buffer
+}
 
 export class Batch extends EventEmitter {
 	// TODO convert to enum and rename to uppercase
@@ -23,12 +32,12 @@ export class Batch extends EventEmitter {
 	private bucketId: BucketId;
 	logger: Logger;
 	private maxSize: number;
-	private maxRecords: number;
+	private maxRecordCount: number;
 	private maxRetries: number;
 	private closeTimeout: number;
 	private timeout: NodeJS.Timeout;
 	createdAt: number;
-	streamMessages: StreamMessage[];
+	records: InsertRecord[];
 	size: number;
 	retries: number;
 	state: State;
@@ -37,7 +46,7 @@ export class Batch extends EventEmitter {
 	constructor(
 		bucketId: BucketId,
 		maxSize: number,
-		maxRecords: number,
+		maxRecordCount: number,
 		closeTimeout: number,
 		maxRetries: number
 	) {
@@ -49,8 +58,8 @@ export class Batch extends EventEmitter {
 			throw new TypeError('maxSize must be > 0');
 		}
 
-		if (maxRecords <= 0) {
-			throw new TypeError('maxRecords must be > 0');
+		if (maxRecordCount <= 0) {
+			throw new TypeError('maxRecordCount must be > 0');
 		}
 
 		if (closeTimeout <= 0) {
@@ -66,7 +75,7 @@ export class Batch extends EventEmitter {
 		this.id = uuidv4();
 		this.bucketId = bucketId;
 		this.createdAt = Date.now();
-		this.streamMessages = [];
+		this.records = [];
 		this.size = 0;
 		this.retries = 0;
 		this.state = Batch.states.OPENED;
@@ -75,7 +84,7 @@ export class Batch extends EventEmitter {
 		this.logger = new Logger(module, { id: this.id });
 
 		this.maxSize = maxSize;
-		this.maxRecords = maxRecords;
+		this.maxRecordCount = maxRecordCount;
 		this.maxRetries = maxRetries;
 		this.closeTimeout = closeTimeout;
 
@@ -126,26 +135,26 @@ export class Batch extends EventEmitter {
 	clear(): void {
 		this.logger.trace('clear');
 		clearTimeout(this.timeout);
-		this.streamMessages = [];
+		this.records = [];
 		this.setState(Batch.states.INSERTED);
 	}
 
-	push(streamMessage: StreamMessage, doneCb?: DoneCallback): void {
-		this.streamMessages.push(streamMessage);
-		this.size += Buffer.byteLength(streamMessage.serialize());
-		if (doneCb) {
+	push(record: InsertRecord, doneCb?: DoneCallback): void {
+		this.records.push(record);
+		this.size += record.payload.length;
+		if (doneCb !== undefined) {
 			this.doneCbs.push(doneCb);
 		}
 	}
 
 	isFull(): boolean {
 		return (
-			this.size >= this.maxSize || this.getNumberOfMessages() >= this.maxRecords
+			this.size >= this.maxSize || this.getRecordCount() >= this.maxRecordCount
 		);
 	}
 
-	private getNumberOfMessages(): number {
-		return this.streamMessages.length;
+	private getRecordCount(): number {
+		return this.records.length;
 	}
 
 	private setState(state: State): void {
@@ -157,7 +166,7 @@ export class Batch extends EventEmitter {
 			this.getId(),
 			this.state,
 			this.size,
-			this.getNumberOfMessages()
+			this.getRecordCount()
 		);
 	}
 }

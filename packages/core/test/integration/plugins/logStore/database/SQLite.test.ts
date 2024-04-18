@@ -1,43 +1,70 @@
-import { MessageID, StreamMessage, toStreamID } from '@streamr/protocol';
-import { toEthereumAddress } from '@streamr/utils';
+import {
+	ContentType,
+	EncryptionType,
+	MessageID,
+	SignatureType,
+	StreamMessage,
+	toStreamID,
+} from '@streamr/protocol';
+import { waitForStreamToEnd } from '@streamr/test-utils';
+import { convertBytesToStreamMessage } from '@streamr/trackerless-network';
+import { hexToBinary, toEthereumAddress, utf8ToBinary } from '@streamr/utils';
 import { globSync } from 'fast-glob';
 import fs from 'fs';
 import path from 'path';
-import { firstValueFrom, from, map, toArray } from 'rxjs';
 import { Readable } from 'stream';
 
 import { SQLiteDBAdapter } from '../../../../../src/plugins/logStore/database/SQLiteDBAdapter';
 import { MAX_SEQUENCE_NUMBER_VALUE } from '../../../../../src/plugins/logStore/LogStore';
 
-const MOCK_STREAM_ID = 'streamId';
-const MOCK_PUBLISHER_ID = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-
+const MOCK_STREAM_ID = `mock-stream-id-${Date.now()}`;
+const MOCK_PUBLISHER_ID = toEthereumAddress(
+	'0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+);
 const MOCK_MSG_CHAIN_ID = 'msgChainId';
-const getMockMessage = (streamId: string, timestamp: number, sequence_no = 0) =>
+
+const createMockMessage = (
+	timestamp: number,
+	sequence_no = 0,
+	streamId: string = MOCK_STREAM_ID
+) =>
 	new StreamMessage({
 		messageId: new MessageID(
 			toStreamID(streamId),
 			0,
 			timestamp,
 			sequence_no,
-			toEthereumAddress(MOCK_PUBLISHER_ID),
+			MOCK_PUBLISHER_ID,
 			MOCK_MSG_CHAIN_ID
 		),
-		content: JSON.stringify({
-			timestamp,
-			sequence_no,
-		}),
-		signature: 'signature',
+		content: utf8ToBinary(
+			JSON.stringify({
+				timestamp,
+				sequence_no,
+			})
+		),
+		signature: hexToBinary('0x1234'),
+		contentType: ContentType.JSON,
+		encryptionType: EncryptionType.NONE,
+		signatureType: SignatureType.SECP256K1,
 	});
 
-function streamToSerializedMsg(stream: Readable) {
-	return firstValueFrom(
-		from(stream).pipe(
-			map((s: StreamMessage) => s.serialize()),
-			toArray()
-		)
-	);
-}
+type TestMessage = {
+	timestamp: number;
+	sequence_no: number;
+};
+
+const streamToContentValues = async (resultStream: Readable) => {
+	const messages: Uint8Array[] = (await waitForStreamToEnd(
+		resultStream
+	)) as Uint8Array[];
+	return messages
+		.map((bytes) => {
+			return convertBytesToStreamMessage(bytes);
+		})
+		.map((message) => message.getParsedContent() as TestMessage)
+		.flatMap((message) => [message.timestamp, message.sequence_no]);
+};
 
 describe('SQLite', () => {
 	const dbPath = path.join(process.cwd(), '.data/test.db');
@@ -52,7 +79,7 @@ describe('SQLite', () => {
 
 	test('it creates and uses the file without problems', async () => {
 		const testDb = new SQLiteDBAdapter({ type: 'sqlite', dataPath: dbPath });
-		await testDb.store(getMockMessage(MOCK_STREAM_ID, 1));
+		await testDb.store(createMockMessage(1));
 	});
 
 	describe('methods test', () => {
@@ -73,33 +100,30 @@ describe('SQLite', () => {
 		});
 
 		test('queryLast works', async () => {
-			const streamId = MOCK_STREAM_ID;
 			const partition = 0;
 			const requestCount = 2;
 			const messages = [
-				getMockMessage(streamId, 1),
-				getMockMessage(streamId, 2),
-				getMockMessage(streamId, 3),
+				createMockMessage(1),
+				createMockMessage(2),
+				createMockMessage(3),
 			];
 
 			await db.store(messages[0]);
 			await db.store(messages[1]);
 			await db.store(messages[2]);
 
-			const stream = db.queryLast(streamId, partition, requestCount);
-			const result = await streamToSerializedMsg(stream);
-
-			expect(result).toEqual(messages.slice(1).map((s) => s.serialize()));
+			const stream = db.queryLast(MOCK_STREAM_ID, partition, requestCount);
+			const contentValues = await streamToContentValues(stream);
+			expect(contentValues).toEqual([2, 0, 3, 0]);
 		});
 
 		test('queryRange works', async () => {
-			const streamId = MOCK_STREAM_ID;
 			const partition = 0;
 			const messages = [
-				getMockMessage(streamId, 1),
-				getMockMessage(streamId, 2),
-				getMockMessage(streamId, 3),
-				getMockMessage(streamId, 4),
+				createMockMessage(1),
+				createMockMessage(2),
+				createMockMessage(3),
+				createMockMessage(4),
 			];
 
 			for (const message of messages) {
@@ -107,31 +131,30 @@ describe('SQLite', () => {
 			}
 
 			const stream = db.queryRange(
-				streamId,
+				MOCK_STREAM_ID,
 				partition,
 				2,
 				0,
 				3,
 				MAX_SEQUENCE_NUMBER_VALUE
 			);
-			const result = await streamToSerializedMsg(stream);
-
-			expect(result).toEqual(messages.slice(1, 3).map((s) => s.serialize()));
+			const contentValues = await streamToContentValues(stream);
+			expect(contentValues).toEqual([2, 0, 3, 0]);
 		});
 
 		test('query range works in multiple edge cases with sequence numbers', async () => {
 			const partition = 0;
 			const messages = [
-				getMockMessage(MOCK_STREAM_ID, 1, 0), // 0
-				getMockMessage(MOCK_STREAM_ID, 1, 1), // 1
-				getMockMessage(MOCK_STREAM_ID, 1, 2), // 2
-				getMockMessage(MOCK_STREAM_ID, 2, 0), // 3
-				getMockMessage(MOCK_STREAM_ID, 3, 0), // 4
-				getMockMessage(MOCK_STREAM_ID, 3, 1), // 5
-				getMockMessage(MOCK_STREAM_ID, 4, 0), // 6
-				getMockMessage(MOCK_STREAM_ID, 4, 1), // 7
-				getMockMessage(MOCK_STREAM_ID, 4, 2), // 8
-				getMockMessage(MOCK_STREAM_ID, 4, 3), // 9
+				createMockMessage(1, 0), // 0
+				createMockMessage(1, 1), // 1
+				createMockMessage(1, 2), // 2
+				createMockMessage(2, 0), // 3
+				createMockMessage(3, 0), // 4
+				createMockMessage(3, 1), // 5
+				createMockMessage(4, 0), // 6
+				createMockMessage(4, 1), // 7
+				createMockMessage(4, 2), // 8
+				createMockMessage(4, 3), // 9
 			];
 
 			for (const message of messages) {
@@ -151,16 +174,15 @@ describe('SQLite', () => {
 			];
 
 			const returnSlices = [
-				[1, 9],
-				[0, 7],
-				[1, 8],
-				[7, 9],
+				[1, 1, 1, 2, 2, 0, 3, 0, 3, 1, 4, 0, 4, 1, 4, 2],
+				[1, 0, 1, 1, 1, 2, 2, 0, 3, 0, 3, 1, 4, 0],
+				[1, 1, 1, 2, 2, 0, 3, 0, 3, 1, 4, 0, 4, 1],
+				[4, 1, 4, 2],
 			];
 
 			for (const c of cases) {
 				const i = cases.indexOf(c);
 				const [fromTimestamp, fromSequenceNo, toTimestamp, toSequenceNo] = c;
-				const [fromSlice, toSlice] = returnSlices[i];
 
 				const stream = db.queryRange(
 					MOCK_STREAM_ID,
@@ -170,21 +192,17 @@ describe('SQLite', () => {
 					toTimestamp,
 					toSequenceNo
 				);
-				const result = await streamToSerializedMsg(stream);
-
-				expect(result).toEqual(
-					messages.slice(fromSlice, toSlice).map((s) => s.serialize())
-				);
+				const contentValues = await streamToContentValues(stream);
+				expect(contentValues).toEqual(returnSlices[i]);
 			}
 		});
 
 		test('query by message id works', async () => {
-			const streamId = MOCK_STREAM_ID;
 			const messages = [
-				getMockMessage(streamId, 1),
-				getMockMessage(streamId, 2),
-				getMockMessage(streamId, 3),
-				getMockMessage(streamId, 4),
+				createMockMessage(1),
+				createMockMessage(2),
+				createMockMessage(3),
+				createMockMessage(4),
 			];
 
 			for (const message of messages) {
@@ -196,19 +214,16 @@ describe('SQLite', () => {
 				queriedMessages.map((m) => m.messageId)
 			);
 
-			const result = await streamToSerializedMsg(stream);
-
-			// important to see if it's on the same order
-			expect(result).toEqual(queriedMessages.map((s) => s.serialize()));
+			const contentValues = await streamToContentValues(stream);
+			expect(contentValues).toEqual([2, 0, 4, 0, 3, 0]);
 		});
 
 		test('details', async () => {
-			const streamId = MOCK_STREAM_ID;
 			const messages = [
-				getMockMessage(streamId, 1),
-				getMockMessage(streamId, 2),
-				getMockMessage(streamId, 3),
-				getMockMessage(streamId, 4),
+				createMockMessage(1),
+				createMockMessage(2),
+				createMockMessage(3),
+				createMockMessage(4),
 			];
 
 			for (const message of messages) {
@@ -216,20 +231,23 @@ describe('SQLite', () => {
 			}
 
 			const firstMessageDate = await db.getFirstMessageDateInStream(
-				streamId,
+				MOCK_STREAM_ID,
 				0
 			);
 			const numberOfMessages = await db.getNumberOfMessagesInStream(
-				streamId,
+				MOCK_STREAM_ID,
 				0
 			);
-			const lastMessageDate = await db.getLastMessageDateInStream(streamId, 0);
-			const totalBytes = await db.getTotalBytesInStream(streamId, 0);
+			const lastMessageDate = await db.getLastMessageDateInStream(
+				MOCK_STREAM_ID,
+				0
+			);
+			const totalBytes = await db.getTotalBytesInStream(MOCK_STREAM_ID, 0);
 
 			expect(firstMessageDate).toBe(1);
 			expect(numberOfMessages).toBe(4);
 			expect(lastMessageDate).toBe(4);
-			expect(totalBytes).toBe(620);
+			expect(totalBytes).toBe(436);
 		});
 	});
 });

@@ -1,6 +1,15 @@
-import { MessageID, StreamMessage, toStreamID } from '@streamr/protocol';
+/* eslint-disable @typescript-eslint/no-shadow */
+import {
+	ContentType,
+	EncryptionType,
+	MessageID,
+	SignatureType,
+	StreamMessage,
+	toStreamID,
+} from '@streamr/protocol';
 import { waitForStreamToEnd } from '@streamr/test-utils';
-import { toEthereumAddress } from '@streamr/utils';
+import { convertBytesToStreamMessage } from '@streamr/trackerless-network';
+import { hexToBinary, toEthereumAddress, utf8ToBinary } from '@streamr/utils';
 import { shuffle } from 'lodash';
 import { Readable } from 'stream';
 
@@ -9,26 +18,49 @@ import { DatabaseAdapter } from '../../../../../src/plugins/logStore/database/Da
 import { SQLiteDBAdapter } from '../../../../../src/plugins/logStore/database/SQLiteDBAdapter';
 import { STREAMR_DOCKER_DEV_HOST } from '../../../../utils';
 
+const MOCK_STREAM_ID = `mock-stream-id-${Date.now()}`;
+const MOCK_PUBLISHER_ID = toEthereumAddress(
+	'0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+);
 const MOCK_MSG_CHAIN_ID = 'msgChainId';
-const MOCK_STREAM_ID = 'streamId';
-const MOCK_PUBLISHER_ID = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
-const getMockMessage = (streamId: string, timestamp: number, sequence_no = 0) =>
-	new StreamMessage({
+const createMockMessage = (
+	timestamp: number,
+	sequence_no = 0,
+	streamId: string = MOCK_STREAM_ID
+) => {
+	return new StreamMessage({
 		messageId: new MessageID(
 			toStreamID(streamId),
 			0,
 			timestamp,
 			sequence_no,
-			toEthereumAddress(MOCK_PUBLISHER_ID),
+			MOCK_PUBLISHER_ID,
 			MOCK_MSG_CHAIN_ID
 		),
-		content: JSON.stringify({
-			timestamp,
-			sequence_no,
-		}),
-		signature: 'signature',
+		content: utf8ToBinary(
+			JSON.stringify({
+				timestamp,
+				sequence_no,
+			})
+		),
+		signature: hexToBinary('0x1234'),
+		contentType: ContentType.JSON,
+		encryptionType: EncryptionType.NONE,
+		signatureType: SignatureType.SECP256K1,
 	});
+};
+
+type TestMessage = {
+	timestamp: number;
+	sequence_no: number;
+};
+
+const streamMessagesToContentValues = (messages: StreamMessage[]) => {
+	return messages
+		.map((message) => message.getParsedContent() as TestMessage)
+		.flatMap((message) => [message.timestamp, message.sequence_no]);
+};
 
 describe('Multiple DB', () => {
 	describe('methods test', () => {
@@ -68,11 +100,11 @@ describe('Multiple DB', () => {
 
 		test('conformity test', async () => {
 			const msgs = [
-				getMockMessage(MOCK_STREAM_ID, 1, 0),
-				getMockMessage(MOCK_STREAM_ID, 1, 1),
-				getMockMessage(MOCK_STREAM_ID, 2, 0),
-				getMockMessage(MOCK_STREAM_ID, 3, 0),
-				getMockMessage(MOCK_STREAM_ID, 3, 1),
+				createMockMessage(1, 0),
+				createMockMessage(1, 1),
+				createMockMessage(2, 0),
+				createMockMessage(3, 0),
+				createMockMessage(3, 1),
 			];
 			const shuffledMsgs = shuffle(msgs);
 
@@ -131,16 +163,19 @@ const expectDatabaseOutputConformity = async (
 	output: Readable,
 	expectedMessages: StreamMessage[]
 ) => {
-	const messages = (await waitForStreamToEnd(output)) as StreamMessage[];
+	const messages = ((await waitForStreamToEnd(output)) as Uint8Array[]).map(
+		convertBytesToStreamMessage
+	);
+
 	// format test
 	const expectedMessage = expectedMessages[0];
 	const message = messages[0];
 	expect(message).toBeInstanceOf(StreamMessage);
 	expect(message.getStreamId()).toEqual(expectedMessage.getStreamId());
-	expect(message.getContent()).toEqual(expectedMessage.getContent());
+	expect(message.content.length).toEqual(expectedMessage.content.length);
 
-	expect(messages.map((m) => m.getContent())).toEqual(
-		expectedMessages.map((m) => m.getContent())
+	expect(streamMessagesToContentValues(messages)).toEqual(
+		streamMessagesToContentValues(expectedMessages)
 	);
 	return messages;
 };

@@ -1,4 +1,5 @@
 import { MessageID, StreamMessage } from '@streamr/protocol';
+import { convertStreamMessageToBytes } from '@streamr/trackerless-network';
 import { Logger } from '@streamr/utils';
 import Database from 'better-sqlite3';
 import {
@@ -23,6 +24,7 @@ import path from 'path';
 import { concatAll, firstValueFrom, from, map, mergeAll } from 'rxjs';
 import { Readable } from 'stream';
 
+import { messageIdToStr } from '../../../streamr/MessageID';
 import {
 	MAX_SEQUENCE_NUMBER_VALUE,
 	MIN_SEQUENCE_NUMBER_VALUE,
@@ -240,7 +242,7 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 			mergeAll(), // arrays to values
 			map(
 				this.parseRow({
-					messageIds: messageIds.map((m) => m.serialize()),
+					messageIds: messageIds.map((m) => messageIdToStr(m)),
 				})
 			)
 		);
@@ -249,18 +251,20 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 	}
 
 	public async store(streamMessage: StreamMessage): Promise<boolean> {
-		await this.dbClient.insert(streamDataTable).values({
+		const payload = convertStreamMessageToBytes(streamMessage);
+		const record = {
 			stream_id: streamMessage.getStreamId(),
 			partition: streamMessage.getStreamPartition(),
 			ts: streamMessage.getTimestamp(),
 			sequence_no: streamMessage.getSequenceNumber(),
 			publisher_id: streamMessage.getPublisherId(),
 			msg_chain_id: streamMessage.getMsgChainId(),
-			payload: JSON.parse(streamMessage.serialize()),
-			content_bytes: Buffer.byteLength(streamMessage.serialize()),
-		});
+			payload: payload,
+			content_bytes: payload.length,
+		};
+		await this.dbClient.insert(streamDataTable).values(record);
 
-		this.emit('write', streamMessage);
+		this.emit('write', record.payload);
 
 		return true;
 	}

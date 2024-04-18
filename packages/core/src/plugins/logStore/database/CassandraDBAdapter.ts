@@ -1,10 +1,12 @@
 import { MessageID, StreamMessage } from '@streamr/protocol';
+import { convertStreamMessageToBytes } from '@streamr/trackerless-network';
 import { Logger } from '@streamr/utils';
 import { auth, Client, tracker, types } from 'cassandra-driver';
 import merge2 from 'merge2';
 import { pipeline, Readable, Transform } from 'stream';
 import { v1 as uuidv1 } from 'uuid';
 
+import { messageIdToStr } from '../../../streamr/MessageID';
 import { sleep } from '../../../utils/sleep';
 import { BatchManager } from '../BatchManager';
 import { Bucket, BucketId } from '../Bucket';
@@ -91,9 +93,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 			objectMode: true,
 			transform(row: types.Row, _, done) {
 				const now = Date.now();
-				const message = self.parseRow(debugInfo)(
-					row as unknown as { payload: Buffer | null }
-				);
+				const message = self.parseRow(debugInfo)(row);
 				if (message !== null) {
 					this.push(message);
 				}
@@ -143,23 +143,30 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 			if (bucketId) {
 				logger.trace(`found bucketId: ${bucketId}`);
 
-				this.bucketManager.incrementBucket(
-					bucketId,
-					Buffer.byteLength(streamMessage.serialize())
-				);
+				const record = {
+					streamId: streamMessage.getStreamId(),
+					partition: streamMessage.getStreamPartition(),
+					timestamp: streamMessage.getTimestamp(),
+					sequenceNo: streamMessage.getSequenceNumber(),
+					publisherId: streamMessage.getPublisherId(),
+					msgChainId: streamMessage.getMsgChainId(),
+					payload: Buffer.from(convertStreamMessageToBytes(streamMessage)),
+				};
+				this.bucketManager.incrementBucket(bucketId, record.payload.length);
 				setImmediate(() =>
-					this.batchManager.store(bucketId, streamMessage, (err?: Error) => {
+					this.batchManager.store(bucketId, record, (err?: Error) => {
 						if (err) {
 							reject(err);
 						} else {
-							this.emit('write', streamMessage);
+							this.emit('write', record.payload);
 							resolve(true);
 						}
 					})
 				);
 			} else {
-				const messageId = streamMessage.messageId.serialize();
-				logger.trace(`bucket not found, put ${messageId} to pendingMessages`);
+				logger.trace('Move message to pending messages (bucket not found)', {
+					messageId: JSON.stringify(streamMessage.messageId),
+				});
 
 				const uuid = uuidv1();
 				const timeout = setTimeout(() => {
@@ -457,7 +464,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 		const sourceStream = Readable.from(messageIds);
 
 		const resultStream = this.createResultStream({
-			messageIds: messageIds.map((m) => m.serialize()),
+			messageIds: messageIds.map((m) => messageIdToStr(m)),
 		});
 
 		const transfrom = new Transform({
@@ -471,7 +478,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 				);
 				if (!bucket) {
 					logger.warn(`Bucket not found for messageId`, {
-						messageId: messageId.serialize(),
+						messageId: messageIdToStr(messageId),
 					});
 					done();
 					return;
@@ -496,7 +503,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 
 				if (!resultSet.rows[0]) {
 					logger.warn('Message not found for messageId', {
-						messageId: messageId.serialize(),
+						messageId: messageIdToStr(messageId),
 					});
 					done();
 					return;

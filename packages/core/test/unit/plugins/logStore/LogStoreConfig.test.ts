@@ -9,10 +9,10 @@ import {
 	toStreamID,
 	toStreamPartID,
 } from '@streamr/protocol';
+import { Stream, StreamrClient } from '@streamr/sdk';
 import { toEthereumAddress, wait } from '@streamr/utils';
 import { BigNumber } from 'ethers';
 import { range } from 'lodash';
-import StreamrClient, { Stream } from 'streamr-client';
 
 import { LogStoreNetworkConfig } from '../../../../src/plugins/logStore/network/LogStoreNetworkConfig';
 
