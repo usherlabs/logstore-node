@@ -58,7 +58,11 @@ export class LogStore extends DatabaseEventEmitter {
 		partition: number,
 		requestCount: number
 	): Readable {
-		return this.db.queryLast(streamId, partition, requestCount);
+		if (requestCount < 0) {
+			return this.db.queryFirst(streamId, partition, -requestCount);
+		} else {
+			return this.db.queryLast(streamId, partition, requestCount);
+		}
 	}
 
 	requestFrom(
