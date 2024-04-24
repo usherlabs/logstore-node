@@ -1,3 +1,4 @@
+import { messageIdToStr } from '@logsn/client';
 import {
 	QueryRequest,
 	QueryResponse,
@@ -84,7 +85,7 @@ export class NetworkQueryRequestManager extends BaseQueryRequestManager {
 				newGroupKey: streamMessage.newGroupKey ?? undefined,
 			});
 
-			const messageId = streamMessage.getMessageID().serialize();
+			const messageId = messageIdToStr(streamMessage.messageId);
 			const messageHash = keccak256(Uint8Array.from(Buffer.from(payload)));
 
 			hashMap.set(messageId, messageHash);

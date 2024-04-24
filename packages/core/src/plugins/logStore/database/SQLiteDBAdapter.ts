@@ -1,3 +1,4 @@
+import { messageIdToStr } from '@logsn/client';
 import { MessageID, StreamMessage } from '@streamr/protocol';
 import { convertStreamMessageToBytes } from '@streamr/trackerless-network';
 import { Logger } from '@streamr/utils';
@@ -24,7 +25,6 @@ import path from 'path';
 import { concatAll, firstValueFrom, from, map, mergeAll } from 'rxjs';
 import { Readable } from 'stream';
 
-import { messageIdToStr } from '../../../streamr/MessageID';
 import {
 	MAX_SEQUENCE_NUMBER_VALUE,
 	MIN_SEQUENCE_NUMBER_VALUE,

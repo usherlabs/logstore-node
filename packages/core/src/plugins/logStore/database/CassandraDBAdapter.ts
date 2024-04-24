@@ -1,3 +1,4 @@
+import { messageIdToStr } from '@logsn/client';
 import { MessageID, StreamMessage } from '@streamr/protocol';
 import { convertStreamMessageToBytes } from '@streamr/trackerless-network';
 import { Logger } from '@streamr/utils';
@@ -6,7 +7,6 @@ import merge2 from 'merge2';
 import { pipeline, Readable, Transform } from 'stream';
 import { v1 as uuidv1 } from 'uuid';
 
-import { messageIdToStr } from '../../../streamr/MessageID';
 import { sleep } from '../../../utils/sleep';
 import { BatchManager } from '../BatchManager';
 import { Bucket, BucketId } from '../Bucket';

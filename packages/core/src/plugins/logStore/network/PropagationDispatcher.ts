@@ -1,5 +1,7 @@
+import { messageIdToStr } from '@logsn/client';
 import { QueryPropagate, QueryResponse } from '@logsn/protocol';
 import { StreamMessage } from '@streamr/protocol';
+import { convertStreamMessageToBytes } from '@streamr/trackerless-network';
 
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { LogStore } from '../LogStore';
@@ -72,10 +74,13 @@ export class PropagationDispatcher {
 		}
 
 		// Read the messages from the LogStore
-		const messages: [string, string][] = [];
+		const messages: [string, Uint8Array][] = [];
 		for await (const value of this.logStore.requestByMessageIds(messageIds)) {
 			const message = value as StreamMessage;
-			messages.push([message.messageId.serialize(), message.serialize()]);
+			messages.push([
+				messageIdToStr(message.messageId),
+				convertStreamMessageToBytes(message),
+			]);
 		}
 
 		const queryPropagate = new QueryPropagate({
