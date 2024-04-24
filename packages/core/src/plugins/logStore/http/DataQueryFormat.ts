@@ -1,26 +1,24 @@
-import { EncryptionType, StreamMessage } from '@streamr/protocol';
+import { StreamMessage } from '@streamr/protocol';
+import { convertBytesToStreamMessage } from '@streamr/trackerless-network';
+import { binaryToHex, toLengthPrefixedFrame } from '@streamr/utils';
 
 export interface Format {
-	getMessageAsString: (
-		streamMessage: StreamMessage,
-		version: number | undefined
-	) => string;
+	formatMessage:
+		| ((bytes: Uint8Array) => string)
+		| ((bytes: Uint8Array) => Uint8Array);
 	contentType: string;
-	delimiter: string;
-	header: string;
-	footer:
+	delimiter?: string;
+	header?: string;
+	footer?:
 		| ((metadata: Record<string, any>, isStreamed?: boolean) => string[])
 		| string;
 }
 
 const createJsonFormat = (
-	getMessageAsString: (
-		streamMessage: StreamMessage,
-		version: number | undefined
-	) => string
+	formatMessage: (bytes: Uint8Array) => string
 ): Format => {
 	return {
-		getMessageAsString,
+		formatMessage,
 		contentType: 'application/json',
 		delimiter: ',',
 		header: '{"messages":[',
@@ -34,70 +32,48 @@ const createJsonFormat = (
 	};
 };
 
-const createPlainTextFormat = (
-	getMessageAsString: (
-		streamMessage: StreamMessage,
-		version: number | undefined
-	) => string
+const createBinaryFormat = (
+	formatMessage: (bytes: Uint8Array) => Uint8Array
 ): Format => {
 	return {
-		getMessageAsString,
-		contentType: 'text/plain',
-		delimiter: '\n',
-		header: '',
-		// on the end of the stream, we send the metadata as the last message
-		footer: (metadata, isStreamed) => {
-			const metadataString = JSON.stringify({ ...metadata, type: 'metadata' });
-			// delimiters are not used when streaming
-			return isStreamed ? [metadataString] : ['\n', metadataString];
-		},
+		formatMessage,
+		contentType: 'application/octet-stream',
 	};
 };
 
-export const toObject = (msg: StreamMessage<any>) => {
-	return {
-		metadata: {
-			id: msg.getMessageID(),
-			prevMsgRef: msg.getPreviousMessageRef(),
-			messageType: msg.messageType,
-			contentType: msg.contentType,
-			encryptionType: msg.encryptionType,
-			groupKeyId: msg.groupKeyId,
-			newGroupKey: msg.getNewGroupKey(),
-			signature: msg.signature,
-		},
+export const toObject = (msg: StreamMessage): any => {
+	const parsedContent = msg.getParsedContent();
+	const result: any = {
+		streamId: msg.getStreamId(),
+		streamPartition: msg.getStreamPartition(),
+		timestamp: msg.getTimestamp(),
+		sequenceNumber: msg.getSequenceNumber(),
+		publisherId: msg.getPublisherId(),
+		msgChainId: msg.getMsgChainId(),
+		messageType: msg.messageType,
+		contentType: msg.contentType,
+		encryptionType: msg.encryptionType,
 		content:
-			msg.encryptionType === EncryptionType.NONE
-				? msg.getParsedContent()
-				: msg.getSerializedContent(),
+			parsedContent instanceof Uint8Array
+				? binaryToHex(parsedContent)
+				: parsedContent,
+		signatureType: msg.signatureType,
+		signature: binaryToHex(msg.signature),
 	};
+	if (msg.groupKeyId !== undefined) {
+		result.groupKeyId = msg.groupKeyId;
+	}
+	return result;
 };
 
-const FORMATS = {
-	// TODO could we deprecate protocol format?
-	// eslint-disable-next-line max-len
-	protocol: createJsonFormat(
-		(streamMessage: StreamMessage, version: number | undefined) =>
-			JSON.stringify(streamMessage.serialize(version))
+const FORMATS: Record<string, Format> = {
+	object: createJsonFormat((bytes: Uint8Array) =>
+		JSON.stringify(toObject(convertBytesToStreamMessage(bytes)))
 	),
-	object: createJsonFormat((streamMessage: StreamMessage) =>
-		JSON.stringify(toObject(streamMessage))
-	),
-	// the raw format message is the same string which we have we have stored to Cassandra (if the version numbers match)
-	// -> TODO we could optimize the reading if we'd fetch the data from Cassandra as plain text
-	// currently we:
-	// 1) deserialize the string to an object in Storage._parseRow
-	// 2) serialize the same object to string here
-	raw: createPlainTextFormat(
-		(streamMessage: StreamMessage, version: number | undefined) =>
-			streamMessage.serialize(version)
-	),
-} satisfies Record<string, Format>;
+	raw: createBinaryFormat(toLengthPrefixedFrame),
+};
 
-export type FormatType = keyof typeof FORMATS;
-
-export const getFormat = (id: string | undefined): Format => {
-	const safeKey = id ?? 'object';
-	const key = safeKey in FORMATS ? safeKey : 'object';
-	return FORMATS[key as FormatType];
+export const getFormat = (id: string | undefined): Format | undefined => {
+	const key = id ?? 'object';
+	return FORMATS[key];
 };

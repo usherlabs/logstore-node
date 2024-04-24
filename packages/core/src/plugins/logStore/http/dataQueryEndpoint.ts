@@ -109,7 +109,14 @@ const createHandler = (metrics: MetricsDefinition): RequestHandler => {
 			return;
 		}
 
-		const format = getFormat(req.query.format as string | undefined);
+		const format = getFormat(req.query.format as string);
+		if (format === undefined) {
+			sendError(
+				`Query parameter "format" is invalid: ${req.query.format}`,
+				res
+			);
+			return;
+		}
 
 		const consumer = toEthereumAddress(req.consumer!);
 

@@ -40,7 +40,7 @@ export const sendSuccess = (
 
 	const responseTransform = isStreamRequest(req)
 		? new StreamResponseTransform(format, version)
-		: new ResponseTransform(format, version);
+		: new ResponseTransform(format);
 
 	if (hasToVerifyNetworkResponses(req)) {
 		responseTransform.updateMetadata((metadata) => ({
