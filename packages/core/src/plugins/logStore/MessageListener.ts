@@ -1,7 +1,7 @@
 import { StreamMessage, StreamMessageType } from '@streamr/protocol';
 import StreamrClient from '@streamr/sdk';
+import { ObservableEventEmitter } from '@streamr/utils';
 
-import { ObservableEventEmitter } from '../../utils/events';
 import { LogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
 import { ValidationSchemaManager } from './validation-schema/ValidationSchemaManager';

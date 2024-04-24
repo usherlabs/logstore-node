@@ -1,6 +1,5 @@
 import StreamrClient, { Stream } from '@streamr/sdk';
-
-import { ObservableEventEmitter } from '../../utils/events';
+import { ObservableEventEmitter } from '@streamr/utils';
 
 export class NodeStreamsRegistry extends ObservableEventEmitter<{
 	registerStream: (stream: Stream) => void;

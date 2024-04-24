@@ -1,8 +1,6 @@
 import { MessageID, StreamMessage } from '@streamr/protocol';
-import { Logger } from '@streamr/utils';
+import { Logger, ObservableEventEmitter } from '@streamr/utils';
 import { Readable } from 'stream';
-
-import { ObservableEventEmitter } from '../../../utils/events';
 
 const logger = new Logger(module);
 
