@@ -25,6 +25,7 @@ jobs:
 
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        if: ${{ !env.ACT }}
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -53,7 +54,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
+          # we push only if env.ACT is not set
+          push: ${{ env.ACT == '' }}
           tags: ${{ env.image_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
