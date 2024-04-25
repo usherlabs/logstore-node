@@ -53,7 +53,5 @@ jobs:
 
       - name: Push image to GitHub Container Registry
         if: ${{ !env.ACT }} # skip during local actions testing
-        env:
-          IMAGE_NAME: ${{ steps.tag.outputs.image_name }}
         run: |
-          docker push $IMAGE_NAME
+          docker push $image_name
