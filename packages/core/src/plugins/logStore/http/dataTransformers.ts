@@ -5,19 +5,13 @@ import { Format } from './DataQueryFormat';
 
 const MESSAGE_LIMIT_REACHED = 'limit-reached';
 
-// to be included only if verifyNetworkState is true
-type NetworkStateVerificationMetadata = {
-	participatingNodesAddress?: string[];
-	requestId?: string;
-};
-
-type StreamResponseMetadata = object & NetworkStateVerificationMetadata;
+type StreamResponseMetadata = object;
 
 type StandardResponseMetadata = {
 	hasNext: boolean;
 	nextTimestamp?: number;
 	nextSequenceNumber?: number;
-} & NetworkStateVerificationMetadata;
+};
 
 export class ResponseTransform extends Transform {
 	format: Format;

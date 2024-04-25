@@ -43,9 +43,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 	public async processQueryRequest(queryRequest: QueryRequest) {
 		const data =
 			this.standaloneQueryRequestManager.getDataForQueryRequest(queryRequest);
-		const nodeId = await this.streamrClient.getAddress();
 		return {
-			participatingNodes: [nodeId],
 			data,
 		};
 	}

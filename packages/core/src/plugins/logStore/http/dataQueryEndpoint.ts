@@ -86,15 +86,12 @@ const getDataForRequest = async (
 			throw new Error('Used store before it was initialized');
 		}
 
-		const { data, participatingNodes } =
-			await store.logStorePlugin.processQueryRequest(
-				queryRequestBag.queryRequest
-			);
+		const { data } = await store.logStorePlugin.processQueryRequest(
+			queryRequestBag.queryRequest
+		);
 
 		return {
 			data,
-			requestId: queryRequestBag.queryRequest.requestId,
-			participatingNodes,
 		};
 	}
 };
@@ -149,16 +146,7 @@ const createHandler = (metrics: MetricsDefinition): RequestHandler => {
 				}
 			);
 			if (response) {
-				sendSuccess(
-					response.data,
-					format,
-					version,
-					streamId,
-					response.requestId,
-					response.participatingNodes,
-					req,
-					res
-				);
+				sendSuccess(response.data, format, version, streamId, req, res);
 			}
 		} catch (error) {
 			sendError(error, res);

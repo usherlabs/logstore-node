@@ -264,17 +264,11 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	}
 
 	public async processQueryRequest(queryRequest: QueryRequest) {
-		const { participatingNodes } =
-			await this.networkQueryRequestManager.publishQueryRequestAndWaitForPropagateResolution(
-				queryRequest
-			);
-
 		const data =
 			this.networkQueryRequestManager.getDataForQueryRequest(queryRequest);
 
 		return {
 			data,
-			participatingNodes,
 		};
 	}
 

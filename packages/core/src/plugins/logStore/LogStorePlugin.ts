@@ -152,7 +152,6 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 	}
 
 	public abstract processQueryRequest(request: QueryRequest): Promise<{
-		participatingNodes: string[];
 		data: Readable;
 	}>;
 
