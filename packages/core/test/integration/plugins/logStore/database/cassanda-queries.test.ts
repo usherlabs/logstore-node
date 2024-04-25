@@ -249,16 +249,6 @@ describe('cassanda-queries', () => {
 			expect(contentValues).toEqual([2, 3]);
 		});
 
-		it('use negative numbers to get the first messages', async () => {
-			const resultStream = cassandraAdapter.queryLast(
-				DEFAULT_MOCK_STREAM_ID,
-				0,
-				-2
-			);
-			const contentValues = await streamToContentValues(resultStream);
-			expect(contentValues).toEqual([1, 2]);
-		});
-
 		it('no messages', async () => {
 			const resultStream = cassandraAdapter.queryLast(EMPTY_STREAM_ID, 0, 1);
 			const contentValues = await streamToContentValues(resultStream);
@@ -301,6 +291,19 @@ describe('cassanda-queries', () => {
 			const [actualError] = await waitForEvent(resultStream, 'error');
 			expect(actualError).toBe(ProxyClient.ERROR);
 		});
+	});
+
+	describe('requestFirst', () => {
+		it('happy path', async () => {
+			const resultStream = cassandraAdapter.queryFirst(
+				DEFAULT_MOCK_STREAM_ID,
+				0,
+				2
+			);
+			const contentValues = await streamToContentValues(resultStream);
+			expect(contentValues).toEqual([1, 2]);
+		})
+		// we're not testing other cases because the logic is reused from requestLast
 	});
 
 	describe.each([
