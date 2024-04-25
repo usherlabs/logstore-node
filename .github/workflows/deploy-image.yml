@@ -33,11 +33,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build image
-        run: |
-          docker build --platform linux/amd64 -t logstore-node -f ./Dockerfile --cache-from type=gha,scope=usherlabs/logstore-node --cache-to type=gha,mode=max,scope=usherlabs/logstore-node .
+#      - name: Build image
+#        run: |
+#          docker build --platform linux/amd64 -t logstore-node -f ./Dockerfile --cache-from type=gha,scope=usherlabs/logstore-node --cache-to type=gha,mode=max,scope=usherlabs/logstore-node .
 
-      - name: Tag image
+      - name: Create image name
         run: |
           # if master, tag as latest
           tag=latest
@@ -45,13 +45,15 @@ jobs:
           if [ $GITHUB_REF != 'refs/heads/master' ]; then
               tag=$(echo $GITHUB_REF | sed 's/refs\/heads\///' | sed 's/\//-/')
           fi
-          image_name=${{ env.REGISTRY }}/$GITHUB_REPOSITORY/logstore-node:$tag
-          docker tag logstore-node $image_name
-          echo "Tagged image as $image_name"
+          image_name=${{ env.REGISTRY }}/usherlabs/logstore-node:$tag
           # save for next step
           echo "image_name=$image_name" >> $GITHUB_ENV
 
-      - name: Push image to GitHub Container Registry
-        if: ${{ !env.ACT }} # skip during local actions testing
-        run: |
-          docker push $image_name
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.image_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
