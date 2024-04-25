@@ -45,13 +45,15 @@ jobs:
           if [ $GITHUB_REF != 'refs/heads/master' ]; then
               tag=$(echo $GITHUB_REF | sed 's/refs\/heads\///' | sed 's/\//-/')
           fi
-          docker tag logstore-node logstore-node:$tag
-          echo "Tagged image as logstore-node:$tag"
+          image_name=${{ env.REGISTRY }}/$GITHUB_REPOSITORY/logstore-node:$tag
+          docker tag logstore-node $image_name
+          echo "Tagged image as $image_name"
+          # save for next step
+          echo "image_name=$image_name" >> $GITHUB_ENV
 
       - name: Push image to GitHub Container Registry
         if: ${{ !env.ACT }} # skip during local actions testing
+        env:
+          IMAGE_NAME: ${{ steps.tag.outputs.image_name }}
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/$GITHUB_REPOSITORY/logstore-node:$tag
-
-
+          docker push $IMAGE_NAME
