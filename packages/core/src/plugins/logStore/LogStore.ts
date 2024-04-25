@@ -159,15 +159,13 @@ export class LogStore extends DatabaseEventEmitter {
 			writeBytesPerSecond: new RateMetric(),
 		};
 		metricsContext.addMetrics('broker.plugin.logStore', metrics);
-		this.on('read', (streamMessage: StreamMessage) => {
+		this.on('read', (streamMessage: Uint8Array) => {
 			metrics.readMessagesPerSecond.record(1);
-			metrics.readBytesPerSecond.record(streamMessage.getContent(false).length);
+			metrics.readBytesPerSecond.record(streamMessage.length);
 		});
-		this.on('write', (streamMessage: StreamMessage) => {
+		this.on('write', (streamMessage: Uint8Array) => {
 			metrics.writeMessagesPerSecond.record(1);
-			metrics.writeBytesPerSecond.record(
-				streamMessage.getContent(false).length
-			);
+			metrics.writeBytesPerSecond.record(streamMessage.length);
 		});
 	}
 

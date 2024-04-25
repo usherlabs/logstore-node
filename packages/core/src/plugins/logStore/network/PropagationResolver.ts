@@ -1,4 +1,3 @@
-import { verify } from '@logsn/client';
 import {
 	QueryPropagate,
 	QueryRequest,
@@ -6,11 +5,17 @@ import {
 	SystemMessage,
 	SystemMessageType,
 } from '@logsn/protocol';
-import { StreamMessage } from '@streamr/protocol';
 import { MessageMetadata } from '@streamr/sdk';
-import { EthereumAddress, Logger, toEthereumAddress } from '@streamr/utils';
+import { convertBytesToStreamMessage } from '@streamr/trackerless-network';
+import {
+	EthereumAddress,
+	Logger,
+	toEthereumAddress,
+	verifySignature,
+} from '@streamr/utils';
 
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
+import { createSignaturePayload } from '../../../streamr/signature';
 import { LogStore } from '../LogStore';
 import { Heartbeat } from './Heartbeat';
 
@@ -26,7 +31,7 @@ class QueryPropagationState {
 	public nodesResponseState: Map<EthereumAddress, boolean>;
 	private foreignResponseBuffer: [QueryResponse, MessageMetadata][] = [];
 	private propagateBuffer: QueryPropagate[] = [];
-	public messagesReadyToBeStored: [string, string][] = [];
+	public messagesReadyToBeStored: [string, Uint8Array][] = [];
 
 	constructor(onlineNodes: EthereumAddress[]) {
 		this.awaitingMessageIds = new Map<string, string>();
@@ -94,24 +99,18 @@ class QueryPropagationState {
 		}
 	}
 
-	private verifyPropagatedMessage(serializedMessage: string) {
-		const message = StreamMessage.deserialize(serializedMessage);
-		const messageId = message.getMessageID();
-		const prevMsgRef = message.getPreviousMessageRef() ?? undefined;
-		const newGroupKey = message.getNewGroupKey() ?? undefined;
-		const serializedContent = message.getSerializedContent();
-
-		const messagePayload = createSignaturePayload({
-			messageId,
-			serializedContent,
-			prevMsgRef,
-			newGroupKey,
-		});
+	private verifyPropagatedMessage(serializedMessage: Uint8Array) {
+		const message = convertBytesToStreamMessage(serializedMessage);
+		const messagePayload = createSignaturePayload(message);
 
 		const messagePublisherAddress = message.getPublisherId();
 		const messageSignature = message.signature;
 
-		return verify(messagePublisherAddress, messagePayload, messageSignature);
+		return verifySignature(
+			messagePublisherAddress,
+			messagePayload,
+			messageSignature
+		);
 	}
 
 	/**
@@ -279,7 +278,7 @@ export class PropagationResolver {
 		// All promises in the array resolve simultaneously once the Batch calls it's insert() method for the batched messages.
 		await Promise.all(
 			messagesToBeStored.map(([_, messageStr]) => {
-				const message = StreamMessage.deserialize(messageStr);
+				const message = convertBytesToStreamMessage(messageStr);
 				return this.logStore.store(message);
 			})
 		);

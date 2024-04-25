@@ -5,14 +5,15 @@ import {
 	SystemMessage,
 	SystemMessageType,
 } from '@logsn/protocol';
-import { createSignaturePayload, StreamMessage } from '@streamr/protocol';
 import { MessageMetadata } from '@streamr/sdk';
+import { convertBytesToStreamMessage } from '@streamr/trackerless-network';
 import { Logger } from '@streamr/utils';
 import { keccak256 } from 'ethers/lib/utils';
 import { Readable } from 'stream';
 
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
+import { createSignaturePayload } from '../../../streamr/signature';
 import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
 import { LogStore } from '../LogStore';
 import { PropagationResolver } from './PropagationResolver';
@@ -77,13 +78,8 @@ export class NetworkQueryRequestManager extends BaseQueryRequestManager {
 		const hashMap: Map<string, string> = new Map();
 
 		for await (const chunk of data) {
-			const streamMessage = chunk as StreamMessage;
-			const payload = createSignaturePayload({
-				messageId: streamMessage.getMessageID(),
-				serializedContent: streamMessage.getSerializedContent(),
-				prevMsgRef: streamMessage.prevMsgRef ?? undefined,
-				newGroupKey: streamMessage.newGroupKey ?? undefined,
-			});
+			const streamMessage = convertBytesToStreamMessage(chunk);
+			const payload = createSignaturePayload(streamMessage);
 
 			const messageId = messageIdToStr(streamMessage.messageId);
 			const messageHash = keccak256(Uint8Array.from(Buffer.from(payload)));
