@@ -4,7 +4,7 @@ import {
 	toStreamID,
 	toStreamPartID,
 } from '@streamr/protocol';
-import { Logger } from '@streamr/utils';
+import { executeSafePromise } from '@streamr/utils';
 import _ from 'lodash';
 
 import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
@@ -65,7 +65,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		const logStoreConfig = new LogStoreStandaloneConfig(streamPartIds, {
 			onStreamPartAdded: async (streamPart) => {
 				try {
-					await node.subscribeAndWaitForJoin(streamPart); // best-effort, can time out
+					await node.join(streamPart, { minCount: 1, timeout: 5000 }); // best-effort, can time out
 					await this.nodeStreamsRegistry.registerStreamId(
 						StreamPartIDUtils.getStreamID(streamPart)
 					);
@@ -74,7 +74,7 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 				}
 			},
 			onStreamPartRemoved: async (streamPart) => {
-				node.unsubscribe(streamPart);
+				executeSafePromise(() => node.leave(streamPart));
 				await this.nodeStreamsRegistry.unregisterStreamId(
 					StreamPartIDUtils.getStreamID(streamPart)
 				);

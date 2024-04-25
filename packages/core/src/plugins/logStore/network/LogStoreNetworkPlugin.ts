@@ -1,7 +1,7 @@
 import { QueryRequest } from '@logsn/protocol';
 import { StreamPartIDUtils } from '@streamr/protocol';
 import { Stream } from '@streamr/sdk';
-import { EthereumAddress, Logger } from '@streamr/utils';
+import { EthereumAddress, executeSafePromise, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
 
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
@@ -226,7 +226,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			{
 				onStreamPartAdded: async (streamPart) => {
 					try {
-						await node.subscribeAndWaitForJoin(streamPart); // best-effort, can time out
+						await node.join(streamPart, { minCount: 1, timeout: 5000 }); // best-effort, can time out
 						await this.nodeStreamsRegistry.registerStreamId(
 							StreamPartIDUtils.getStreamID(streamPart)
 						);
@@ -252,7 +252,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 					}
 				},
 				onStreamPartRemoved: async (streamPart) => {
-					node.unsubscribe(streamPart);
+					executeSafePromise(() => node.leave(streamPart));
 					await this.nodeStreamsRegistry.unregisterStreamId(
 						StreamPartIDUtils.getStreamID(streamPart)
 					);

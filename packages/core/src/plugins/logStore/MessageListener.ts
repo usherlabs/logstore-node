@@ -1,6 +1,6 @@
 import { StreamMessage, StreamMessageType } from '@streamr/protocol';
 import StreamrClient from '@streamr/sdk';
-import { ObservableEventEmitter } from '@streamr/utils';
+import { executeSafePromise, ObservableEventEmitter } from '@streamr/utils';
 
 import { LogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
@@ -39,7 +39,7 @@ export class MessageListener extends ObservableEventEmitter<{
 		this.removeAllListeners();
 		node.removeMessageListener(this.onStreamMessage);
 		this.logStoreConfig?.getStreamParts().forEach((streamPart) => {
-			node.unsubscribe(streamPart);
+			executeSafePromise(() => node.leave(streamPart));
 		});
 	}
 
