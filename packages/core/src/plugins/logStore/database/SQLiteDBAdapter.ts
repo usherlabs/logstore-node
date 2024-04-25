@@ -174,7 +174,7 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 		partition: number,
 		requestCount: number
 	): Readable {
-		return this.queryTake(streamId, partition, requestCount);
+		return this.queryTake(streamId, partition, requestCount * -1);
 	}
 
 	public queryFirst(
@@ -223,7 +223,8 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 			.prepare();
 
 		const results$ = from(preparedQuery.execute()).pipe(
-			map((c) => c.reverse()),
+			// reverse if we want the last messages, but don't if we want the first
+			map((c) => (requestType === 'last' ? c.reverse() : c)),
 			mergeAll(), // array to values
 			map(
 				this.parseRow({
