@@ -10,9 +10,10 @@ const getCredentials = (req: Request) => {
 	const headerValue = req.headers.authorization;
 	const PREFIX = 'basic ';
 	if (headerValue?.toLowerCase().startsWith(PREFIX)) {
-		const [user, signature] = Base64.decode(
+		const [user, signatureStr] = Base64.decode(
 			headerValue.substring(PREFIX.length)
 		).split(':');
+		const signature = Buffer.from(signatureStr, 'base64');
 		return { user, signature };
 	}
 	return undefined;
