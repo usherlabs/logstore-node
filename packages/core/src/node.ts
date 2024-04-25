@@ -34,12 +34,12 @@ export const createLogStoreNode = async (
 	validateLogStoreClientConfig(config.logStoreClient);
 
 	// Tweaks suggested by the Streamr Team
-	config.streamrClient.network = {
-		...config.streamrClient.network,
-		webrtcSendBufferMaxMessageCount: 5000,
-	};
-	config.streamrClient.gapFill = true;
-	config.streamrClient.gapFillTimeout = 30 * 1000;
+	// config.streamrClient.network = {
+	// 	...config.streamrClient.network,
+	// 	webrtcSendBufferMaxMessageCount: 5000,
+	// };
+	// config.streamrClient.gapFill = true;
+	// config.streamrClient.gapFillTimeout = 30 * 1000;
 
 	const streamrClientConfig = config.streamrClient;
 	const streamrClient = new StreamrClient(streamrClientConfig);
@@ -138,7 +138,7 @@ export const createLogStoreNode = async (
 				);
 			}
 
-			const nodeId = (await streamrClient.getNode()).getNodeId();
+			const nodeId = await streamrClient.getNodeId();
 			const nodeAddress = await streamrClient.getAddress();
 			const mnemonic = generateMnemonicFromAddress(
 				toEthereumAddress(nodeAddress)
@@ -151,36 +151,12 @@ export const createLogStoreNode = async (
 				logger.info(
 					`Welcome to the LogStore Network. Your node's generated name is ${mnemonic}.`
 				);
-				// TODO: Network Explorer link
-				logger.info(
-					`View your node in the Network Explorer: https://streamr.network/network-explorer/nodes/${encodeURIComponent(
-						nodeId
-					)}`
-				);
 			}
-			logger.info(`Streamr Network node ${nodeId} running`);
-			logger.info(`Ethereum address ${nodeAddress}`);
-			logger.info(
-				`Tracker Configuration: ${
-					config.streamrClient.network?.trackers
-						? JSON.stringify(config.streamrClient.network?.trackers)
-						: 'default'
-				}`
-			);
+			logger.info(`Network node ${nodeId} running`);
+			logger.info(`Node address ${nodeAddress}`);
 
 			logger.info(`Plugins: ${JSON.stringify(plugins.map((p) => p.name))}`);
 
-			if (
-				config.streamrClient.network?.webrtcDisallowPrivateAddresses ===
-					undefined ||
-				config.streamrClient.network.webrtcDisallowPrivateAddresses
-			) {
-				logger.warn(
-					'WebRTC private address probing is disabled. ' +
-						'This makes it impossible to create network layer connections directly via local routers ' +
-						'More info: https://github.com/streamr-dev/network-monorepo/wiki/WebRTC-private-addresses'
-				);
-			}
 			started = true;
 		},
 		stop: async () => {
