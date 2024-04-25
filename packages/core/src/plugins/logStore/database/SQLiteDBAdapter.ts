@@ -174,6 +174,35 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 		partition: number,
 		requestCount: number
 	): Readable {
+		return this.queryTake(streamId, partition, requestCount * -1);
+	}
+
+	public queryFirst(
+		streamId: string,
+		partition: number,
+		requestCount: number
+	): Readable {
+		return this.queryTake(streamId, partition, requestCount);
+	}
+
+	private queryTake(
+		streamId: string,
+		partition: number,
+		// if positive, is first messages, if negative, is last messages
+		requestCount: number
+	): Readable {
+		const requestType = requestCount > 0 ? 'first' : 'last';
+		const orderByForLastMessage = [
+			desc(streamDataTable.ts),
+			desc(streamDataTable.sequence_no),
+		];
+		const orderByForFirstMessage = [
+			asc(streamDataTable.ts),
+			asc(streamDataTable.sequence_no),
+		];
+
+		const messagesCount = Math.abs(requestCount);
+
 		const preparedQuery = this.dbClient
 			.select({
 				payload: streamDataTable.payload,
@@ -185,12 +214,17 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 					eq(streamDataTable.partition, partition)
 				)
 			)
-			.orderBy(desc(streamDataTable.ts), desc(streamDataTable.sequence_no))
-			.limit(requestCount)
+			.orderBy(
+				...(requestType === 'last'
+					? orderByForLastMessage
+					: orderByForFirstMessage)
+			)
+			.limit(messagesCount)
 			.prepare();
 
 		const results$ = from(preparedQuery.execute()).pipe(
-			map((c) => c.reverse()),
+			// reverse if we want the last messages, but don't if we want the first
+			map((c) => (requestType === 'last' ? c.reverse() : c)),
 			mergeAll(), // array to values
 			map(
 				this.parseRow({

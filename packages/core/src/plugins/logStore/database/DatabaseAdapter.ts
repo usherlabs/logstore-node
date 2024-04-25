@@ -47,6 +47,12 @@ export abstract class DatabaseAdapter extends DatabaseEventEmitter {
 
 	abstract queryByMessageIds(messageIds: MessageID[]): Readable;
 
+	abstract queryFirst(
+		streamId: string,
+		partition: number,
+		requestCount: number
+	): Readable;
+
 	abstract queryLast(
 		streamId: string,
 		partition: number,

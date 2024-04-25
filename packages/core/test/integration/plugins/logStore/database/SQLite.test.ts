@@ -89,7 +89,27 @@ describe('SQLite', () => {
 			const stream = db.queryLast(streamId, partition, requestCount);
 			const result = await streamToSerializedMsg(stream);
 
-			expect(result).toEqual(messages.slice(1).map((s) => s.serialize()));
+			expect(result).toEqual(messages.slice(-2).map((s) => s.serialize()));
+		});
+
+		test('queryFirst works', async () => {
+			const streamId = MOCK_STREAM_ID;
+			const partition = 0;
+			const requestCount = 2;
+			const messages = [
+				getMockMessage(streamId, 1),
+				getMockMessage(streamId, 2),
+				getMockMessage(streamId, 3),
+			];
+
+			await db.store(messages[0]);
+			await db.store(messages[1]);
+			await db.store(messages[2]);
+
+			const stream = db.queryFirst(streamId, partition, requestCount);
+			const result = await streamToSerializedMsg(stream);
+
+			expect(result).toEqual(messages.slice(0, 2).map((s) => s.serialize()));
 		});
 
 		test('queryRange works', async () => {

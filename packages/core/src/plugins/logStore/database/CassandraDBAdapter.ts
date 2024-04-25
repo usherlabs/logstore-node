@@ -307,7 +307,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 
 				const streams = queries.map((q) => {
 					const select = `SELECT payload
-																		FROM stream_data ${q.queryStatement} ALLOW FILTERING`;
+													FROM stream_data ${q.queryStatement} ALLOW FILTERING`;
 
 					return this.queryWithStreamingResults(select, q.params);
 				});
@@ -333,19 +333,51 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 		return resultStream;
 	}
 
-	queryLast(
+	public queryLast(
 		streamId: string,
 		partition: number,
 		requestCount: number
 	): Readable {
-		const limit = Math.min(requestCount, MAX_RESEND_LAST);
+		if (requestCount < 0) {
+			throw new Error('requestCount must be positive');
+		}
+
+		return this.queryTake(streamId, partition, -requestCount);
+	}
+
+	public queryFirst(
+		streamId: string,
+		partition: number,
+		requestCount: number
+	): Readable {
+		if (requestCount < 0) {
+			throw new Error('requestCount must be positive');
+		}
+
+		return this.queryTake(streamId, partition, requestCount);
+	}
+
+	queryTake(
+		streamId: string,
+		partition: number,
+		// if positive, is first messages, if negative, is last messages
+		requestCount: number
+	): Readable {
+		const requestType = requestCount > 0 ? 'first' : 'last';
+		const orderByForLastMessage = 'ORDER BY ts DESC, sequence_no DESC ';
+		const orderByForFirstMessage = 'ORDER BY ts ASC, sequence_no ASC ';
+		const messagesCount = Math.abs(requestCount);
+
+		const limit = Math.min(messagesCount, MAX_RESEND_LAST);
 
 		logger.trace('requestLast', { streamId, partition, limit });
 
-		const GET_LAST_N_MESSAGES =
+		const GET_N_MESSAGES =
 			'SELECT payload FROM stream_data WHERE ' +
 			'stream_id = ? AND partition = ? AND bucket_id IN ? ' +
-			'ORDER BY ts DESC, sequence_no DESC ' +
+			(requestType === 'first'
+				? orderByForFirstMessage
+				: orderByForLastMessage) +
 			'LIMIT ?';
 		const COUNT_MESSAGES =
 			'SELECT COUNT(*) AS total FROM stream_data WHERE stream_id = ? AND partition = ? AND bucket_id = ?';
@@ -364,18 +396,20 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 			limit,
 		});
 
-		const makeLastQuery = async (bucketIds: BucketId[]) => {
+		const makeTakeQuery = async (bucketIds: BucketId[]) => {
 			try {
 				const params = [streamId, partition, bucketIds, limit];
 				const resultSet = await this.cassandraClient.execute(
-					GET_LAST_N_MESSAGES,
+					GET_N_MESSAGES,
 					params,
 					{
 						prepare: true,
 						fetchSize: 0, // disable paging
 					}
 				);
-				resultSet.rows.reverse().forEach((r: types.Row) => {
+				const orderedRows =
+					requestType === 'first' ? resultSet.rows : resultSet.rows.reverse();
+				orderedRows.forEach((r: types.Row) => {
 					resultStream.write(r);
 				});
 				resultStream.end();
@@ -430,7 +464,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 						if (result.nextPage && total < limit && total < MAX_RESEND_LAST) {
 							result.nextPage();
 						} else {
-							makeLastQuery(bucketIds);
+							makeTakeQuery(bucketIds);
 						}
 					} catch (err2) {
 						resultStream.destroy(err2);
