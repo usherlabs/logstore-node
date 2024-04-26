@@ -24,7 +24,7 @@ COPY ./packages/mpc-tls/scripts/protoc.sh ./script.sh
 RUN sh ./script.sh
 
 
-FROM ubuntu:latest
+FROM ubuntu:22.04
 RUN apt update
 RUN apt install -y libsecret-1-dev cmake
 
