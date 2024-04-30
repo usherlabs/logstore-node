@@ -48,17 +48,17 @@ const publisherThree = toEthereumAddress(
 
 export function buildMsg({
 	streamId,
-	streamPartition,
+	streamPartition = 0,
 	timestamp,
-	sequenceNumber,
+	sequenceNumber = 0,
 	publisherId = publisherZero,
 	msgChainId = '1',
 	content = {},
 }: {
 	streamId: string;
-	streamPartition: number;
+	streamPartition?: number;
 	timestamp: number;
-	sequenceNumber: number;
+	sequenceNumber?: number;
 	publisherId?: EthereumAddress;
 	msgChainId?: string;
 	content?: any;

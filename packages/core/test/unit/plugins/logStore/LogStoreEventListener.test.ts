@@ -5,9 +5,9 @@ import {
 	LogStoreClientEvents,
 } from '@logsn/client';
 import { toStreamID } from '@streamr/protocol';
+import StreamrClient, { Stream } from '@streamr/sdk';
 import { wait } from '@streamr/utils';
 import { BigNumber } from 'ethers';
-import StreamrClient, { Stream } from 'streamr-client';
 
 import { LogStoreEventListener } from '../../../../src/plugins/logStore/LogStoreEventListener';
 

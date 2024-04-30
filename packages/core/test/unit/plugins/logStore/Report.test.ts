@@ -10,28 +10,21 @@ import {
 	prepareStakeForQueryManager,
 	prepareStakeForStoreManager,
 } from '@logsn/shared';
-import { Tracker } from '@streamr/network-tracker';
+import StreamrClient, { CONFIG_TEST, StreamPermission } from '@streamr/sdk';
 import { fetchPrivateKeyWithGas } from '@streamr/test-utils';
 import { providers } from 'ethers';
 import { range } from 'lodash';
-import StreamrClient, { CONFIG_TEST, StreamPermission } from 'streamr-client';
 
 // import { StrictConfig } from '../../../../src/config/config';
 import { ReportPoller } from '../../../../src/plugins/logStore/network/ReportPoller';
-import {
-	createStreamrClient,
-	createTestStream,
-	startTestTracker,
-} from '../../../utils';
+import { createStreamrClient, createTestStream } from '../../../utils';
 
 jest.setTimeout(6000000);
 
-const TRACKER_PORT = 17711;
 const STAKE_AMOUNT = BigInt('2000000000000000000');
 const NUM_NODES = 1;
 
 describe(ReportPoller, () => {
-	let tracker: Tracker;
 	let client1: StreamrClient;
 	let brokerWallet: Wallet;
 	let testStream: any;
@@ -42,7 +35,6 @@ describe(ReportPoller, () => {
 	const nodeManagers: LogStoreNodeManager[] = [];
 
 	beforeEach(async () => {
-		tracker = await startTestTracker(TRACKER_PORT);
 		provider = new providers.JsonRpcProvider(
 			CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
 			CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
@@ -59,7 +51,7 @@ describe(ReportPoller, () => {
 		publisherClients = await Promise.all(
 			range(NUM_NODES).map(async (_, index) => {
 				const newPK = logStoreBrokerWallets[index].privateKey;
-				const client = await createStreamrClient(tracker, newPK);
+				const client = await createStreamrClient(newPK);
 				return client;
 			})
 		);
@@ -141,7 +133,7 @@ describe(ReportPoller, () => {
 	});
 
 	afterEach(async () => {
-		await Promise.all([tracker.stop(), client1.destroy()]);
+		await Promise.all([client1.destroy()]);
 		for await (const index of range(NUM_NODES)) {
 			await nodeManagers[index].leave().then((tx) => tx.wait());
 			await publisherClients[index].destroy();

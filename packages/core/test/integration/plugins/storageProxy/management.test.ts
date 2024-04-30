@@ -17,15 +17,10 @@ import {
 	dropStorageProxy,
 	removeNodeFromStorageProxy,
 } from '@logsn/storage-proxy';
-import { Tracker } from '@streamr/network-tracker';
+import StreamrClient, { Stream, StreamPermission } from '@streamr/sdk';
 import { KeyServer } from '@streamr/test-utils';
 import { toEthereumAddress } from '@streamr/utils';
-import { providers, Wallet } from 'ethers';
-import StreamrClient, {
-	Stream,
-	StreamPermission,
-	CONFIG_TEST as STREAMR_CLIENT_CONFIG_TEST,
-} from 'streamr-client';
+import { Wallet } from 'ethers';
 
 import { LogStoreNode } from '../../../../src/node';
 import {
@@ -33,24 +28,15 @@ import {
 	createStreamrClient,
 	createTestStream,
 	fetchWalletsWithGas,
+	getProvider,
 	publishTestMessages,
 	startLogStoreBroker,
-	startTestTracker,
 } from '../../../utils';
 
 const STAKE_AMOUNT = BigInt('1000000000000000000');
 
-// There are two options to run the test managed by a value of the TRACKER_PORT constant:
-// 1. TRACKER_PORT = undefined - run the test against the brokers running in dev-env and brokers run by the test script.
-// 2. TRACKER_PORT = 17771 - run the test against only brokers run by the test script.
-//    In this case dev-env doesn't run any brokers and there is no brokers joined the network (NodeManager.totalNodes == 0)
-const TRACKER_PORT = undefined;
-
 describe('StorageProxy management', () => {
-	const provider = new providers.JsonRpcProvider(
-		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
-	);
+	const provider = getProvider();
 
 	// Accounts
 	let adminAccount: Wallet;
@@ -72,7 +58,6 @@ describe('StorageProxy management', () => {
 	let nodeManager: LogStoreNodeManager;
 	let queryManager: LogStoreQueryManager;
 
-	let tracker: Tracker;
 	let testStream: Stream;
 
 	beforeAll(async () => {
@@ -86,15 +71,10 @@ describe('StorageProxy management', () => {
 		tokenAdminManager = await getTokenManagerContract(adminAccount);
 		queryManager = await getQueryManagerContract(logStoreBrokerAccount);
 		nodeManager = await getNodeManagerContract(logStoreBrokerAccount);
-
-		if (TRACKER_PORT) {
-			tracker = await startTestTracker(TRACKER_PORT);
-		}
 	});
 
 	afterAll(async () => {
 		await streamOwnerClient?.destroy();
-		await tracker?.stop();
 		await logStoreBroker?.stop();
 		// TODO: Setup global tear-down
 		await KeyServer.stopIfRunning();
@@ -105,7 +85,7 @@ describe('StorageProxy management', () => {
 		async () => {
 			await createStorageProxy({
 				privateKey: storageProxyAccount.privateKey,
-				metadata: { http: 'http://localhost:7171' },
+				metadata: { urls: ['http://10.200.10.1:7171'] },
 				devNetwork: true,
 			});
 		},
@@ -122,7 +102,7 @@ describe('StorageProxy management', () => {
 			});
 
 			const nodeMetadata: NodeMetadata = {
-				http: 'http://127.0.0.1:7171',
+				http: 'http://10.200.10.1:7171',
 			};
 
 			await nodeAdminManager
@@ -147,7 +127,6 @@ describe('StorageProxy management', () => {
 	it('Starts a Node with LogStore and StorageProxy plugins', async () => {
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: TRACKER_PORT,
 			plugins: {
 				logStore: {
 					db: { type: 'cassandra' },
@@ -163,7 +142,6 @@ describe('StorageProxy management', () => {
 		'Creates a test stream and adds it to a StorageProxy',
 		async () => {
 			streamOwnerClient = await createStreamrClient(
-				tracker,
 				streamOwnerAccount.privateKey
 			);
 
