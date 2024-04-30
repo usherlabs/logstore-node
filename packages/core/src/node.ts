@@ -87,7 +87,6 @@ export const createLogStoreNode = async (
 			? {
 					type: 'network',
 					heartbeatStream: await nodeManagerStream('/heartbeat'),
-					recoveryStream: await nodeManagerStream('/recovery'),
 					systemStream: await nodeManagerStream('/system'),
 					nodeManager: await getNodeManagerContract(signer),
 				}

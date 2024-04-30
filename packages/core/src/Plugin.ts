@@ -11,7 +11,6 @@ import { Endpoint } from './httpServer';
 export type NetworkModeConfig = {
 	type: 'network';
 	heartbeatStream: Stream;
-	recoveryStream: Stream;
 	systemStream: Stream;
 	nodeManager: LogStoreNodeManager;
 };

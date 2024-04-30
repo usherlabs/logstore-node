@@ -10,12 +10,8 @@ import { StorageProxyPluginConfig } from '../plugins/storageProxy/StorageProxyPl
 
 export type NetworkParticipantMode = {
 	type: 'network';
-	pool?: {
-		id: string;
-		url: string;
-		pollInterval: number;
-	};
 };
+
 type StandaloneMode = {
 	type: 'standalone';
 	trackedStreams: {

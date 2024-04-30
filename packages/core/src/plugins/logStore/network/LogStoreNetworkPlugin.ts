@@ -8,19 +8,14 @@ import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
-import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { Heartbeat } from './Heartbeat';
-import { KyvePool } from './KyvePool';
 import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
 import { MessageMetricsCollector } from './MessageMetricsCollector';
 import { NetworkQueryRequestManager } from './NetworkQueryRequestManager';
 import { PropagationDispatcher } from './PropagationDispatcher';
 import { PropagationResolver } from './PropagationResolver';
 import { QueryResponseManager } from './QueryResponseManager';
-import { ReportPoller } from './ReportPoller';
-import { SystemCache } from './SystemCache';
-import { SystemRecovery } from './SystemRecovery';
 
 const METRICS_INTERVAL = 60 * 1000;
 
@@ -31,16 +26,12 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private readonly systemPublisher: BroadbandPublisher;
 	private readonly heartbeatPublisher: BroadbandPublisher;
 	private readonly heartbeatSubscriber: BroadbandSubscriber;
-	private readonly kyvePool: KyvePool;
 	private readonly messageMetricsCollector: MessageMetricsCollector;
 	private readonly heartbeat: Heartbeat;
-	private readonly systemCache: SystemCache;
-	private readonly systemRecovery: SystemRecovery;
 	private readonly networkQueryRequestManager: NetworkQueryRequestManager;
 	private readonly queryResponseManager: QueryResponseManager;
 	private readonly propagationResolver: PropagationResolver;
 	private readonly propagationDispatcher: PropagationDispatcher;
-	private readonly reportPoller: ReportPoller;
 
 	private metricsTimer?: NodeJS.Timer;
 
@@ -66,11 +57,6 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.networkConfig.systemStream
 		);
 
-		this.kyvePool = new KyvePool(
-			networkStrictNodeConfig.pool.url,
-			networkStrictNodeConfig.pool.id
-		);
-
 		this.heartbeatSubscriber = new BroadbandSubscriber(
 			this.streamrClient,
 			this.networkConfig.heartbeatStream
@@ -87,18 +73,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		);
 
 		this.messageMetricsCollector = new MessageMetricsCollector(
-			this.streamrClient,
-			this.systemSubscriber,
-			this.networkConfig.recoveryStream
-		);
-
-		this.systemCache = new SystemCache(this.systemSubscriber, this.kyvePool);
-
-		this.systemRecovery = new SystemRecovery(
-			this.streamrClient,
-			this.networkConfig.recoveryStream,
-			this.networkConfig.systemStream,
-			this.systemCache
+			this.systemSubscriber
 		);
 
 		this.propagationResolver = new PropagationResolver(
@@ -120,14 +95,6 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		this.networkQueryRequestManager = new NetworkQueryRequestManager(
 			this.queryResponseManager,
 			this.propagationResolver,
-			this.systemPublisher,
-			this.systemSubscriber
-		);
-
-		this.reportPoller = new ReportPoller(
-			this.kyvePool,
-			networkStrictNodeConfig.pool,
-			this.signer,
 			this.systemPublisher,
 			this.systemSubscriber
 		);
@@ -154,27 +121,9 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		await this.propagationResolver.start(this.logStore);
 		this.propagationDispatcher.start(this.logStore);
 
-		if (this.pluginConfig.experimental?.enableValidator) {
-			// start the report polling process
-			const abortController = new AbortController();
-			await this.reportPoller.start(abortController.signal);
-			await this.systemCache.start();
-			await this.systemRecovery.start();
-		}
-
 		await this.networkQueryRequestManager.start(this.logStore);
 		await this.queryResponseManager.start(clientId);
 		await this.messageMetricsCollector.start();
-
-		if (this.pluginConfig.experimental?.enableValidator) {
-			this.addHttpServerEndpoint(
-				createRecoveryEndpoint(
-					this.networkConfig.systemStream,
-					this.heartbeat,
-					this.metricsContext
-				)
-			);
-		}
 
 		this.metricsTimer = setInterval(
 			this.logMetrics.bind(this),
@@ -185,23 +134,12 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	override async stop(): Promise<void> {
 		clearInterval(this.metricsTimer);
 
-		const stopValidatorComponents = async () => {
-			await Promise.all([
-				this.reportPoller.stop(),
-				this.systemCache.stop(),
-				this.systemRecovery.stop(),
-			]);
-		};
-
 		await Promise.all([
 			this.messageMetricsCollector.stop(),
 			this.heartbeat.stop(),
 			this.propagationResolver.stop(),
 			this.networkQueryRequestManager.stop(),
 			this.queryResponseManager.stop(),
-			this.pluginConfig.experimental?.enableValidator
-				? stopValidatorComponents()
-				: Promise.resolve(),
 		]);
 
 		await super.stop();

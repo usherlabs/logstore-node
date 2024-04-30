@@ -39,9 +39,6 @@ export interface LogStorePluginConfig {
 			[key: string]: string;
 		};
 	};
-	experimental?: {
-		enableValidator?: boolean;
-	};
 }
 
 export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
