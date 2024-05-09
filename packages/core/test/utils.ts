@@ -1,10 +1,10 @@
+import { JsonRpcProvider, Provider } from '@ethersproject/providers';
 import {
 	CONFIG_TEST as LOGSTORE_CLIENT_CONFIG_TEST,
 	LogStoreClient,
 	LogStoreClientConfig,
 } from '@logsn/client';
-import { TEST_CONFIG } from '@streamr/network-node';
-import { startTracker, Tracker } from '@streamr/network-tracker';
+import { config as CHAIN_CONFIG } from '@streamr/config';
 import {
 	Message,
 	Stream,
@@ -14,12 +14,7 @@ import {
 	StreamrClientConfig,
 } from '@streamr/sdk';
 import { fetchPrivateKeyWithGas } from '@streamr/test-utils';
-import {
-	EthereumAddress,
-	merge,
-	MetricsContext,
-	toEthereumAddress,
-} from '@streamr/utils';
+import { EthereumAddress, merge, toEthereumAddress } from '@streamr/utils';
 import { providers, Wallet } from 'ethers';
 import _ from 'lodash';
 
@@ -34,11 +29,12 @@ import { StorageProxyPluginConfig } from '../src/plugins/storageProxy/StoragePro
 export const STREAMR_DOCKER_DEV_HOST =
 	process.env.STREAMR_DOCKER_DEV_HOST || '127.0.0.1';
 
+export const TEST_CHAIN_CONFIG = CHAIN_CONFIG.dev2;
+
 export const CONTRACT_OWNER_PRIVATE_KEY =
 	'0x633a182fb8975f22aaad41e9008cb49a432e9fdfef37f151e9e7c54e96258ef9';
 
 export interface LogStoreBrokerTestConfig {
-	trackerPort?: number;
 	privateKey: string;
 	plugins: {
 		logStore?: LogStorePluginTestConfig;
@@ -66,7 +62,6 @@ export interface StorageProxyPluginTestConfig {
 }
 
 export const formLogStoreNetworkBrokerConfig = ({
-	trackerPort,
 	privateKey,
 	plugins,
 	httpServerPort = 7171,
@@ -83,23 +78,10 @@ export const formLogStoreNetworkBrokerConfig = ({
 				privateKey,
 			},
 			network: {
-				id: toEthereumAddress(new Wallet(privateKey).address),
-				trackers: trackerPort
-					? [
-							{
-								id: createEthereumAddress(trackerPort),
-								ws: `ws://127.0.0.1:${trackerPort}`,
-								http: `http://127.0.0.1:${trackerPort}`,
-							},
-						]
-					: STREAMR_CLIENT_CONFIG_TEST.network?.trackers,
-				location: {
-					latitude: 60.19,
-					longitude: 24.95,
-					country: 'Finland',
-					city: 'Helsinki',
+				...STREAMR_CLIENT_CONFIG_TEST.network,
+				node: {
+					id: toEthereumAddress(new Wallet(privateKey).address),
 				},
-				webrtcDisallowPrivateAddresses: false,
 			},
 		},
 		plugins: {},
@@ -134,7 +116,7 @@ export const formLogStorePluginConfig = ({
 			db.type === 'cassandra'
 				? {
 						type: 'cassandra',
-						hosts: [STREAMR_DOCKER_DEV_HOST],
+						hosts: ['10.200.10.1'],
 						datacenter: 'datacenter1',
 						username: '',
 						password: '',
@@ -146,7 +128,7 @@ export const formLogStorePluginConfig = ({
 					},
 		programs: {
 			chainRpcUrls: {
-				'8997': 'http://10.200.10.1:8546',
+				'31337': 'http://10.200.10.1:8547',
 			},
 		},
 	};
@@ -166,18 +148,6 @@ export const formStorageProxyPluginConfig = ({
 	};
 };
 
-export const startTestTracker = async (port: number): Promise<Tracker> => {
-	return await startTracker({
-		id: createEthereumAddress(port),
-		listen: {
-			hostname: '127.0.0.1',
-			port,
-		},
-		metricsContext: new MetricsContext(),
-		trackerPingInterval: TEST_CONFIG.trackerPingInterval,
-	});
-};
-
 export const startLogStoreBroker = async (
 	testConfig: LogStoreBrokerTestConfig
 ): Promise<LogStoreNode> => {
@@ -192,27 +162,27 @@ export const createEthereumAddress = (id: number): EthereumAddress => {
 	return toEthereumAddress('0x' + _.padEnd(String(id), 40, '0'));
 };
 
-export const createStreamrClient = async (
-	tracker: Tracker,
-	privateKey: string
-): Promise<StreamrClient> => {
-	const networkOptions = {
-		...STREAMR_CLIENT_CONFIG_TEST?.network,
-		trackers: tracker
-			? [tracker.getConfigRecord()]
-			: STREAMR_CLIENT_CONFIG_TEST.network?.trackers,
-	} satisfies StreamrClientConfig['network'];
-
-	const config = {
-		...STREAMR_CLIENT_CONFIG_TEST,
-		logLevel: 'trace',
-		auth: {
-			privateKey,
+export const createStreamrClient = (
+	privateKey: string,
+	clientOptions?: StreamrClientConfig
+): StreamrClient => {
+	const opts = merge(
+		STREAMR_CLIENT_CONFIG_TEST,
+		{
+			auth: {
+				privateKey,
+			},
+			network: {
+				controlLayer: STREAMR_CLIENT_CONFIG_TEST.network!.controlLayer,
+				node: merge(
+					STREAMR_CLIENT_CONFIG_TEST.network!.node,
+					clientOptions?.network?.node
+				),
+			},
 		},
-		network: networkOptions,
-	} satisfies StreamrClientConfig;
-
-	return new StreamrClient(config);
+		clientOptions
+	);
+	return new StreamrClient(opts);
 };
 
 export const createLogStoreClient = async (
@@ -258,7 +228,7 @@ export async function sleep(ms = 0): Promise<void> {
 }
 
 export const fetchWalletsWithGas = async (
-	provider: providers.JsonRpcProvider,
+	provider: providers.Provider,
 	number: number
 ): Promise<Wallet[]> => {
 	return await Promise.all(
@@ -290,3 +260,7 @@ export const publishTestMessages = async (
 
 	return messages;
 };
+
+export function getProvider(): Provider {
+	return new JsonRpcProvider(TEST_CHAIN_CONFIG.rpcEndpoints[0].url);
+}

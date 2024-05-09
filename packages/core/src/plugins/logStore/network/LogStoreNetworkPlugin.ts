@@ -9,13 +9,11 @@ import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
 import { LogStorePlugin } from '../LogStorePlugin';
+import { AggregationManager } from './AggregationManager';
 import { Heartbeat } from './Heartbeat';
 import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
 import { MessageMetricsCollector } from './MessageMetricsCollector';
-import { NetworkQueryRequestManager } from './NetworkQueryRequestManager';
-import { PropagationDispatcher } from './PropagationDispatcher';
-import { PropagationResolver } from './PropagationResolver';
-import { QueryResponseManager } from './QueryResponseManager';
+import { PropagationManager } from './PropagationManager';
 
 const METRICS_INTERVAL = 60 * 1000;
 
@@ -28,10 +26,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private readonly heartbeatSubscriber: BroadbandSubscriber;
 	private readonly messageMetricsCollector: MessageMetricsCollector;
 	private readonly heartbeat: Heartbeat;
-	private readonly networkQueryRequestManager: NetworkQueryRequestManager;
-	private readonly queryResponseManager: QueryResponseManager;
-	private readonly propagationResolver: PropagationResolver;
-	private readonly propagationDispatcher: PropagationDispatcher;
+	private readonly aggregationManager: AggregationManager;
+	private readonly propagationManager: PropagationManager;
 
 	private metricsTimer?: NodeJS.Timer;
 
@@ -76,25 +72,13 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.systemSubscriber
 		);
 
-		this.propagationResolver = new PropagationResolver(
-			this.heartbeat,
+		this.propagationManager = new PropagationManager(
+			this.systemPublisher,
 			this.systemSubscriber
 		);
 
-		this.propagationDispatcher = new PropagationDispatcher(
-			this.systemPublisher
-		);
-
-		this.queryResponseManager = new QueryResponseManager(
-			this.systemPublisher,
-			this.systemSubscriber,
-			this.propagationResolver,
-			this.propagationDispatcher
-		);
-
-		this.networkQueryRequestManager = new NetworkQueryRequestManager(
-			this.queryResponseManager,
-			this.propagationResolver,
+		this.aggregationManager = new AggregationManager(
+			this.heartbeat,
 			this.systemPublisher,
 			this.systemSubscriber
 		);
@@ -118,11 +102,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		const clientId = await this.streamrClient.getAddress();
 
 		await this.heartbeat.start(clientId);
-		await this.propagationResolver.start(this.logStore);
-		this.propagationDispatcher.start(this.logStore);
-
-		await this.networkQueryRequestManager.start(this.logStore);
-		await this.queryResponseManager.start(clientId);
+		await this.aggregationManager.start(clientId, this.logStore.db);
+		await this.propagationManager.start(clientId, this.logStore.db);
 		await this.messageMetricsCollector.start();
 
 		this.metricsTimer = setInterval(
@@ -137,9 +118,8 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		await Promise.all([
 			this.messageMetricsCollector.stop(),
 			this.heartbeat.stop(),
-			this.propagationResolver.stop(),
-			this.networkQueryRequestManager.stop(),
-			this.queryResponseManager.stop(),
+			await this.aggregationManager.stop(),
+			await this.propagationManager.stop(),
 		]);
 
 		await super.stop();
@@ -202,11 +182,11 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	}
 
 	public async processQueryRequest(queryRequest: QueryRequest) {
-		const data =
-			this.networkQueryRequestManager.getDataForQueryRequest(queryRequest);
+		await this.systemPublisher.publish(queryRequest.serialize());
 
+		const aggregator = this.aggregationManager.aggregare(queryRequest);
 		return {
-			data,
+			data: aggregator,
 		};
 	}
 

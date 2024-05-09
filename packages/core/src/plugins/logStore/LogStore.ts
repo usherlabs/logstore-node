@@ -19,7 +19,7 @@ const logger = new Logger(module);
 // TODO: move this to protocol-js
 export const MIN_SEQUENCE_NUMBER_VALUE = 0;
 export const MAX_SEQUENCE_NUMBER_VALUE = 2147483647;
-const MAX_TIMESTAMP_VALUE = 8640000000000000; // https://262.ecma-international.org/5.1/#sec-15.9.1.1
+export const MAX_TIMESTAMP_VALUE = 8640000000000000; // https://262.ecma-international.org/5.1/#sec-15.9.1.1
 
 export type DatabaseOptions = CassandraDBOptions | SQLiteDBOptions;
 
@@ -40,7 +40,7 @@ const getOptionsWithDefaults = <T extends CommonDBOptions>(opts: T): T => {
 };
 
 export class LogStore extends DatabaseEventEmitter {
-	constructor(private db: DatabaseAdapter) {
+	constructor(public db: DatabaseAdapter) {
 		super();
 
 		this.db.on('read', (p) => this.emit('read', p));

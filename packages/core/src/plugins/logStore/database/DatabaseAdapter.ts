@@ -1,4 +1,4 @@
-import { MessageID, StreamMessage } from '@streamr/protocol';
+import { MessageID, MessageRef, StreamMessage } from '@streamr/protocol';
 import { Logger, ObservableEventEmitter } from '@streamr/utils';
 import { Readable } from 'stream';
 
@@ -24,6 +24,11 @@ export type QueryDebugInfo =
 	  }
 	| {
 			messageIds: string[];
+	  }
+	| {
+			streamId: string;
+			partition?: number;
+			messageRefs: MessageRef[];
 	  };
 
 export abstract class DatabaseAdapter extends DatabaseEventEmitter {
@@ -44,6 +49,12 @@ export abstract class DatabaseAdapter extends DatabaseEventEmitter {
 	): Readable;
 
 	abstract queryByMessageIds(messageIds: MessageID[]): Readable;
+
+	abstract queryByMessageRefs(
+		streamId: string,
+		partition: number,
+		messageRefs: MessageRef[]
+	): Readable;
 
 	abstract queryLast(
 		streamId: string,

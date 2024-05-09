@@ -26,7 +26,7 @@ export class BaseQueryRequestManager {
 
 	public getDataForQueryRequest(queryRequest: QueryRequest) {
 		let readableStream: Readable;
-		switch (queryRequest.queryType) {
+		switch (queryRequest.queryOptions.queryType) {
 			case QueryType.Last: {
 				const { last } = queryRequest.queryOptions as QueryLastOptions;
 

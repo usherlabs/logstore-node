@@ -1,5 +1,5 @@
 import { messageIdToStr } from '@logsn/client';
-import { MessageID, StreamMessage } from '@streamr/protocol';
+import { MessageID, MessageRef, StreamMessage } from '@streamr/protocol';
 import { convertStreamMessageToBytes } from '@streamr/trackerless-network';
 import { Logger } from '@streamr/utils';
 import { auth, Client, tracker, types } from 'cassandra-driver';
@@ -504,6 +504,77 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 				if (!resultSet.rows[0]) {
 					logger.warn('Message not found for messageId', {
 						messageId: messageIdToStr(messageId),
+					});
+					done();
+					return;
+				}
+
+				done(null, resultSet.rows[0]);
+			},
+		});
+
+		return pipeline(
+			sourceStream,
+			transfrom,
+			resultStream,
+			(err: Error | null) => {
+				if (err) {
+					sourceStream.destroy();
+					transfrom.destroy();
+					resultStream.destroy(err);
+				}
+			}
+		);
+	}
+
+	public queryByMessageRefs(
+		streamId: string,
+		partition: number,
+		messageRefs: MessageRef[]
+	): Readable {
+		const sourceStream = Readable.from(messageRefs);
+
+		const resultStream = this.createResultStream({
+			streamId,
+			partition,
+			messageRefs,
+		});
+
+		const transfrom = new Transform({
+			objectMode: true,
+			transform: async (messageRef: MessageRef, _, done) => {
+				const [bucket] = await this.getBucketsByTimestamp(
+					streamId,
+					partition,
+					messageRef.timestamp,
+					messageRef.timestamp
+				);
+				if (!bucket) {
+					logger.warn(`Bucket not found for messageRef`, {
+						messageRef,
+					});
+					done();
+					return;
+				}
+
+				const query =
+					'SELECT payload FROM stream_data WHERE ' +
+					'stream_id = ? AND partition = ? AND bucket_id = ? AND ts = ? AND sequence_no = ?';
+				const params = [
+					streamId,
+					partition,
+					bucket.id,
+					messageRef.timestamp,
+					messageRef.sequenceNumber,
+				];
+
+				const resultSet = await this.cassandraClient.execute(query, params, {
+					prepare: true,
+				});
+
+				if (!resultSet.rows[0]) {
+					logger.warn('Message not found for messageRef', {
+						messageRef,
 					});
 					done();
 					return;
