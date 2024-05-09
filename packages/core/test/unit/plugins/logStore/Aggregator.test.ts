@@ -172,7 +172,7 @@ describe('Aggregator aggregates messages from', () => {
 		});
 
 		describe('if the primary node has the same data as the foreign node', () => {
-			test.skip('and the foreign node responds with 1 response', (done) => {
+			test('and the foreign node responds with 1 response', (done) => {
 				pipeline(aggregator, responseStreamMock, (err) => {
 					try {
 						expect(responseChunkCallbackMock).toHaveBeenCalledTimes(1);
@@ -206,7 +206,7 @@ describe('Aggregator aggregates messages from', () => {
 				);
 			});
 
-			test.skip('and the foreign node responds with 2 responses', (done) => {
+			test('and the foreign node responds with 2 responses', (done) => {
 				pipeline(aggregator, responseStreamMock, (err) => {
 					try {
 						expect(responseChunkCallbackMock).toHaveBeenCalledTimes(1);
@@ -231,10 +231,8 @@ describe('Aggregator aggregates messages from', () => {
 
 				queryStreamMock2.push(data[0]);
 				queryStreamMock2.push(data[1]);
+				queryStreamMock2.push(data[2]);
 				queryStreamMock2.push(null);
-
-				queryStreamMock3.push(data[2]);
-				queryStreamMock3.push(null);
 
 				aggregator.onForeignResponse(
 					foreignNode1,
@@ -270,13 +268,9 @@ describe('Aggregator aggregates messages from', () => {
 				queryStreamMock1.push(null);
 
 				queryStreamMock2.push(data[0]);
+				queryStreamMock2.push(data[1]);
+				queryStreamMock2.push(data[2]);
 				queryStreamMock2.push(null);
-
-				queryStreamMock3.push(data[1]);
-				queryStreamMock3.push(null);
-
-				queryStreamMock4.push(data[2]);
-				queryStreamMock4.push(null);
 
 				aggregator.onForeignResponse(
 					foreignNode1,
@@ -514,7 +508,7 @@ describe('Aggregator aggregates messages from', () => {
 			);
 		});
 
-		test.skip('if the primary node has all the data for the query but the foreign nodes have it partially', (done) => {
+		test('if the primary node has all the data for the query but the foreign nodes have it partially', (done) => {
 			pipeline(aggregator, responseStreamMock, (err) => {
 				try {
 					expect(responseChunkCallbackMock).toHaveBeenCalledTimes(1);
@@ -539,10 +533,8 @@ describe('Aggregator aggregates messages from', () => {
 
 			queryStreamMock2.push(data[0]);
 			queryStreamMock2.push(data[1]);
+			queryStreamMock2.push(data[2]);
 			queryStreamMock2.push(null);
-
-			queryStreamMock3.push(data[2]);
-			queryStreamMock3.push(null);
 
 			aggregator.onForeignResponse(
 				foreignNode1,

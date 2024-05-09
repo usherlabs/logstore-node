@@ -31,7 +31,6 @@ export class Aggregator extends PassThrough {
 	>;
 	private readonly aggreagationList: AggreagationList;
 	private readonly queryStreams: Set<Readable>;
-	private isPrimaryNodeResponseFinalized: boolean = false;
 
 	constructor(
 		database: DatabaseAdapter,
@@ -94,6 +93,8 @@ export class Aggregator extends PassThrough {
 				break;
 		}
 
+		this.queryStreams.add(queryStream);
+
 		queryStream.on('data', (bytes: Uint8Array) => {
 			const message = convertBytesToStreamMessage(bytes);
 			const messageRef = message.messageId.toMessageRef();
@@ -101,10 +102,11 @@ export class Aggregator extends PassThrough {
 			this.doCheck();
 		});
 		queryStream.on('end', () => {
-			this.isPrimaryNodeResponseFinalized = true;
+			this.queryStreams.delete(queryStream);
 			this.doCheck();
 		});
 		queryStream.on('error', (err) => {
+			this.queryStreams.delete(queryStream);
 			// TODO: Handle error
 			logger.error('query failed', { err });
 		});
@@ -115,6 +117,19 @@ export class Aggregator extends PassThrough {
 				logger.error('Pipeline failed', { err });
 			}
 		});
+	}
+
+	private get isWaitingForForeignNodes() {
+		for (const {
+			messageRef,
+			isFinalized,
+		} of this.foreignNodeResponses.values()) {
+			if (!isFinalized && messageRef === undefined) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private getOrCreateForeignNodeResponse(node: EthereumAddress) {
@@ -160,16 +175,11 @@ export class Aggregator extends PassThrough {
 	}
 
 	private doCheck() {
-		let isFinalized = this.isPrimaryNodeResponseFinalized;
-		for (const [, foreignNodeResponse] of this.foreignNodeResponses) {
-			isFinalized &&= foreignNodeResponse.isFinalized;
+		if (this.isWaitingForForeignNodes) {
+			return;
 		}
 
-		if (
-			isFinalized &&
-			this.aggreagationList.isEmpty &&
-			this.queryStreams.size === 0
-		) {
+		if (this.aggreagationList.isEmpty && this.queryStreams.size === 0) {
 			this.end();
 			return;
 		}
@@ -200,12 +210,8 @@ export class Aggregator extends PassThrough {
 				this.queryStreams.delete(queryStream);
 				this.doCheck();
 			});
-			queryStream.on('close', () => {
-				this.queryStreams.delete(queryStream);
-				this.doCheck();
-			});
 
-			queryStream.pipe(this, { end: isFinalized });
+			queryStream.pipe(this, { end: false });
 
 			this.aggreagationList.shrink(readyTo);
 		}
