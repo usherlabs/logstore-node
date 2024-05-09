@@ -11,11 +11,11 @@ interface ChunkerOptions {
 }
 
 export class Chunker<T> extends Transform {
-	private readonly lengthLimit: number;
-	private readonly sizeLimit: number;
+	private readonly itemsLimit: number;
+	private readonly bytesLimit: number;
 	private readonly chunkCallback: ChunkerCallback<T>;
 	private readonly items: T[] = [];
-	private chunkSize: number = 0;
+	private chunkBytes: number = 0;
 
 	constructor(
 		chunkCallback: ChunkerCallback<T>,
@@ -23,8 +23,8 @@ export class Chunker<T> extends Transform {
 	) {
 		super({ objectMode: true });
 
-		this.lengthLimit = itemsLimit;
-		this.sizeLimit = bytesLimit;
+		this.itemsLimit = itemsLimit;
+		this.bytesLimit = bytesLimit;
 		this.chunkCallback = chunkCallback;
 
 		this.once('finish', () => {
@@ -38,7 +38,7 @@ export class Chunker<T> extends Transform {
 		callback: TransformCallback
 	): void {
 		this.items.push(data);
-		this.chunkSize += (data as string).length;
+		this.chunkBytes += (data as string).length;
 
 		try {
 			this.finishCunkIfReady(false);
@@ -51,11 +51,11 @@ export class Chunker<T> extends Transform {
 	private finishCunkIfReady(isFinal: boolean) {
 		if (
 			isFinal ||
-			this.items.length >= this.lengthLimit ||
-			this.chunkSize >= this.sizeLimit
+			this.items.length >= this.itemsLimit ||
+			this.chunkBytes >= this.bytesLimit
 		) {
 			this.chunkCallback(this.items.splice(0), isFinal);
-			this.chunkSize = 0;
+			this.chunkBytes = 0;
 		}
 	}
 }
