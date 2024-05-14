@@ -117,6 +117,26 @@ describe('SQLite', () => {
 			expect(contentValues).toEqual([2, 0, 3, 0]);
 		});
 
+		test('queryFirst works', async () => {
+			const streamId = MOCK_STREAM_ID;
+			const partition = 0;
+			const requestCount = 2;
+			const messages = [
+				createMockMessage(1),
+				createMockMessage(2),
+				createMockMessage(3),
+			];
+
+			await db.store(messages[0]);
+			await db.store(messages[1]);
+			await db.store(messages[2]);
+
+			const stream = db.queryFirst(streamId, partition, requestCount);
+			const contentValues = await streamToContentValues(stream);
+
+			expect(contentValues).toEqual([1, 0, 2, 0]);
+		});
+
 		test('queryRange works', async () => {
 			const partition = 0;
 			const messages = [

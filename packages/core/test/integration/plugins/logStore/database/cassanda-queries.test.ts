@@ -302,6 +302,15 @@ describe('cassanda-queries', () => {
 		});
 	});
 
+	describe('requestFirst', () => {
+		it('happy path', async () => {
+			const resultStream = cassandraAdapter.queryFirst(MOCK_STREAM_ID, 0, 2);
+			const contentValues = await streamToContentValues(resultStream);
+			expect(contentValues).toEqual([1, 0, 2, 0]);
+		});
+		// we're not testing other cases because the logic is reused from requestLast
+	});
+
 	describe.each([
 		[REQUEST_TYPE_FROM, undefined, undefined],
 		[REQUEST_TYPE_FROM, MOCK_PUBLISHER_ID, undefined],
