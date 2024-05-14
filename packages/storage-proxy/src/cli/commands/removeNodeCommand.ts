@@ -25,5 +25,6 @@ export const removeNodeCommand = new Command('remove-node')
 			});
 		} catch (err) {
 			logger.error('Remove a Node from a StorageProxy failed', { err });
+			process.exit(1);
 		}
 	});

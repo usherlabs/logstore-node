@@ -25,5 +25,6 @@ export const addNodeCommand = new Command('add-node')
 			});
 		} catch (err) {
 			logger.error('Add a Node to a StorageProxy failed', { err });
+			process.exit(1);
 		}
 	});

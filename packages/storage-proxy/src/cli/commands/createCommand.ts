@@ -25,5 +25,6 @@ export const createCommand = new Command('create')
 			});
 		} catch (err) {
 			logger.error('Create a StorageProxy failed', { err });
+			process.exit(1);
 		}
 	});
