@@ -105,17 +105,17 @@ importers:
         specifier: 0.0.0-dev-20240514115825
         version: 0.0.0-dev-20240514115825(@ethersproject/hash@5.7.0)(graphql@16.8.1)(react@18.3.1)(typescript@5.4.2)
       '@logsn/contracts':
-        specifier: 0.0.0-dev-20240514115825
-        version: 0.0.0-dev-20240514115825
+        specifier: 0.0.0-dev-20240514232118
+        version: 0.0.0-dev-20240514232118
       '@logsn/program':
         specifier: workspace:*
         version: link:../program
       '@logsn/protocol':
-        specifier: 0.0.0-dev-20240514115825
-        version: 0.0.0-dev-20240514115825
+        specifier: 0.0.0-dev-20240514232118
+        version: 0.0.0-dev-20240514232118
       '@logsn/shared':
-        specifier: 0.0.0-dev-20240514115825
-        version: 0.0.0-dev-20240514115825
+        specifier: 0.0.0-dev-20240514232118
+        version: 0.0.0-dev-20240514232118
       '@streamr/config':
         specifier: ^5.2.7
         version: 5.2.7
@@ -2381,8 +2381,24 @@ packages:
       '@openzeppelin/contracts-upgradeable': 4.9.6
     dev: false
 
+  /@logsn/contracts@0.0.0-dev-20240514232118:
+    resolution: {integrity: sha512-E5I1qDQ4h7eOGIcKj6Am77R2cikf8XLQmcVdz/TfIEqFUI0cd7Zek4c2ZARGovENmty8DaspkkIOJd5gFMoKMA==}
+    dependencies:
+      '@openzeppelin/contracts-upgradeable': 4.9.6
+    dev: false
+
   /@logsn/protocol@0.0.0-dev-20240514115825:
     resolution: {integrity: sha512-cquQeaa4VUCaxDHXQFaug50Pz253dbLN2QxIqrBMXdwUsXdU4rJq4Cwq3pL+8gOZv+/cnV/3TrNwhxDVTOhNkw==}
+    dependencies:
+      '@ethersproject/abstract-signer': 5.7.0
+      '@ethersproject/bignumber': 5.7.0
+      '@ethersproject/bytes': 5.7.0
+      '@ethersproject/solidity': 5.7.0
+      '@streamr/protocol': 100.1.2
+    dev: false
+
+  /@logsn/protocol@0.0.0-dev-20240514232118:
+    resolution: {integrity: sha512-yfuh1QjXR1jotbAJpbuT64GpSrC7CIRzn6qgLWSD5h7JaylcZjho5NWMt11vUP3C8d3gyFaTGoiYUcZNSTpUXQ==}
     dependencies:
       '@ethersproject/abstract-signer': 5.7.0
       '@ethersproject/bignumber': 5.7.0
@@ -2397,6 +2413,22 @@ packages:
       '@ethersproject/providers': 5.7.2(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       '@logsn/contracts': 0.0.0-dev-20240514115825
       '@logsn/protocol': 0.0.0-dev-20240514115825
+      ethers: 5.7.2(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+      inquirer: 8.2.6
+      redstone-api: 0.4.12
+      tslog: 4.9.2
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - utf-8-validate
+    dev: false
+
+  /@logsn/shared@0.0.0-dev-20240514232118:
+    resolution: {integrity: sha512-VVMf0/GCdt3CEyV0OLE2uIEqBBqOHGJQdDBVnQmnt3crDUNdObWiFz3VJSf94qmAFbC0Yu7xUP+mdpPtuwarJw==}
+    dependencies:
+      '@ethersproject/providers': 5.7.2(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+      '@logsn/contracts': 0.0.0-dev-20240514232118
+      '@logsn/protocol': 0.0.0-dev-20240514232118
       ethers: 5.7.2(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       inquirer: 8.2.6
       redstone-api: 0.4.12
@@ -12062,7 +12094,7 @@ packages:
       is-arguments: 1.1.1
       is-generator-function: 1.0.10
       is-typed-array: 1.1.13
-      which-typed-array: 1.1.14
+      which-typed-array: 1.1.15
     dev: false
 
   /utils-merge@1.0.1:
