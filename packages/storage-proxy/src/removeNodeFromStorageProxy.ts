@@ -31,6 +31,6 @@ export const removeNodeFromStorageProxy = async (options: Options) => {
 	});
 
 	logger.info(
-		`Removed the StorageProxy Node ${options.node} from the StorageProxy ${clusterId}...`
+		`Removed the StorageProxy Node ${options.node} from the StorageProxy ${clusterId}`
 	);
 };

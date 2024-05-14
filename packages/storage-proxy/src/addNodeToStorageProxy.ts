@@ -31,6 +31,6 @@ export const addNodeToStorageProxy = async (options: Options) => {
 	});
 
 	logger.info(
-		`Added the StorageProxy Node ${options.node} to the StorageProxy ${clusterId}...`
+		`Added the StorageProxy Node ${options.node} to the StorageProxy ${clusterId}`
 	);
 };

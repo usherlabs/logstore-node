@@ -35,5 +35,5 @@ export const createStorageProxy = async (options: Options) => {
 	logger.info(`Setting metadata to the StorageProxy...`);
 	await streamrClient.setStorageNodeMetadata(options.metadata);
 
-	logger.info(`Created a StorageProxy with address ${clusterId}...`);
+	logger.info(`Created a StorageProxy with address ${clusterId}`);
 };
