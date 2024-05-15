@@ -1,5 +1,4 @@
-import { messageIdToStr } from '@logsn/client';
-import { MessageID, MessageRef, StreamMessage } from '@streamr/protocol';
+import { MessageRef, StreamMessage } from '@streamr/protocol';
 import { convertStreamMessageToBytes } from '@streamr/trackerless-network';
 import { Logger } from '@streamr/utils';
 import { auth, Client, tracker, types } from 'cassandra-driver';
@@ -481,84 +480,6 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 		);
 
 		return resultStream;
-	}
-
-	/**
-	 * Fetches messages from stream_data table based on the given message IDs.
-	 *
-	 * - It won't error if doesn't find a bucket id. Will just skip the message.
-	 * - If it doesn't find a message it will just skip it
-	 *
-	 * @param {MessageID[]} messageIds
-	 */
-	public queryByMessageIds(
-		messageIds: MessageID[]
-		// ? should we need to add limit param? Will we use it to fetch over 5000 messages?
-	) {
-		const sourceStream = Readable.from(messageIds);
-
-		const resultStream = this.createResultStream({
-			messageIds: messageIds.map((m) => messageIdToStr(m)),
-		});
-
-		const transfrom = new Transform({
-			objectMode: true,
-			transform: async (messageId: MessageID, _, done) => {
-				const [bucket] = await this.getBucketsByTimestamp(
-					messageId.streamId,
-					messageId.streamPartition,
-					messageId.timestamp,
-					messageId.timestamp
-				);
-				if (!bucket) {
-					logger.warn(`Bucket not found for messageId`, {
-						messageId: messageIdToStr(messageId),
-					});
-					done();
-					return;
-				}
-
-				const query =
-					'SELECT payload FROM stream_data WHERE ' +
-					'stream_id = ? AND partition = ? AND bucket_id = ? AND ts = ? AND sequence_no = ? AND publisher_id = ? AND msg_chain_id = ?';
-				const params = [
-					messageId.streamId,
-					messageId.streamPartition,
-					bucket.id,
-					messageId.timestamp,
-					messageId.sequenceNumber,
-					messageId.publisherId,
-					messageId.msgChainId,
-				];
-
-				const resultSet = await this.cassandraClient.execute(query, params, {
-					prepare: true,
-				});
-
-				if (!resultSet.rows[0]) {
-					logger.warn('Message not found for messageId', {
-						messageId: messageIdToStr(messageId),
-					});
-					done();
-					return;
-				}
-
-				done(null, resultSet.rows[0]);
-			},
-		});
-
-		return pipeline(
-			sourceStream,
-			transfrom,
-			resultStream,
-			(err: Error | null) => {
-				if (err) {
-					sourceStream.destroy();
-					transfrom.destroy();
-					resultStream.destroy(err);
-				}
-			}
-		);
 	}
 
 	public queryByMessageRefs(

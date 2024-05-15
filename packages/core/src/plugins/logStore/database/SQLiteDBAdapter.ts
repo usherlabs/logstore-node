@@ -1,5 +1,4 @@
-import { messageIdToStr } from '@logsn/client';
-import { MessageID, MessageRef, StreamMessage } from '@streamr/protocol';
+import { MessageRef, StreamMessage } from '@streamr/protocol';
 import { convertStreamMessageToBytes } from '@streamr/trackerless-network';
 import { Logger } from '@streamr/utils';
 import Database from 'better-sqlite3';
@@ -233,50 +232,6 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 					streamId,
 					partition,
 					limit: requestCount,
-				})
-			)
-		);
-
-		return Readable.from(results$);
-	}
-
-	public queryByMessageIds(messageIds: MessageID[]): Readable {
-		// optimized when using prepared + placeholder
-		// see https://github.com/drizzle-team/drizzle-orm/blob/main/drizzle-orm/src/sqlite-core/README.md#%EF%B8%8F-performance-and-prepared-statements
-		const queryTemplate = this.dbClient
-			.select({
-				payload: streamDataTable.payload,
-			})
-			.from(streamDataTable)
-			.where(
-				and(
-					eq(streamDataTable.stream_id, placeholder('stream_id')),
-					eq(streamDataTable.partition, placeholder('partition')),
-					eq(streamDataTable.ts, placeholder('ts')),
-					eq(streamDataTable.sequence_no, placeholder('sequence_no')),
-					eq(streamDataTable.publisher_id, placeholder('publisher_id')),
-					eq(streamDataTable.msg_chain_id, placeholder('msg_chain_id'))
-				)
-			)
-			.prepare();
-
-		const queries = messageIds.map((messageId) =>
-			queryTemplate.execute({
-				stream_id: messageId.streamId,
-				partition: messageId.streamPartition,
-				ts: messageId.timestamp,
-				sequence_no: messageId.sequenceNumber,
-				publisher_id: messageId.publisherId,
-				msg_chain_id: messageId.msgChainId,
-			})
-		);
-
-		const results$ = from(queries).pipe(
-			concatAll(), // promises to arrays, preserving the order
-			mergeAll(), // arrays to values
-			map(
-				this.parseRow({
-					messageIds: messageIds.map((m) => messageIdToStr(m)),
 				})
 			)
 		);

@@ -1,4 +1,4 @@
-import { MessageID, StreamMessage } from '@streamr/protocol';
+import { StreamMessage } from '@streamr/protocol';
 import { Logger, MetricsContext, RateMetric } from '@streamr/utils';
 import { Readable } from 'stream';
 
@@ -95,18 +95,6 @@ export class LogStore extends DatabaseEventEmitter {
 				limit
 			)
 			.pipe(new MessageLimitTransform(limit || Infinity));
-	}
-
-	/**
-	 * Requests messages from DB by their serialized message IDs.
-	 */
-	requestByMessageIds(messageIdsSerialized: string[]): Readable {
-		const messageIds = messageIdsSerialized.map((messageId) =>
-			// @ts-expect-error Property 'fromArray' does not exist on type 'typeof MessageID'
-			MessageID.fromArray(JSON.parse(messageId))
-		);
-
-		return this.db.queryByMessageIds(messageIds);
 	}
 
 	requestRange(

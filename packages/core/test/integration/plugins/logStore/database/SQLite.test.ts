@@ -18,6 +18,7 @@ import { SQLiteDBAdapter } from '../../../../../src/plugins/logStore/database/SQ
 import { MAX_SEQUENCE_NUMBER_VALUE } from '../../../../../src/plugins/logStore/LogStore';
 
 const MOCK_STREAM_ID = `mock-stream-id-${Date.now()}`;
+const MOCK_PARTITION = 0;
 const MOCK_PUBLISHER_ID = toEthereumAddress(
 	'0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 );
@@ -26,12 +27,13 @@ const MOCK_MSG_CHAIN_ID = 'msgChainId';
 const createMockMessage = (
 	timestamp: number,
 	sequence_no = 0,
-	streamId: string = MOCK_STREAM_ID
+	streamId: string = MOCK_STREAM_ID,
+	partition: number = MOCK_PARTITION
 ) =>
 	new StreamMessage({
 		messageId: new MessageID(
 			toStreamID(streamId),
-			0,
+			partition,
 			timestamp,
 			sequence_no,
 			MOCK_PUBLISHER_ID,
@@ -230,8 +232,10 @@ describe('SQLite', () => {
 			}
 
 			const queriedMessages = [messages[1], messages[3], messages[2]];
-			const stream = db.queryByMessageIds(
-				queriedMessages.map((m) => m.messageId)
+			const stream = db.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				queriedMessages.map((m) => m.getMessageRef())
 			);
 
 			const contentValues = await streamToContentValues(stream);

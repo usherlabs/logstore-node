@@ -26,6 +26,7 @@ const localDataCenter = 'datacenter1';
 const keyspace = 'logstore_dev';
 
 const MOCK_STREAM_ID = `mock-stream-id-${Date.now()}`;
+const MOCK_PARTITION = 0;
 const MOCK_PUBLISHER_ID = toEthereumAddress(
 	'0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 );
@@ -34,12 +35,13 @@ const MOCK_MSG_CHAIN_ID = 'msgChainId';
 const createMockMessage = (
 	timestamp: number,
 	sequence_no = 0,
-	streamId: string = MOCK_STREAM_ID
+	streamId: string = MOCK_STREAM_ID,
+	partition: number = MOCK_PARTITION
 ) => {
 	return new StreamMessage({
 		messageId: new MessageID(
 			toStreamID(streamId),
-			0,
+			partition,
 			timestamp,
 			sequence_no,
 			MOCK_PUBLISHER_ID,
@@ -193,26 +195,32 @@ describe('cassanda-queries', () => {
 		// cassandraAdapter.bucketManager.cassandraClient = proxyClient;
 	});
 
-	describe('requestByMessageIds', () => {
+	describe('queryByMessageRefs', () => {
 		it('single happy path', async () => {
-			const resultStream = cassandraAdapter.queryByMessageIds([
-				MOCK_MESSAGES[0].messageId,
-			]);
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				[MOCK_MESSAGES[0].getMessageRef()]
+			);
 			const contentValues = await streamToContentValues(resultStream);
 			expect(contentValues).toEqual([1, 0]);
 		});
 
 		it('multiple happy path', async () => {
-			const resultStream = cassandraAdapter.queryByMessageIds(
-				MOCK_MESSAGES.map((msg) => msg.messageId)
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				MOCK_MESSAGES.map((msg) => msg.getMessageRef())
 			);
 			const contentValues = await streamToContentValues(resultStream);
 			expect(contentValues).toEqual([1, 0, 2, 0, 3, 0]);
 		});
 
 		it('multiple happy path received in same order', async () => {
-			const resultStream = cassandraAdapter.queryByMessageIds(
-				[2, 1, 3].map((i) => MOCK_MESSAGES[i - 1].messageId)
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				[2, 1, 3].map((i) => MOCK_MESSAGES[i - 1].getMessageRef())
 			);
 			const contentValues = await streamToContentValues(resultStream);
 			expect(contentValues).toEqual([2, 0, 1, 0, 3, 0]);
@@ -238,8 +246,10 @@ describe('cassanda-queries', () => {
 			await waitForStoredMessageCount(BUCKET_1_MESSAGES.length, mockStreamId1);
 			await waitForStoredMessageCount(BUCKET_2_MESSAGES.length, mockStreamId2);
 
-			const resultStream = cassandraAdapter.queryByMessageIds(
-				allMessages.map((msg) => msg.messageId)
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				allMessages.map((msg) => msg.getMessageRef())
 			);
 
 			const contentValues = await streamToContentValues(resultStream);
@@ -247,16 +257,20 @@ describe('cassanda-queries', () => {
 		});
 
 		it('not found', async () => {
-			const resultStream = cassandraAdapter.queryByMessageIds([
-				createMockMessage(999).messageId,
-			]);
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				[createMockMessage(999).getMessageRef()]
+			);
 			const contentValues = await streamToContentValues(resultStream);
 			expect(contentValues).toEqual([]);
 		});
 
 		it('not found in the middle', async () => {
-			const resultStream = cassandraAdapter.queryByMessageIds(
-				[1, 999, 3].map((i) => createMockMessage(i).messageId)
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				[1, 999, 3].map((i) => createMockMessage(i).getMessageRef())
 			);
 			const contentValues = await streamToContentValues(resultStream);
 			expect(contentValues).toEqual([1, 0, 3, 0]);

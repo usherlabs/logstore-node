@@ -19,6 +19,7 @@ import { SQLiteDBAdapter } from '../../../../../src/plugins/logStore/database/SQ
 import { STREAMR_DOCKER_DEV_HOST } from '../../../../utils';
 
 const MOCK_STREAM_ID = `mock-stream-id-${Date.now()}`;
+const MOCK_PARTITION = 0;
 const MOCK_PUBLISHER_ID = toEthereumAddress(
 	'0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 );
@@ -27,12 +28,13 @@ const MOCK_MSG_CHAIN_ID = 'msgChainId';
 const createMockMessage = (
 	timestamp: number,
 	sequence_no = 0,
-	streamId: string = MOCK_STREAM_ID
+	streamId: string = MOCK_STREAM_ID,
+	partition: number = MOCK_PARTITION
 ) => {
 	return new StreamMessage({
 		messageId: new MessageID(
 			toStreamID(streamId),
-			0,
+			partition,
 			timestamp,
 			sequence_no,
 			MOCK_PUBLISHER_ID,
@@ -117,8 +119,10 @@ describe('Multiple DB', () => {
 				await Promise.all(shuffledMsgs.map((m) => db.store(m)));
 
 				const byIdMsgs = shuffledMsgs.slice(0, 3);
-				const byMessageIdStream = db.queryByMessageIds(
-					byIdMsgs.map((msg) => msg.messageId)
+				const byMessageIdStream = db.queryByMessageRefs(
+					MOCK_STREAM_ID,
+					MOCK_PARTITION,
+					byIdMsgs.map((msg) => msg.getMessageRef())
 				);
 				const requestLastStream = db.queryLast(MOCK_STREAM_ID, 0, 3);
 				const requestRangeStream = db.queryRange(
