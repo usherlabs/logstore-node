@@ -49,7 +49,7 @@ export class PropagationManager {
 				this.onQueryRequest(systemMessage as QueryRequest, metadata);
 				break;
 			case SystemMessageType.QueryResponse:
-				this.onQueryResponse(systemMessage as QueryResponse);
+				this.onQueryResponse(systemMessage as QueryResponse, metadata);
 				break;
 		}
 	}
@@ -91,7 +91,14 @@ export class PropagationManager {
 		this.propagators.set(queryRequest.requestId, propagator);
 	}
 
-	private async onQueryResponse(queryResponse: QueryResponse) {
+	private async onQueryResponse(
+		queryResponse: QueryResponse,
+		metadata: MessageMetadata
+	) {
+		if (queryResponse.requestPublisherId !== metadata.publisherId) {
+			return;
+		}
+
 		const propagator = this.propagators.get(queryResponse.requestId);
 
 		propagator?.onPrimaryResponse(queryResponse);
