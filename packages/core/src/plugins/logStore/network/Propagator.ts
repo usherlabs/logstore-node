@@ -80,7 +80,7 @@ export class Propagator {
 			this.doCheck();
 		});
 		queryStream.on('end', () => {
-			this.propagationList.fnalizeForeign();
+			this.propagationList.finalizeForeign();
 			this.doCheck();
 		});
 
@@ -115,14 +115,14 @@ export class Propagator {
 		});
 
 		if (response.isFinal) {
-			this.propagationList.fnalizePrimary();
+			this.propagationList.finalizePrimary();
 		}
 
 		this.doCheck();
 	}
 
 	private doCheck() {
-		const messaqgeRefs = this.propagationList.getDiffAndSrink();
+		const messaqgeRefs = this.propagationList.getDiffAndShrink();
 
 		if (messaqgeRefs.length) {
 			const queryStream = this.database.queryByMessageRefs(

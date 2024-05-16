@@ -184,7 +184,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	public async processQueryRequest(queryRequest: QueryRequest) {
 		await this.systemPublisher.publish(queryRequest.serialize());
 
-		const aggregator = this.aggregationManager.aggregare(queryRequest);
+		const aggregator = this.aggregationManager.aggregate(queryRequest);
 		return {
 			data: aggregator,
 		};

@@ -58,7 +58,7 @@ export class PropagationManager {
 		queryRequest: QueryRequest,
 		metadata: MessageMetadata
 	) {
-		const propagagtor = new Propagator(
+		const propagator = new Propagator(
 			this.database!,
 			queryRequest,
 			async (serializedMessages, isFinal) => {
@@ -88,7 +88,7 @@ export class PropagationManager {
 			}
 		);
 
-		this.propagators.set(queryRequest.requestId, propagagtor);
+		this.propagators.set(queryRequest.requestId, propagator);
 	}
 
 	private async onQueryResponse(queryResponse: QueryResponse) {

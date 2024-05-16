@@ -33,11 +33,11 @@ export class PropagationList {
 		}
 	}
 
-	public fnalizePrimary() {
+	public finalizePrimary() {
 		this.isPrimaryFinalized = true;
 	}
 
-	public fnalizeForeign() {
+	public finalizeForeign() {
 		this.isForeignFinalized = true;
 	}
 
@@ -45,7 +45,7 @@ export class PropagationList {
 		return this.isPrimaryFinalized && this.isForeignFinalized;
 	}
 
-	public getDiffAndSrink() {
+	public getDiffAndShrink() {
 		if (this.isPrimaryFinalized) {
 			return this.foreignItems.splice(0, this.foreignItems.length);
 		}

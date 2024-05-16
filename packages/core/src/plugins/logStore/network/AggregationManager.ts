@@ -72,7 +72,7 @@ export class AggregationManager {
 		aggregator?.onPropagation(metadata.publisherId, queryPropagate);
 	}
 
-	public aggregare(queryRequest: QueryRequest) {
+	public aggregate(queryRequest: QueryRequest) {
 		const aggregator = new Aggregator(
 			this.database!,
 			queryRequest,
