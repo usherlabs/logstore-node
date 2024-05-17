@@ -17,7 +17,7 @@ import {
 	MAX_TIMESTAMP_VALUE,
 	MIN_SEQUENCE_NUMBER_VALUE,
 } from '../LogStore';
-import { AggreagationList } from './AggregationList';
+import { AggregationList } from './AggregationList';
 
 const logger = new Logger(module);
 
@@ -29,7 +29,7 @@ export class Aggregator extends PassThrough {
 		EthereumAddress,
 		{ messageRef: MessageRef | undefined; isFinalized: boolean }
 	>;
-	private readonly aggreagationList: AggreagationList;
+	private readonly aggregationList: AggregationList;
 	private readonly queryStreams: Set<Readable>;
 
 	constructor(
@@ -52,7 +52,7 @@ export class Aggregator extends PassThrough {
 				{ messageRef: undefined, isFinalized: false },
 			])
 		);
-		this.aggreagationList = new AggreagationList();
+		this.aggregationList = new AggregationList();
 		this.queryStreams = new Set<Readable>();
 
 		let queryStream: Readable;
@@ -98,7 +98,7 @@ export class Aggregator extends PassThrough {
 		queryStream.on('data', (bytes: Uint8Array) => {
 			const message = convertBytesToStreamMessage(bytes);
 			const messageRef = message.messageId.toMessageRef();
-			this.aggreagationList.push(messageRef, true);
+			this.aggregationList.push(messageRef, true);
 			this.doCheck();
 		});
 		queryStream.on('end', () => {
@@ -150,7 +150,7 @@ export class Aggregator extends PassThrough {
 		const foreignNodeResponse = this.getOrCreateForeignNodeResponse(node);
 
 		response.messageRefs.forEach((messageRef) => {
-			this.aggreagationList.push(messageRef, false);
+			this.aggregationList.push(messageRef, false);
 		});
 
 		if (response.isFinal) {
@@ -167,7 +167,7 @@ export class Aggregator extends PassThrough {
 				await this.database.store(message);
 
 				const messageRef = message.messageId.toMessageRef();
-				this.aggreagationList.push(messageRef, true);
+				this.aggregationList.push(messageRef, true);
 			})
 		).then(() => {
 			this.doCheck();
@@ -179,13 +179,13 @@ export class Aggregator extends PassThrough {
 			return;
 		}
 
-		if (this.aggreagationList.isEmpty && this.queryStreams.size === 0) {
+		if (this.aggregationList.isEmpty && this.queryStreams.size === 0) {
 			this.end();
 			return;
 		}
 
-		const readyFrom = this.aggreagationList.readyFrom;
-		const readyTo = this.aggreagationList.readyTo;
+		const readyFrom = this.aggregationList.readyFrom;
+		const readyTo = this.aggregationList.readyTo;
 
 		if (readyFrom && readyTo) {
 			// TODO: review the cast
@@ -213,7 +213,7 @@ export class Aggregator extends PassThrough {
 
 			queryStream.pipe(this, { end: false });
 
-			this.aggreagationList.shrink(readyTo);
+			this.aggregationList.shrink(readyTo);
 		}
 	}
 }

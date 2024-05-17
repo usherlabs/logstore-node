@@ -122,13 +122,13 @@ export class Propagator {
 	}
 
 	private doCheck() {
-		const messaqgeRefs = this.propagationList.getDiffAndShrink();
+		const messageRefs = this.propagationList.getDiffAndShrink();
 
-		if (messaqgeRefs.length) {
+		if (messageRefs.length) {
 			const queryStream = this.database.queryByMessageRefs(
 				this.queryRequest.streamId,
 				this.queryRequest.partition,
-				messaqgeRefs
+				messageRefs
 			);
 			this.queryStreams.add(queryStream);
 

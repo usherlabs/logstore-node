@@ -1,6 +1,6 @@
 import { MessageRef } from '@streamr/protocol';
 
-export class AggreagationList {
+export class AggregationList {
 	private readonly items: { messageRef: MessageRef; isReady: boolean }[] = [];
 	private _threshold: MessageRef | undefined;
 
