@@ -98,7 +98,7 @@ export class Aggregator extends PassThrough {
 		queryStream.on('data', (bytes: Uint8Array) => {
 			const message = convertBytesToStreamMessage(bytes);
 			const messageRef = message.messageId.toMessageRef();
-			this.aggregationList.push(messageRef, true);
+			this.aggregationList.pushPrimary(messageRef);
 			this.doCheck();
 		});
 		queryStream.on('end', () => {
@@ -150,7 +150,7 @@ export class Aggregator extends PassThrough {
 		const foreignNodeResponse = this.getOrCreateForeignNodeResponse(node);
 
 		response.messageRefs.forEach((messageRef) => {
-			this.aggregationList.push(messageRef, false);
+			this.aggregationList.pushForeign(messageRef);
 		});
 
 		if (response.isFinal) {
@@ -167,7 +167,7 @@ export class Aggregator extends PassThrough {
 				await this.database.store(message);
 
 				const messageRef = message.messageId.toMessageRef();
-				this.aggregationList.push(messageRef, true);
+				this.aggregationList.pushPropagation(messageRef);
 			})
 		).then(() => {
 			this.doCheck();

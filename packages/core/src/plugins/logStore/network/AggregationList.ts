@@ -33,11 +33,19 @@ export class AggregationList {
 		return undefined;
 	}
 
-	public get threshold() {
-		return this._threshold;
+	public pushPrimary(messageRef: MessageRef) {
+		this.push(messageRef, true);
 	}
 
-	public push(messageRef: MessageRef, isReady: boolean) {
+	public pushForeign(messageRef: MessageRef) {
+		this.push(messageRef, false);
+	}
+
+	public pushPropagation(messageRef: MessageRef) {
+		this.push(messageRef, true);
+	}
+
+	private push(messageRef: MessageRef, isReady: boolean) {
 		if (this._threshold && this._threshold.compareTo(messageRef) >= 0) {
 			return;
 		}
