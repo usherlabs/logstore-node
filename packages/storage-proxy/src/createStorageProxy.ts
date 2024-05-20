@@ -1,9 +1,9 @@
-import { Logger } from '@streamr/utils';
 import {
 	formStorageNodeAssignmentStreamId,
 	StorageNodeMetadata,
 	StreamPermission,
-} from 'streamr-client';
+} from '@streamr/sdk';
+import { Logger } from '@streamr/utils';
 
 import { getStreamrClient } from './utils/getStreamrClient';
 
@@ -35,5 +35,5 @@ export const createStorageProxy = async (options: Options) => {
 	logger.info(`Setting metadata to the StorageProxy...`);
 	await streamrClient.setStorageNodeMetadata(options.metadata);
 
-	logger.info(`Created a StorageProxy with address ${clusterId}...`);
+	logger.info(`Created a StorageProxy with address ${clusterId}`);
 };

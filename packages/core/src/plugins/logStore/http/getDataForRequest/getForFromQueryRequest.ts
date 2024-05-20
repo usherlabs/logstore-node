@@ -1,4 +1,5 @@
 import { QueryRequest, QueryType } from '@logsn/protocol';
+import { MessageRef } from '@streamr/protocol';
 import { MetricsDefinition } from '@streamr/utils';
 import { v4 as uuid } from 'uuid';
 
@@ -59,12 +60,9 @@ export const getForFromQueryRequest = ({
 		consumerId: req.consumer!,
 		streamId,
 		partition,
-		queryType: QueryType.From,
 		queryOptions: {
-			from: {
-				timestamp: fromTimestamp,
-				sequenceNumber: fromSequenceNumber,
-			},
+			queryType: QueryType.From,
+			from: new MessageRef(fromTimestamp, fromSequenceNumber),
 			limit: limitOrUndefinedIfInfinity,
 			publisherId,
 		},

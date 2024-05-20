@@ -1,4 +1,5 @@
-import { MessageID, StreamMessage } from '@streamr/protocol';
+import { MessageRef, StreamMessage } from '@streamr/protocol';
+import { convertStreamMessageToBytes } from '@streamr/trackerless-network';
 import { Logger } from '@streamr/utils';
 import { auth, Client, tracker, types } from 'cassandra-driver';
 import merge2 from 'merge2';
@@ -91,9 +92,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 			objectMode: true,
 			transform(row: types.Row, _, done) {
 				const now = Date.now();
-				const message = self.parseRow(debugInfo)(
-					row as unknown as { payload: Buffer | null }
-				);
+				const message = self.parseRow(debugInfo)(row);
 				if (message !== null) {
 					this.push(message);
 				}
@@ -143,23 +142,30 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 			if (bucketId) {
 				logger.trace(`found bucketId: ${bucketId}`);
 
-				this.bucketManager.incrementBucket(
-					bucketId,
-					Buffer.byteLength(streamMessage.serialize())
-				);
+				const record = {
+					streamId: streamMessage.getStreamId(),
+					partition: streamMessage.getStreamPartition(),
+					timestamp: streamMessage.getTimestamp(),
+					sequenceNo: streamMessage.getSequenceNumber(),
+					publisherId: streamMessage.getPublisherId(),
+					msgChainId: streamMessage.getMsgChainId(),
+					payload: Buffer.from(convertStreamMessageToBytes(streamMessage)),
+				};
+				this.bucketManager.incrementBucket(bucketId, record.payload.length);
 				setImmediate(() =>
-					this.batchManager.store(bucketId, streamMessage, (err?: Error) => {
+					this.batchManager.store(bucketId, record, (err?: Error) => {
 						if (err) {
 							reject(err);
 						} else {
-							this.emit('write', streamMessage);
+							this.emit('write', record.payload);
 							resolve(true);
 						}
 					})
 				);
 			} else {
-				const messageId = streamMessage.messageId.serialize();
-				logger.trace(`bucket not found, put ${messageId} to pendingMessages`);
+				logger.trace('Move message to pending messages (bucket not found)', {
+					messageId: JSON.stringify(streamMessage.messageId),
+				});
 
 				const uuid = uuidv1();
 				const timeout = setTimeout(() => {
@@ -307,7 +313,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 
 				const streams = queries.map((q) => {
 					const select = `SELECT payload
-																		FROM stream_data ${q.queryStatement} ALLOW FILTERING`;
+													FROM stream_data ${q.queryStatement} ALLOW FILTERING`;
 
 					return this.queryWithStreamingResults(select, q.params);
 				});
@@ -333,19 +339,51 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 		return resultStream;
 	}
 
-	queryLast(
+	public queryLast(
 		streamId: string,
 		partition: number,
 		requestCount: number
 	): Readable {
-		const limit = Math.min(requestCount, MAX_RESEND_LAST);
+		if (requestCount < 0) {
+			throw new Error('requestCount must be positive');
+		}
+
+		return this.queryTake(streamId, partition, -requestCount);
+	}
+
+	public queryFirst(
+		streamId: string,
+		partition: number,
+		requestCount: number
+	): Readable {
+		if (requestCount < 0) {
+			throw new Error('requestCount must be positive');
+		}
+
+		return this.queryTake(streamId, partition, requestCount);
+	}
+
+	queryTake(
+		streamId: string,
+		partition: number,
+		// if positive, is first messages, if negative, is last messages
+		requestCount: number
+	): Readable {
+		const requestType = requestCount > 0 ? 'first' : 'last';
+		const orderByForLastMessage = 'ORDER BY ts DESC, sequence_no DESC ';
+		const orderByForFirstMessage = 'ORDER BY ts ASC, sequence_no ASC ';
+		const messagesCount = Math.abs(requestCount);
+
+		const limit = Math.min(messagesCount, MAX_RESEND_LAST);
 
 		logger.trace('requestLast', { streamId, partition, limit });
 
-		const GET_LAST_N_MESSAGES =
+		const GET_N_MESSAGES =
 			'SELECT payload FROM stream_data WHERE ' +
 			'stream_id = ? AND partition = ? AND bucket_id IN ? ' +
-			'ORDER BY ts DESC, sequence_no DESC ' +
+			(requestType === 'first'
+				? orderByForFirstMessage
+				: orderByForLastMessage) +
 			'LIMIT ?';
 		const COUNT_MESSAGES =
 			'SELECT COUNT(*) AS total FROM stream_data WHERE stream_id = ? AND partition = ? AND bucket_id = ?';
@@ -364,18 +402,20 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 			limit,
 		});
 
-		const makeLastQuery = async (bucketIds: BucketId[]) => {
+		const makeTakeQuery = async (bucketIds: BucketId[]) => {
 			try {
 				const params = [streamId, partition, bucketIds, limit];
 				const resultSet = await this.cassandraClient.execute(
-					GET_LAST_N_MESSAGES,
+					GET_N_MESSAGES,
 					params,
 					{
 						prepare: true,
 						fetchSize: 0, // disable paging
 					}
 				);
-				resultSet.rows.reverse().forEach((r: types.Row) => {
+				const orderedRows =
+					requestType === 'first' ? resultSet.rows : resultSet.rows.reverse();
+				orderedRows.forEach((r: types.Row) => {
 					resultStream.write(r);
 				});
 				resultStream.end();
@@ -430,7 +470,7 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 						if (result.nextPage && total < limit && total < MAX_RESEND_LAST) {
 							result.nextPage();
 						} else {
-							makeLastQuery(bucketIds);
+							makeTakeQuery(bucketIds);
 						}
 					} catch (err2) {
 						resultStream.destroy(err2);
@@ -442,36 +482,31 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 		return resultStream;
 	}
 
-	/**
-	 * Fetches messages from stream_data table based on the given message IDs.
-	 *
-	 * - It won't error if doesn't find a bucket id. Will just skip the message.
-	 * - If it doesn't find a message it will just skip it
-	 *
-	 * @param {MessageID[]} messageIds
-	 */
-	public queryByMessageIds(
-		messageIds: MessageID[]
-		// ? should we need to add limit param? Will we use it to fetch over 5000 messages?
-	) {
-		const sourceStream = Readable.from(messageIds);
+	public queryByMessageRefs(
+		streamId: string,
+		partition: number,
+		messageRefs: MessageRef[]
+	): Readable {
+		const sourceStream = Readable.from(messageRefs);
 
 		const resultStream = this.createResultStream({
-			messageIds: messageIds.map((m) => m.serialize()),
+			streamId,
+			partition,
+			messageRefs,
 		});
 
 		const transfrom = new Transform({
 			objectMode: true,
-			transform: async (messageId: MessageID, _, done) => {
+			transform: async (messageRef: MessageRef, _, done) => {
 				const [bucket] = await this.getBucketsByTimestamp(
-					messageId.streamId,
-					messageId.streamPartition,
-					messageId.timestamp,
-					messageId.timestamp
+					streamId,
+					partition,
+					messageRef.timestamp,
+					messageRef.timestamp
 				);
 				if (!bucket) {
-					logger.warn(`Bucket not found for messageId`, {
-						messageId: messageId.serialize(),
+					logger.warn(`Bucket not found for messageRef`, {
+						messageRef,
 					});
 					done();
 					return;
@@ -479,15 +514,13 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 
 				const query =
 					'SELECT payload FROM stream_data WHERE ' +
-					'stream_id = ? AND partition = ? AND bucket_id = ? AND ts = ? AND sequence_no = ? AND publisher_id = ? AND msg_chain_id = ?';
+					'stream_id = ? AND partition = ? AND bucket_id = ? AND ts = ? AND sequence_no = ?';
 				const params = [
-					messageId.streamId,
-					messageId.streamPartition,
+					streamId,
+					partition,
 					bucket.id,
-					messageId.timestamp,
-					messageId.sequenceNumber,
-					messageId.publisherId,
-					messageId.msgChainId,
+					messageRef.timestamp,
+					messageRef.sequenceNumber,
 				];
 
 				const resultSet = await this.cassandraClient.execute(query, params, {
@@ -495,8 +528,8 @@ export class CassandraDBAdapter extends DatabaseAdapter {
 				});
 
 				if (!resultSet.rows[0]) {
-					logger.warn('Message not found for messageId', {
-						messageId: messageId.serialize(),
+					logger.warn('Message not found for messageRef', {
+						messageRef,
 					});
 					done();
 					return;

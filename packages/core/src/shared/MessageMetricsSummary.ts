@@ -1,5 +1,5 @@
 import { SystemMessage, SystemMessageType } from '@logsn/protocol';
-import { MessageMetadata } from 'streamr-client';
+import { MessageMetadata } from '@streamr/sdk';
 
 import { MessageMetrics } from './MessageMetrics';
 

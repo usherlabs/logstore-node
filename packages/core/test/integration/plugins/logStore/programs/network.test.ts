@@ -14,46 +14,32 @@ import {
 	prepareStakeForQueryManager,
 	prepareStakeForStoreManager,
 } from '@logsn/shared';
-import { Tracker } from '@streamr/network-tracker';
+import StreamrClient, { Stream, StreamPermission } from '@streamr/sdk';
 import {
 	fastWallet,
 	fetchPrivateKeyWithGas,
 	KeyServer,
 } from '@streamr/test-utils';
-import { providers, Wallet } from 'ethers';
+import { Wallet } from 'ethers';
 import { defer, firstValueFrom, switchAll, timeout } from 'rxjs';
 import { switchMap } from 'rxjs/internal/operators/switchMap';
-import StreamrClient, {
-	Stream,
-	StreamPermission,
-	CONFIG_TEST as STREAMR_CONFIG_TEST,
-} from 'streamr-client';
 
 import { LogStoreNode } from '../../../../../src/node';
 import {
 	CONTRACT_OWNER_PRIVATE_KEY,
 	createStreamrClient,
 	createTestStream,
+	getProvider,
 	sleep,
 	startLogStoreBroker,
-	startTestTracker,
 } from '../../../../utils';
 
 jest.setTimeout(60000);
 
 const STAKE_AMOUNT = BigInt('1000000000000000000');
 
-// There are two options to run the test managed by a value of the TRACKER_PORT constant:
-// 1. TRACKER_PORT = undefined - run the test against the brokers running in dev-env and brokers run by the test script.
-// 2. TRACKER_PORT = 17771 - run the test against only brokers run by the test script.
-//    In this case dev-env doesn't run any brokers and there is no brokers joined the network (NodeManager.totalNodes == 0)
-const TRACKER_PORT = undefined;
-
 describe('Network Mode Programs', () => {
-	const provider = new providers.JsonRpcProvider(
-		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
-	);
+	const provider = getProvider();
 
 	// Accounts
 	let tokenAdminAccount: Wallet;
@@ -77,7 +63,6 @@ describe('Network Mode Programs', () => {
 	let storeManager: LogStoreManager;
 	let queryManager: LogStoreQueryManager;
 
-	let tracker: Tracker;
 	let testStream: Stream;
 
 	beforeAll(async () => {
@@ -107,9 +92,6 @@ describe('Network Mode Programs', () => {
 	});
 
 	beforeEach(async () => {
-		if (TRACKER_PORT) {
-			tracker = await startTestTracker(TRACKER_PORT);
-		}
 		const nodeMetadata: NodeMetadata = {
 			http: 'http://10.200.10.1:7171',
 		};
@@ -134,7 +116,7 @@ describe('Network Mode Programs', () => {
 			const log = args[args.length - 1];
 
 			const message = {
-				__logStoreChainId: '8997',
+				__logStoreChainId: '31337',
 				__logStoreChannelId: 'evm-validate',
 				address: log.address,
 				blockHash: log.blockHash,
@@ -149,7 +131,6 @@ describe('Network Mode Programs', () => {
 
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: TRACKER_PORT,
 			plugins: {
 				logStore: {
 					db: {
@@ -159,15 +140,9 @@ describe('Network Mode Programs', () => {
 			},
 		});
 
-		publisherClient = await createStreamrClient(
-			tracker,
-			publisherAccount.privateKey
-		);
+		publisherClient = await createStreamrClient(publisherAccount.privateKey);
 
-		consumerClient = await createStreamrClient(
-			tracker,
-			storeConsumerAccount.privateKey
-		);
+		consumerClient = await createStreamrClient(storeConsumerAccount.privateKey);
 
 		testStream = await createTestStream(publisherClient, module);
 		// TODO: the consumer must have permission to subscribe to the stream or the strem have to be public
@@ -192,7 +167,6 @@ describe('Network Mode Programs', () => {
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
 			nodeManager?.leave().then((tx) => tx.wait()),
-			tracker?.stop(),
 		]);
 	});
 

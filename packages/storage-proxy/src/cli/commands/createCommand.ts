@@ -1,6 +1,6 @@
+import { StorageNodeMetadata } from '@streamr/sdk';
 import { Logger } from '@streamr/utils';
 import { Command, program } from 'commander';
-import { StorageNodeMetadata } from 'streamr-client';
 
 import { createStorageProxy } from '../../createStorageProxy';
 import { metadataArgument } from '../arguments';
@@ -25,5 +25,6 @@ export const createCommand = new Command('create')
 			});
 		} catch (err) {
 			logger.error('Create a StorageProxy failed', { err });
+			process.exit(1);
 		}
 	});

@@ -1,6 +1,6 @@
+import { EthereumAddress } from '@streamr/sdk';
 import { Logger } from '@streamr/utils';
 import { Command, program } from 'commander';
-import { EthereumAddress } from 'streamr-client';
 
 import { removeNodeFromStorageProxy } from '../../removeNodeFromStorageProxy';
 import { nodeArgument } from '../arguments';
@@ -25,5 +25,6 @@ export const removeNodeCommand = new Command('remove-node')
 			});
 		} catch (err) {
 			logger.error('Remove a Node from a StorageProxy failed', { err });
+			process.exit(1);
 		}
 	});

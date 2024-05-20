@@ -1,9 +1,5 @@
 import { SystemMessageType } from '@logsn/protocol';
-import StreamrClient, {
-	MessageMetadata,
-	Stream,
-	Subscription,
-} from 'streamr-client';
+import { MessageMetadata } from '@streamr/sdk';
 
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import {
@@ -12,10 +8,6 @@ import {
 } from '../../../shared/MessageMetricsSummary';
 
 const METRICS_SUBJECTS: MessageMetricsSubject[] = [
-	{
-		subject: 'ProofOfReport',
-		type: SystemMessageType.ProofOfReport,
-	},
 	{
 		subject: 'QueryRequest',
 		type: SystemMessageType.QueryRequest,
@@ -28,32 +20,17 @@ const METRICS_SUBJECTS: MessageMetricsSubject[] = [
 		subject: 'QueryPropagate',
 		type: SystemMessageType.QueryPropagate,
 	},
-	{
-		subject: 'RecoveryRequest',
-		type: SystemMessageType.RecoveryRequest,
-	},
 ];
 
 export class MessageMetricsCollector {
 	private readonly messageMetricsSummary: MessageMetricsSummary;
 
-	private recoverySubscription?: Subscription;
-
-	constructor(
-		private readonly client: StreamrClient,
-		private readonly systemSubscriber: BroadbandSubscriber,
-		private readonly recoveryStream: Stream
-	) {
+	constructor(private readonly systemSubscriber: BroadbandSubscriber) {
 		this.messageMetricsSummary = new MessageMetricsSummary(METRICS_SUBJECTS);
 	}
 
 	public async start() {
 		await this.systemSubscriber.subscribe(this.onSystemMessage.bind(this));
-
-		this.recoverySubscription = await this.client.subscribe(
-			this.recoveryStream,
-			this.onRecoveryMessage.bind(this)
-		);
 	}
 
 	public get summary() {
@@ -61,8 +38,6 @@ export class MessageMetricsCollector {
 	}
 
 	public async stop() {
-		await this.recoverySubscription?.unsubscribe();
-
 		await this.systemSubscriber.unsubscribe();
 	}
 

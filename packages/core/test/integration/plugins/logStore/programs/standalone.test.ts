@@ -1,41 +1,27 @@
 import { LSAN } from '@logsn/contracts';
 import { getTokenManagerContract } from '@logsn/shared';
-import { Tracker } from '@streamr/network-tracker';
+import StreamrClient, { Stream, StreamPermission } from '@streamr/sdk';
 import {
 	fastWallet,
 	fetchPrivateKeyWithGas,
 	KeyServer,
 } from '@streamr/test-utils';
-import { providers, Wallet } from 'ethers';
+import { Wallet } from 'ethers';
 import { defer, firstValueFrom, switchAll, timeout } from 'rxjs';
-import StreamrClient, {
-	Stream,
-	StreamPermission,
-	CONFIG_TEST as STREAMR_CONFIG_TEST,
-} from 'streamr-client';
 
 import { LogStoreNode } from '../../../../../src/node';
 import {
 	createStreamrClient,
 	createTestStream,
+	getProvider,
 	sleep,
 	startLogStoreBroker,
-	startTestTracker,
 } from '../../../../utils';
 
 jest.setTimeout(60000);
 
-// There are two options to run the test managed by a value of the TRACKER_PORT constant:
-// 1. TRACKER_PORT = undefined - run the test against the brokers running in dev-env and brokers run by the test script.
-// 2. TRACKER_PORT = 17771 - run the test against only brokers run by the test script.
-//    In this case dev-env doesn't run any brokers and there is no brokers joined the network (NodeManager.totalNodes == 0)
-const TRACKER_PORT = undefined;
-
 describe('Standalone Mode Programs', () => {
-	const provider = new providers.JsonRpcProvider(
-		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
-	);
+	const provider = getProvider();
 
 	// Accounts
 	let tokenSenderAccount: Wallet;
@@ -54,7 +40,6 @@ describe('Standalone Mode Programs', () => {
 	// Contracts
 	let tokenAdminManager: LSAN;
 
-	let tracker: Tracker;
 	let testStream: Stream;
 	let topicsStream: Stream;
 
@@ -80,20 +65,14 @@ describe('Standalone Mode Programs', () => {
 	});
 
 	beforeEach(async () => {
-		if (TRACKER_PORT) {
-			tracker = await startTestTracker(TRACKER_PORT);
-		}
-
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
 
 		publisherStreamrClient = await createStreamrClient(
-			tracker,
 			publisherAccount.privateKey
 		);
 
 		consumerStreamrClient = await createStreamrClient(
-			tracker,
 			storeConsumerAccount.privateKey
 		);
 
@@ -126,7 +105,7 @@ describe('Standalone Mode Programs', () => {
 			const log = args[args.length - 1];
 
 			const message = {
-				__logStoreChainId: '8997',
+				__logStoreChainId: '31337',
 				__logStoreChannelId: 'evm-validate',
 				address: log.address,
 				blockHash: log.blockHash,
@@ -141,7 +120,6 @@ describe('Standalone Mode Programs', () => {
 
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: TRACKER_PORT,
 			plugins: {
 				logStore: {
 					db: {
@@ -166,7 +144,7 @@ describe('Standalone Mode Programs', () => {
 		tokenAdminManager?.removeAllListeners();
 		await publisherStreamrClient?.destroy();
 		await consumerStreamrClient?.destroy();
-		await Promise.allSettled([logStoreBroker?.stop(), tracker?.stop()]);
+		await Promise.allSettled([logStoreBroker?.stop()]);
 	});
 
 	it('should process the message', async () => {

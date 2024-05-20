@@ -1,5 +1,5 @@
+import { Stream, StreamID, StreamrClient } from '@streamr/sdk';
 import { EthereumAddress, Logger } from '@streamr/utils';
-import { Stream, StreamID, StreamrClient } from 'streamr-client';
 
 import {
 	Diff,

@@ -1,6 +1,6 @@
+import { EthereumAddress } from '@streamr/sdk';
 import { Logger } from '@streamr/utils';
 import { Command, program } from 'commander';
-import { EthereumAddress } from 'streamr-client';
 
 import { addNodeToStorageProxy } from '../../addNodeToStorageProxy';
 import { nodeArgument } from '../arguments';
@@ -25,5 +25,6 @@ export const addNodeCommand = new Command('add-node')
 			});
 		} catch (err) {
 			logger.error('Add a Node to a StorageProxy failed', { err });
+			process.exit(1);
 		}
 	});

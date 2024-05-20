@@ -1,14 +1,12 @@
-import { MessageID, StreamMessage } from '@streamr/protocol';
-import { Logger } from '@streamr/utils';
+import { MessageRef, StreamMessage } from '@streamr/protocol';
+import { Logger, ObservableEventEmitter } from '@streamr/utils';
 import { Readable } from 'stream';
-
-import { ObservableEventEmitter } from '../../../utils/events';
 
 const logger = new Logger(module);
 
 export const DatabaseEventEmitter = ObservableEventEmitter<{
-	read: (streamMessage: StreamMessage) => void;
-	write: (streamMessage: StreamMessage) => void;
+	read: (streamMessage: Uint8Array) => void;
+	write: (streamMessage: Uint8Array) => void;
 }>;
 
 // NET-329
@@ -25,7 +23,9 @@ export type QueryDebugInfo =
 			msgChainId?: string | null;
 	  }
 	| {
-			messageIds: string[];
+			streamId: string;
+			partition?: number;
+			messageRefs: MessageRef[];
 	  };
 
 export abstract class DatabaseAdapter extends DatabaseEventEmitter {
@@ -45,7 +45,17 @@ export abstract class DatabaseAdapter extends DatabaseEventEmitter {
 		limit?: number
 	): Readable;
 
-	abstract queryByMessageIds(messageIds: MessageID[]): Readable;
+	abstract queryByMessageRefs(
+		streamId: string,
+		partition: number,
+		messageRefs: MessageRef[]
+	): Readable;
+
+	abstract queryFirst(
+		streamId: string,
+		partition: number,
+		requestCount: number
+	): Readable;
 
 	abstract queryLast(
 		streamId: string,
@@ -74,25 +84,16 @@ export abstract class DatabaseAdapter extends DatabaseEventEmitter {
 	): Promise<number>;
 
 	protected parseRow(debugInfo: QueryDebugInfo) {
-		return (row: {
-			payload: Buffer | string | null | any[] | unknown;
-		}): StreamMessage | null => {
-			if (row.payload == null) {
-				logger.error(
-					`Found message with NULL payload on cassandra; debug info: ${JSON.stringify(
-						debugInfo
-					)}`
-				);
+		return (row: Record<string, any>): Uint8Array | null => {
+			if (row.payload === null) {
+				logger.error('Found unexpected message with NULL payload in database', {
+					debugInfo,
+				});
 				return null;
 			}
 
-			const serializedPayload = Array.isArray(row.payload)
-				? row.payload
-				: row.payload.toString();
-
-			const streamMessage = StreamMessage.deserialize(serializedPayload);
-			this.emit('read', streamMessage);
-			return streamMessage;
+			this.emit('read', row.payload);
+			return row.payload;
 		};
 	}
 

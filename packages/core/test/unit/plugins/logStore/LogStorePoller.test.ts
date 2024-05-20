@@ -1,6 +1,6 @@
 import { LogStoreClient } from '@logsn/client';
+import { Stream } from '@streamr/sdk';
 import { wait } from '@streamr/utils';
-import { Stream } from 'streamr-client';
 
 import { LogStorePoller } from '../../../../src/plugins/logStore/network/LogStorePoller';
 

@@ -8,7 +8,7 @@ export class Bucket {
 	records: number;
 	dateCreate: Date;
 	private maxSize: number;
-	private maxRecords: number;
+	private maxRecordCount: number;
 	private keepAliveSeconds: number;
 	ttl: Date;
 	private stored: boolean;
@@ -21,7 +21,7 @@ export class Bucket {
 		records: number,
 		dateCreate: Date,
 		maxSize: number,
-		maxRecords: number,
+		maxRecordCount: number,
 		keepAliveSeconds: number
 	) {
 		if (!id || !id.length) {
@@ -52,8 +52,8 @@ export class Bucket {
 			throw new TypeError('maxSize must be > 0');
 		}
 
-		if (maxRecords <= 0) {
-			throw new TypeError('maxRecords must be > 0');
+		if (maxRecordCount <= 0) {
+			throw new TypeError('maxRecordCount must be > 0');
 		}
 
 		if (keepAliveSeconds <= 0) {
@@ -68,7 +68,7 @@ export class Bucket {
 		this.dateCreate = dateCreate;
 
 		this.maxSize = maxSize;
-		this.maxRecords = maxRecords;
+		this.maxRecordCount = maxRecordCount;
 		this.keepAliveSeconds = keepAliveSeconds;
 
 		this.ttl = new Date();
@@ -86,8 +86,9 @@ export class Bucket {
 
 	private checkSize(percentDeduction = 0): boolean {
 		const maxPercentSize = (this.maxSize * (100 - percentDeduction)) / 100;
-		const maxRecords = (this.maxRecords * (100 - percentDeduction)) / 100;
-		return this.size >= maxPercentSize || this.records >= maxRecords;
+		const maxRecordCount =
+			(this.maxRecordCount * (100 - percentDeduction)) / 100;
+		return this.size >= maxPercentSize || this.records >= maxRecordCount;
 	}
 
 	isAlmostFull(percentDeduction = 30): boolean {

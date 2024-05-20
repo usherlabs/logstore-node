@@ -86,15 +86,12 @@ const getDataForRequest = async (
 			throw new Error('Used store before it was initialized');
 		}
 
-		const { data, participatingNodes } =
-			await store.logStorePlugin.processQueryRequest(
-				queryRequestBag.queryRequest
-			);
+		const { data } = await store.logStorePlugin.processQueryRequest(
+			queryRequestBag.queryRequest
+		);
 
 		return {
 			data,
-			requestId: queryRequestBag.queryRequest.requestId,
-			participatingNodes,
 		};
 	}
 };
@@ -109,7 +106,14 @@ const createHandler = (metrics: MetricsDefinition): RequestHandler => {
 			return;
 		}
 
-		const format = getFormat(req.query.format as string | undefined);
+		const format = getFormat(req.query.format as string);
+		if (format === undefined) {
+			sendError(
+				`Query parameter "format" is invalid: ${req.query.format}`,
+				res
+			);
+			return;
+		}
 
 		const consumer = toEthereumAddress(req.consumer!);
 
@@ -142,16 +146,7 @@ const createHandler = (metrics: MetricsDefinition): RequestHandler => {
 				}
 			);
 			if (response) {
-				sendSuccess(
-					response.data,
-					format,
-					version,
-					streamId,
-					response.requestId,
-					response.participatingNodes,
-					req,
-					res
-				);
+				sendSuccess(response.data, format, version, streamId, req, res);
 			}
 		} catch (error) {
 			sendError(error, res);

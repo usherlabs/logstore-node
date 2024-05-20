@@ -1,8 +1,8 @@
-import { EthereumAddress, Logger } from '@streamr/utils';
 import {
 	formStorageNodeAssignmentStreamId,
 	StreamPermission,
-} from 'streamr-client';
+} from '@streamr/sdk';
+import { EthereumAddress, Logger } from '@streamr/utils';
 
 import { getStreamrClient } from './utils/getStreamrClient';
 
@@ -31,6 +31,6 @@ export const addNodeToStorageProxy = async (options: Options) => {
 	});
 
 	logger.info(
-		`Added the StorageProxy Node ${options.node} to the StorageProxy ${clusterId}...`
+		`Added the StorageProxy Node ${options.node} to the StorageProxy ${clusterId}`
 	);
 };

@@ -1,4 +1,5 @@
-import { MessageID, StreamMessage } from '@streamr/protocol';
+import { MessageRef, StreamMessage } from '@streamr/protocol';
+import { convertStreamMessageToBytes } from '@streamr/trackerless-network';
 import { Logger } from '@streamr/utils';
 import Database from 'better-sqlite3';
 import {
@@ -174,6 +175,35 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 		partition: number,
 		requestCount: number
 	): Readable {
+		return this.queryTake(streamId, partition, requestCount * -1);
+	}
+
+	public queryFirst(
+		streamId: string,
+		partition: number,
+		requestCount: number
+	): Readable {
+		return this.queryTake(streamId, partition, requestCount);
+	}
+
+	private queryTake(
+		streamId: string,
+		partition: number,
+		// if positive, is first messages, if negative, is last messages
+		requestCount: number
+	): Readable {
+		const requestType = requestCount > 0 ? 'first' : 'last';
+		const orderByForLastMessage = [
+			desc(streamDataTable.ts),
+			desc(streamDataTable.sequence_no),
+		];
+		const orderByForFirstMessage = [
+			asc(streamDataTable.ts),
+			asc(streamDataTable.sequence_no),
+		];
+
+		const messagesCount = Math.abs(requestCount);
+
 		const preparedQuery = this.dbClient
 			.select({
 				payload: streamDataTable.payload,
@@ -185,12 +215,17 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 					eq(streamDataTable.partition, partition)
 				)
 			)
-			.orderBy(desc(streamDataTable.ts), desc(streamDataTable.sequence_no))
-			.limit(requestCount)
+			.orderBy(
+				...(requestType === 'last'
+					? orderByForLastMessage
+					: orderByForFirstMessage)
+			)
+			.limit(messagesCount)
 			.prepare();
 
 		const results$ = from(preparedQuery.execute()).pipe(
-			map((c) => c.reverse()),
+			// reverse if we want the last messages, but don't if we want the first
+			map((c) => (requestType === 'last' ? c.reverse() : c)),
 			mergeAll(), // array to values
 			map(
 				this.parseRow({
@@ -204,7 +239,11 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 		return Readable.from(results$);
 	}
 
-	public queryByMessageIds(messageIds: MessageID[]): Readable {
+	public queryByMessageRefs(
+		streamId: string,
+		partition: number,
+		messageRefs: MessageRef[]
+	): Readable {
 		// optimized when using prepared + placeholder
 		// see https://github.com/drizzle-team/drizzle-orm/blob/main/drizzle-orm/src/sqlite-core/README.md#%EF%B8%8F-performance-and-prepared-statements
 		const queryTemplate = this.dbClient
@@ -217,21 +256,17 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 					eq(streamDataTable.stream_id, placeholder('stream_id')),
 					eq(streamDataTable.partition, placeholder('partition')),
 					eq(streamDataTable.ts, placeholder('ts')),
-					eq(streamDataTable.sequence_no, placeholder('sequence_no')),
-					eq(streamDataTable.publisher_id, placeholder('publisher_id')),
-					eq(streamDataTable.msg_chain_id, placeholder('msg_chain_id'))
+					eq(streamDataTable.sequence_no, placeholder('sequence_no'))
 				)
 			)
 			.prepare();
 
-		const queries = messageIds.map((messageId) =>
+		const queries = messageRefs.map((messageRef) =>
 			queryTemplate.execute({
-				stream_id: messageId.streamId,
-				partition: messageId.streamPartition,
-				ts: messageId.timestamp,
-				sequence_no: messageId.sequenceNumber,
-				publisher_id: messageId.publisherId,
-				msg_chain_id: messageId.msgChainId,
+				stream_id: streamId,
+				partition: partition,
+				ts: messageRef.timestamp,
+				sequence_no: messageRef.sequenceNumber,
 			})
 		);
 
@@ -240,7 +275,9 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 			mergeAll(), // arrays to values
 			map(
 				this.parseRow({
-					messageIds: messageIds.map((m) => m.serialize()),
+					streamId,
+					partition,
+					messageRefs,
 				})
 			)
 		);
@@ -249,18 +286,20 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 	}
 
 	public async store(streamMessage: StreamMessage): Promise<boolean> {
-		await this.dbClient.insert(streamDataTable).values({
+		const payload = convertStreamMessageToBytes(streamMessage);
+		const record = {
 			stream_id: streamMessage.getStreamId(),
 			partition: streamMessage.getStreamPartition(),
 			ts: streamMessage.getTimestamp(),
 			sequence_no: streamMessage.getSequenceNumber(),
 			publisher_id: streamMessage.getPublisherId(),
 			msg_chain_id: streamMessage.getMsgChainId(),
-			payload: JSON.parse(streamMessage.serialize()),
-			content_bytes: Buffer.byteLength(streamMessage.serialize()),
-		});
+			payload: payload,
+			content_bytes: payload.length,
+		};
+		await this.dbClient.insert(streamDataTable).values(record);
 
-		this.emit('write', streamMessage);
+		this.emit('write', record.payload);
 
 		return true;
 	}

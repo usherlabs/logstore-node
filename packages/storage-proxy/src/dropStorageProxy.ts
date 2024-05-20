@@ -1,5 +1,5 @@
+import { formStorageNodeAssignmentStreamId } from '@streamr/sdk';
 import { Logger } from '@streamr/utils';
-import { formStorageNodeAssignmentStreamId } from 'streamr-client';
 
 import { getStreamrClient } from './utils/getStreamrClient';
 
@@ -24,5 +24,5 @@ export const dropStorageProxy = async (options: Options) => {
 	logger.info(`Deleting assignments stream...`);
 	await streamrClient.deleteStream(assignmentsStreamId);
 
-	logger.info(`Dropped a StorageProxy with address ${clusterId}...`);
+	logger.info(`Dropped a StorageProxy with address ${clusterId}`);
 };

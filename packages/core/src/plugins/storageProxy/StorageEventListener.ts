@@ -1,9 +1,9 @@
-import { EthereumAddress, Logger } from '@streamr/utils';
 import {
 	StorageNodeAssignmentEvent,
 	Stream,
 	StreamrClient,
-} from 'streamr-client';
+} from '@streamr/sdk';
+import { EthereumAddress, Logger } from '@streamr/utils';
 
 const logger = new Logger(module);
 

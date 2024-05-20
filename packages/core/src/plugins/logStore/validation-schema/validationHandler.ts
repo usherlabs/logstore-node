@@ -28,7 +28,7 @@ const getSchemaFromMetadata =
 
 export const createValidationHandler =
 	({ schemaMap }: { schemaMap: ValidationFunctionMap }) =>
-	async (message: StreamMessage<unknown>) => {
+	async (message: StreamMessage) => {
 		const schema = getSchemaFromMetadata(schemaMap)(message.getStreamId());
 		const isEncrypted = message.encryptionType !== EncryptionType.NONE;
 
@@ -49,5 +49,5 @@ export const createValidationHandler =
 			return { valid: false, errors: ['Invalid schema'] } as const;
 		}
 
-		return validateEventFromSchema(schema)(message.getContent());
+		return validateEventFromSchema(schema)(message.content);
 	};

@@ -5,50 +5,42 @@ import { Format } from './DataQueryFormat';
 
 const MESSAGE_LIMIT_REACHED = 'limit-reached';
 
-// to be included only if verifyNetworkState is true
-type NetworkStateVerificationMetadata = {
-	participatingNodesAddress?: string[];
-	requestId?: string;
-};
-
-type StreamResponseMetadata = {} & NetworkStateVerificationMetadata;
+type StreamResponseMetadata = object;
 
 type StandardResponseMetadata = {
 	hasNext: boolean;
 	nextTimestamp?: number;
 	nextSequenceNumber?: number;
-} & NetworkStateVerificationMetadata;
+};
 
 export class ResponseTransform extends Transform {
 	format: Format;
-	version: number | undefined;
 	firstMessage = true;
 	totalMessages = 0;
 	private metadata: StandardResponseMetadata = {
 		hasNext: false,
 	};
 
-	constructor(format: Format, version: number | undefined) {
+	constructor(format: Format) {
 		super({
 			writableObjectMode: true,
 		});
 		this.format = format;
-		this.version = version;
 	}
 
-	override _transform(
-		input: StreamMessage,
-		_encoding: string,
-		done: () => void
-	) {
+	override _transform(input: Uint8Array, _encoding: string, done: () => void) {
 		this.totalMessages++;
 		if (this.firstMessage) {
 			this.firstMessage = false;
-			this.push(this.format.header);
+			if (this.format.header !== undefined) {
+				this.push(this.format.header);
+			}
 		} else {
-			this.push(this.format.delimiter);
+			if (this.format.delimiter !== undefined) {
+				this.push(this.format.delimiter);
+			}
 		}
-		this.push(this.format.getMessageAsString(input, this.version));
+		this.push(this.format.formatMessage(input));
 		done();
 	}
 
@@ -64,18 +56,22 @@ export class ResponseTransform extends Transform {
 
 	override _flush(done: () => void) {
 		if (this.firstMessage) {
-			this.push(this.format.header);
+			if (this.format.header !== undefined) {
+				this.push(this.format.header);
+			}
 		}
 
-		const finalChunk =
-			typeof this.format.footer === 'function'
-				? this.format.footer({
-						...this.metadata,
-						totalMessages: this.totalMessages,
-					})
-				: [this.format.footer];
+		if (this.format.footer !== undefined) {
+			const finalChunk =
+				typeof this.format.footer === 'function'
+					? this.format.footer({
+							...this.metadata,
+							totalMessages: this.totalMessages,
+						})
+					: [this.format.footer];
 
-		finalChunk.forEach((chunk) => this.push(chunk));
+			finalChunk.forEach((chunk) => this.push(chunk));
+		}
 		done();
 	}
 }
@@ -118,11 +114,11 @@ export class StreamResponseTransform extends Transform {
 	}
 
 	override _transform(
-		input: StreamMessage,
+		input: Uint8Array,
 		_encoding: string,
 		done: (error?: Error | null, data?: any) => void
 	) {
-		this.push(this.format.getMessageAsString(input, this.version));
+		this.push(this.format.formatMessage(input));
 		done();
 	}
 }

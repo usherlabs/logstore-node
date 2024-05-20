@@ -54,8 +54,8 @@ export const getForLastQueryRequest = ({
 		consumerId: req.consumer!,
 		streamId,
 		partition,
-		queryType: QueryType.Last,
 		queryOptions: {
+			queryType: QueryType.Last,
 			last: count,
 		},
 	});

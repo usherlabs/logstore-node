@@ -1,34 +1,19 @@
-import { Tracker } from '@streamr/network-tracker';
+import StreamrClient, { Message, Stream, StreamPermission } from '@streamr/sdk';
 import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
-import { providers, Wallet } from 'ethers';
-import StreamrClient, {
-	Message,
-	Stream,
-	StreamPermission,
-	CONFIG_TEST as STREAMR_CLIENT_CONFIG_TEST,
-} from 'streamr-client';
+import { Wallet } from 'ethers';
 
 import {
 	createStreamrClient,
 	createTestStream,
 	fetchWalletsWithGas,
+	getProvider,
 	publishTestMessages,
-	startTestTracker,
 } from '../../../utils';
 
 const STORAGE_PROXY_ADDRESS = '0x718811e2d1170db844d0c5de6d276b299f2916a9';
 
-// There are two options to run the test managed by a value of the TRACKER_PORT constant:
-// 1. TRACKER_PORT = undefined - run the test against the brokers running in dev-env and brokers run by the test script.
-// 2. TRACKER_PORT = 17771 - run the test against only brokers run by the test script.
-//    In this case dev-env doesn't run any brokers and there is no brokers joined the network (NodeManager.totalNodes == 0)
-const TRACKER_PORT = undefined;
-
 describe('StorageProxy resends', () => {
-	const provider = new providers.JsonRpcProvider(
-		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
-	);
+	const provider = getProvider();
 
 	// Accounts
 	let ownerAccount: Wallet;
@@ -36,20 +21,15 @@ describe('StorageProxy resends', () => {
 	// Clients
 	let ownerClient: StreamrClient;
 
-	let tracker: Tracker;
 	let testStream: Stream;
 
 	let publishedMessages: (Message & { originalContent: string })[];
 
 	beforeAll(async () => {
-		if (TRACKER_PORT) {
-			tracker = await startTestTracker(TRACKER_PORT);
-		}
-
 		// Accounts
 		ownerAccount = new Wallet(await fetchPrivateKeyWithGas(), provider);
 
-		ownerClient = await createStreamrClient(tracker, ownerAccount.privateKey);
+		ownerClient = await createStreamrClient(ownerAccount.privateKey);
 	}, 30 * 1000);
 
 	afterAll(async () => {
@@ -58,7 +38,6 @@ describe('StorageProxy resends', () => {
 		// await testStream.delete();
 
 		await ownerClient?.destroy();
-		await tracker?.stop();
 		// TODO: Setup global tear-down
 		await KeyServer.stopIfRunning();
 	});
@@ -147,13 +126,9 @@ describe('StorageProxy resends', () => {
 				2
 			);
 
-			publisherClient = await createStreamrClient(
-				tracker,
-				publisherAccount.privateKey
-			);
+			publisherClient = await createStreamrClient(publisherAccount.privateKey);
 
 			subscriberClient = await createStreamrClient(
-				tracker,
 				subscriberAccount.privateKey
 			);
 

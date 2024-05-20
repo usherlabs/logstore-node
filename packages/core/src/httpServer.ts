@@ -1,1 +1,1 @@
-export * from 'streamr-broker/dist/src/httpServer';
+export * from '@streamr/node/dist/src/httpServer';

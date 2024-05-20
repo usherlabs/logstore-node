@@ -1,4 +1,4 @@
-import { MessageID, StreamMessage } from '@streamr/protocol';
+import { StreamMessage } from '@streamr/protocol';
 import { Logger, MetricsContext, RateMetric } from '@streamr/utils';
 import { Readable } from 'stream';
 
@@ -19,7 +19,7 @@ const logger = new Logger(module);
 // TODO: move this to protocol-js
 export const MIN_SEQUENCE_NUMBER_VALUE = 0;
 export const MAX_SEQUENCE_NUMBER_VALUE = 2147483647;
-const MAX_TIMESTAMP_VALUE = 8640000000000000; // https://262.ecma-international.org/5.1/#sec-15.9.1.1
+export const MAX_TIMESTAMP_VALUE = 8640000000000000; // https://262.ecma-international.org/5.1/#sec-15.9.1.1
 
 export type DatabaseOptions = CassandraDBOptions | SQLiteDBOptions;
 
@@ -40,7 +40,7 @@ const getOptionsWithDefaults = <T extends CommonDBOptions>(opts: T): T => {
 };
 
 export class LogStore extends DatabaseEventEmitter {
-	constructor(private db: DatabaseAdapter) {
+	constructor(public db: DatabaseAdapter) {
 		super();
 
 		this.db.on('read', (p) => this.emit('read', p));
@@ -58,7 +58,11 @@ export class LogStore extends DatabaseEventEmitter {
 		partition: number,
 		requestCount: number
 	): Readable {
-		return this.db.queryLast(streamId, partition, requestCount);
+		if (requestCount < 0) {
+			return this.db.queryFirst(streamId, partition, -requestCount);
+		} else {
+			return this.db.queryLast(streamId, partition, requestCount);
+		}
 	}
 
 	requestFrom(
@@ -91,18 +95,6 @@ export class LogStore extends DatabaseEventEmitter {
 				limit
 			)
 			.pipe(new MessageLimitTransform(limit || Infinity));
-	}
-
-	/**
-	 * Requests messages from DB by their serialized message IDs.
-	 */
-	requestByMessageIds(messageIdsSerialized: string[]): Readable {
-		const messageIds = messageIdsSerialized.map((messageId) =>
-			// @ts-expect-error Property 'fromArray' does not exist on type 'typeof MessageID'
-			MessageID.fromArray(JSON.parse(messageId))
-		);
-
-		return this.db.queryByMessageIds(messageIds);
 	}
 
 	requestRange(
@@ -159,15 +151,13 @@ export class LogStore extends DatabaseEventEmitter {
 			writeBytesPerSecond: new RateMetric(),
 		};
 		metricsContext.addMetrics('broker.plugin.logStore', metrics);
-		this.on('read', (streamMessage: StreamMessage) => {
+		this.on('read', (streamMessage: Uint8Array) => {
 			metrics.readMessagesPerSecond.record(1);
-			metrics.readBytesPerSecond.record(streamMessage.getContent(false).length);
+			metrics.readBytesPerSecond.record(streamMessage.length);
 		});
-		this.on('write', (streamMessage: StreamMessage) => {
+		this.on('write', (streamMessage: Uint8Array) => {
 			metrics.writeMessagesPerSecond.record(1);
-			metrics.writeBytesPerSecond.record(
-				streamMessage.getContent(false).length
-			);
+			metrics.writeBytesPerSecond.record(streamMessage.length);
 		});
 	}
 

@@ -1,6 +1,6 @@
+import { StorageNodeMetadata } from '@streamr/sdk';
 import { toEthereumAddress } from '@streamr/utils';
 import { Argument } from 'commander';
-import { StorageNodeMetadata } from 'streamr-client';
 
 export const metadataArgument = new Argument(
 	'metadata',

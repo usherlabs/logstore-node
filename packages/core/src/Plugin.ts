@@ -1,8 +1,8 @@
 import { LogStoreClient } from '@logsn/client';
 import { LogStoreNodeManager } from '@logsn/contracts';
+import StreamrClient, { Stream } from '@streamr/sdk';
 import { Schema } from 'ajv';
 import { Signer } from 'ethers';
-import StreamrClient, { Stream } from 'streamr-client';
 
 import { StrictConfig } from './config/config';
 import { validateConfig } from './config/validateConfig';
@@ -11,7 +11,6 @@ import { Endpoint } from './httpServer';
 export type NetworkModeConfig = {
 	type: 'network';
 	heartbeatStream: Stream;
-	recoveryStream: Stream;
 	systemStream: Stream;
 	nodeManager: LogStoreNodeManager;
 };

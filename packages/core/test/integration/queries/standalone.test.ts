@@ -1,39 +1,25 @@
 import { LogStoreClient } from '@logsn/client';
-import { Tracker } from '@streamr/network-tracker';
+import StreamrClient, { Stream, StreamPermission } from '@streamr/sdk';
 import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
 import { waitForCondition } from '@streamr/utils';
-import { providers, Wallet } from 'ethers';
-import StreamrClient, {
-	Stream,
-	StreamPermission,
-	CONFIG_TEST as STREAMR_CONFIG_TEST,
-} from 'streamr-client';
+import { Wallet } from 'ethers';
 
 import { LogStoreNode } from '../../../src/node';
 import {
 	createLogStoreClient,
 	createStreamrClient,
 	createTestStream,
+	getProvider,
 	sleep,
 	startLogStoreBroker,
-	startTestTracker,
 } from '../../utils';
 
 jest.setTimeout(60000);
 
 const STAKE_AMOUNT = BigInt('1000000000000000000');
 
-// There are two options to run the test managed by a value of the TRACKER_PORT constant:
-// 1. TRACKER_PORT = undefined - run the test against the brokers running in dev-env and brokers run by the test script.
-// 2. TRACKER_PORT = 17771 - run the test against only brokers run by the test script.
-//    In this case dev-env doesn't run any brokers and there is no brokers joined the network (NodeManager.totalNodes == 0)
-const TRACKER_PORT = undefined;
-
 describe('Standalone Mode Queries', () => {
-	const provider = new providers.JsonRpcProvider(
-		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
-	);
+	const provider = getProvider();
 
 	// Accounts
 	let logStoreBrokerAccount: Wallet;
@@ -48,7 +34,6 @@ describe('Standalone Mode Queries', () => {
 	let consumerStreamrClient: StreamrClient;
 	let consumerLogStoreClient: LogStoreClient;
 
-	let tracker: Tracker;
 	let testStream: Stream;
 
 	beforeAll(async () => {
@@ -70,31 +55,24 @@ describe('Standalone Mode Queries', () => {
 	});
 
 	beforeEach(async () => {
-		if (TRACKER_PORT) {
-			tracker = await startTestTracker(TRACKER_PORT);
-		}
-
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
 
 		publisherStreamrClient = await createStreamrClient(
-			tracker,
 			publisherAccount.privateKey
 		);
 
 		consumerStreamrClient = await createStreamrClient(
-			tracker,
 			storeConsumerAccount.privateKey
 		);
 		consumerLogStoreClient = await createLogStoreClient(consumerStreamrClient, {
-			nodeUrl: 'http://127.0.0.1:7171',
+			nodeUrl: 'http://10.200.10.1:7171',
 		});
 
 		testStream = await createTestStream(publisherStreamrClient, module);
 
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: TRACKER_PORT,
 			plugins: {
 				logStore: {
 					db: {
@@ -118,7 +96,7 @@ describe('Standalone Mode Queries', () => {
 		await publisherStreamrClient?.destroy();
 		await consumerStreamrClient?.destroy();
 		consumerLogStoreClient?.destroy();
-		await Promise.allSettled([logStoreBroker?.stop(), tracker?.stop()]);
+		await Promise.allSettled([logStoreBroker?.stop()]);
 	});
 
 	it('when client publishes a message, it is written to the store', async () => {

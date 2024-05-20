@@ -1,13 +1,25 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import {
+	ContentType,
 	EncryptionType,
 	MessageID,
+	SignatureType,
 	StreamMessage,
 	toStreamID,
 } from '@streamr/protocol';
-import { EthereumAddress, toEthereumAddress } from '@streamr/utils';
+import {
+	convertBytesToStreamMessage,
+	convertStreamMessageToBytes,
+} from '@streamr/trackerless-network';
+import {
+	EthereumAddress,
+	hexToBinary,
+	toEthereumAddress,
+	utf8ToBinary,
+} from '@streamr/utils';
 import { Client } from 'cassandra-driver';
 import { randomFillSync } from 'crypto';
+import { Readable } from 'stream';
 import toArray from 'stream-to-array';
 
 import {
@@ -36,17 +48,17 @@ const publisherThree = toEthereumAddress(
 
 export function buildMsg({
 	streamId,
-	streamPartition,
+	streamPartition = 0,
 	timestamp,
-	sequenceNumber,
+	sequenceNumber = 0,
 	publisherId = publisherZero,
 	msgChainId = '1',
 	content = {},
 }: {
 	streamId: string;
-	streamPartition: number;
+	streamPartition?: number;
 	timestamp: number;
-	sequenceNumber: number;
+	sequenceNumber?: number;
 	publisherId?: EthereumAddress;
 	msgChainId?: string;
 	content?: any;
@@ -60,8 +72,11 @@ export function buildMsg({
 			publisherId,
 			msgChainId
 		),
-		content: JSON.stringify(content),
-		signature: 'signature',
+		content: Buffer.from(utf8ToBinary(JSON.stringify(content))),
+		signature: Buffer.from(hexToBinary('0x1234')),
+		contentType: ContentType.JSON,
+		encryptionType: EncryptionType.NONE,
+		signatureType: SignatureType.SECP256K1,
 	});
 }
 
@@ -72,7 +87,6 @@ function buildEncryptedMsg({
 	sequenceNumber,
 	publisherId = publisherZero,
 	msgChainId = '1',
-	content = 'ab3516983712fa4eb216a898ddd',
 }: {
 	streamId: string;
 	streamPartition: number;
@@ -80,7 +94,6 @@ function buildEncryptedMsg({
 	sequenceNumber: number;
 	publisherId?: EthereumAddress;
 	msgChainId?: string;
-	content?: string;
 }) {
 	return new StreamMessage({
 		messageId: new MessageID(
@@ -91,10 +104,12 @@ function buildEncryptedMsg({
 			publisherId,
 			msgChainId
 		),
-		content,
+		content: Buffer.from(new Uint8Array([1, 2, 3])),
 		encryptionType: EncryptionType.AES,
-		signature: 'signature',
+		signature: Buffer.from(hexToBinary('0x1234')),
 		groupKeyId: 'groupKeyId',
+		contentType: ContentType.JSON,
+		signatureType: SignatureType.SECP256K1,
 	});
 }
 
@@ -104,14 +119,14 @@ async function storeMockMessages({
 	minTimestamp,
 	maxTimestamp,
 	count,
-	logSstore,
+	logStore,
 }: {
 	streamId: string;
 	streamPartition: number;
 	minTimestamp: number;
 	maxTimestamp: number;
 	count: number;
-	logSstore: LogStore;
+	logStore: LogStore;
 }) {
 	const storePromises = [];
 	for (let i = 0; i < count; i++) {
@@ -125,9 +140,16 @@ async function storeMockMessages({
 			sequenceNumber: 0,
 			publisherId: publisherOne,
 		});
-		storePromises.push(logSstore.store(msg));
+		storePromises.push(logStore.store(msg));
 	}
 	return Promise.all(storePromises);
+}
+
+async function readStreamToEnd(
+	streamingResults: Readable
+): Promise<StreamMessage[]> {
+	const messages: Uint8Array[] = await toArray(streamingResults);
+	return messages.map(convertBytesToStreamMessage);
 }
 
 describe('LogStore', () => {
@@ -169,7 +191,7 @@ describe('LogStore', () => {
 
 	test('requestFrom not throwing exception if timestamp is zero', async () => {
 		const a = logStore.requestFrom(streamId, 0, 0, 0, undefined);
-		const resultsA = await toArray(a);
+		const resultsA = await readStreamToEnd(a);
 		expect(resultsA).toEqual([]);
 	});
 
@@ -221,7 +243,7 @@ describe('LogStore', () => {
 			sequence_no: 0,
 			publisher_id: publisherZero,
 			msg_chain_id: '1',
-			payload: Buffer.from(msg.serialize()),
+			payload: Buffer.from(convertStreamMessageToBytes(msg)),
 		});
 	});
 
@@ -309,7 +331,7 @@ describe('LogStore', () => {
 		]);
 
 		const streamingResults = logStore.requestLast(streamId, 10, 3);
-		const results = await toArray(streamingResults);
+		const results = await readStreamToEnd(streamingResults);
 
 		expect(results).toEqual([msg1, msg2, msg3]);
 	});
@@ -412,7 +434,7 @@ describe('LogStore', () => {
 				6,
 				undefined
 			);
-			const results = await toArray(streamingResults);
+			const results = await readStreamToEnd(streamingResults);
 
 			expect(results).toEqual([msg1, msg2, msg3, msg4, msg5]);
 		});
@@ -526,7 +548,7 @@ describe('LogStore', () => {
 				undefined,
 				undefined
 			);
-			const results = await toArray(streamingResults);
+			const results = await readStreamToEnd(streamingResults);
 
 			expect(results).toEqual([msg1, msg2, msg3, msg4, msg5]);
 		});
@@ -549,7 +571,7 @@ describe('LogStore', () => {
 				undefined,
 				undefined
 			);
-			const results = await toArray(streamingResults);
+			const results = await readStreamToEnd(streamingResults);
 			expect(results).toEqual([msg]);
 		});
 
@@ -664,7 +686,7 @@ describe('LogStore', () => {
 				publisherOne,
 				'1'
 			);
-			const results = await toArray(streamingResults);
+			const results = await readStreamToEnd(streamingResults);
 
 			expect(results).toEqual([msg1, msg2, msg3, msg4]);
 		});
@@ -678,7 +700,7 @@ describe('LogStore', () => {
 			minTimestamp: 123000000,
 			maxTimestamp: 456000000,
 			count: messageCount,
-			logSstore: logStore,
+			logStore: logStore,
 		});
 
 		// get all
@@ -692,7 +714,7 @@ describe('LogStore', () => {
 			undefined,
 			undefined
 		);
-		const results1 = await toArray(streamingResults1);
+		const results1 = await readStreamToEnd(streamingResults1);
 		expect(results1.length).toEqual(messageCount);
 
 		// no messages in range (ignorable messages before range)
@@ -706,7 +728,7 @@ describe('LogStore', () => {
 			undefined,
 			undefined
 		);
-		const results2 = await toArray(streamingResults2);
+		const results2 = await readStreamToEnd(streamingResults2);
 		expect(results2).toEqual([]);
 
 		// no messages in range (ignorable messages after range)
@@ -720,7 +742,7 @@ describe('LogStore', () => {
 			undefined,
 			undefined
 		);
-		const results3 = await toArray(streamingResults3);
+		const results3 = await readStreamToEnd(streamingResults3);
 		expect(results3).toEqual([]);
 	}, 20000);
 
@@ -765,7 +787,7 @@ describe('LogStore', () => {
 
 		it('requestLast correctly returns last 10 messages', async () => {
 			const streamingResults = logStore.requestLast(streamId, 0, 10);
-			const results = await toArray(streamingResults);
+			const results = await readStreamToEnd(streamingResults);
 			expect(results.map((msg) => msg.messageId.sequenceNumber)).toEqual([
 				90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
 			]);
@@ -773,7 +795,7 @@ describe('LogStore', () => {
 
 		it('requestFrom correctly returns messages', async () => {
 			const streamingResults = logStore.requestFrom(streamId, 0, 91000, 0);
-			const results = await toArray(streamingResults);
+			const results = await readStreamToEnd(streamingResults);
 			expect(results.map((msg) => msg.messageId.sequenceNumber)).toEqual([
 				90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
 			]);
@@ -790,7 +812,7 @@ describe('LogStore', () => {
 				undefined,
 				undefined
 			);
-			const results = await toArray(streamingResults);
+			const results = await readStreamToEnd(streamingResults);
 			expect(results.map((msg) => msg.messageId.sequenceNumber)).toEqual([
 				40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
 			]);

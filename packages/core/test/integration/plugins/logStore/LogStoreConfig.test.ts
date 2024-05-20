@@ -7,26 +7,21 @@ import {
 	prepareStakeForNodeManager,
 	prepareStakeForStoreManager,
 } from '@logsn/shared';
-import { Tracker } from '@streamr/network-tracker';
-import { StreamMessage } from '@streamr/protocol';
+import { Stream, StreamrClient } from '@streamr/sdk';
 import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
+import { convertBytesToStreamMessage } from '@streamr/trackerless-network';
 import { waitForCondition } from '@streamr/utils';
 import cassandra, { Client } from 'cassandra-driver';
-import { providers, Wallet } from 'ethers';
-import {
-	Stream,
-	CONFIG_TEST as STREAMR_CLIENT_CONFIG_TEST,
-	StreamrClient,
-} from 'streamr-client';
+import { Wallet } from 'ethers';
 
 import { LogStoreNode } from '../../../../src/node';
 import {
 	CONTRACT_OWNER_PRIVATE_KEY,
 	createStreamrClient,
 	createTestStream,
+	getProvider,
 	sleep,
 	startLogStoreBroker,
-	startTestTracker,
 	STREAMR_DOCKER_DEV_HOST,
 } from '../../../utils';
 
@@ -38,17 +33,8 @@ const keyspace = 'logstore_test';
 
 const STAKE_AMOUNT = BigInt('1000000000000000000');
 
-// There are two options to run the test managed by a value of the TRACKER_PORT constant:
-// 1. TRACKER_PORT = undefined - run the test against the brokers running in dev-env and brokers run by the test script.
-// 2. TRACKER_PORT = 17771 - run the test against only brokers run by the test script.
-//    In this case dev-env doesn't run any brokers and there is no brokers joined the network (NodeManager.totalNodes == 0)
-const TRACKER_PORT = undefined;
-
 describe('LogStoreConfig', () => {
-	const provider = new providers.JsonRpcProvider(
-		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		STREAMR_CLIENT_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
-	);
+	const provider = getProvider();
 
 	// Accounts
 	let logStoreBrokerAccount: Wallet;
@@ -69,7 +55,6 @@ describe('LogStoreConfig', () => {
 	let nodeAdminManager: LogStoreNodeManager;
 	let tokenAdminManager: LSAN;
 
-	let tracker: Tracker;
 	let testStream: Stream;
 
 	beforeAll(async () => {
@@ -103,9 +88,6 @@ describe('LogStoreConfig', () => {
 	});
 
 	beforeEach(async () => {
-		if (TRACKER_PORT) {
-			tracker = await startTestTracker(TRACKER_PORT);
-		}
 		const nodeMetadata: NodeMetadata = {
 			http: 'http://10.200.10.1:7171',
 		};
@@ -127,7 +109,6 @@ describe('LogStoreConfig', () => {
 
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: TRACKER_PORT,
 			plugins: {
 				logStore: {
 					db: {
@@ -141,10 +122,7 @@ describe('LogStoreConfig', () => {
 			},
 		});
 
-		publisherClient = await createStreamrClient(
-			tracker,
-			publisherAccount.privateKey
-		);
+		publisherClient = await createStreamrClient(publisherAccount.privateKey);
 
 		testStream = await createTestStream(publisherClient, module);
 
@@ -159,7 +137,6 @@ describe('LogStoreConfig', () => {
 		await Promise.allSettled([
 			logStoreBroker?.stop(),
 			nodeManager?.leave().then((tx) => tx.wait()),
-			tracker?.stop(),
 		]);
 	});
 
@@ -178,9 +155,7 @@ describe('LogStoreConfig', () => {
 			'SELECT * FROM stream_data WHERE stream_id = ? ALLOW FILTERING',
 			[testStream.id]
 		);
-		const storedMessage = StreamMessage.deserialize(
-			JSON.parse(result.first().payload.toString())
-		);
+		const storedMessage = convertBytesToStreamMessage(result.first().payload);
 		expect(storedMessage.signature).toEqual(publishedMessage.signature);
 	});
 });

@@ -1,7 +1,7 @@
 import { StreamMessage, StreamMessageType } from '@streamr/protocol';
-import StreamrClient from 'streamr-client';
+import StreamrClient from '@streamr/sdk';
+import { executeSafePromise, ObservableEventEmitter } from '@streamr/utils';
 
-import { ObservableEventEmitter } from '../../utils/events';
 import { LogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
 import { ValidationSchemaManager } from './validation-schema/ValidationSchemaManager';
@@ -39,7 +39,7 @@ export class MessageListener extends ObservableEventEmitter<{
 		this.removeAllListeners();
 		node.removeMessageListener(this.onStreamMessage);
 		this.logStoreConfig?.getStreamParts().forEach((streamPart) => {
-			node.unsubscribe(streamPart);
+			executeSafePromise(() => node.leave(streamPart));
 		});
 	}
 

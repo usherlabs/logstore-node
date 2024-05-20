@@ -21,5 +21,6 @@ export const dropCommand = new Command('drop')
 			});
 		} catch (err) {
 			logger.error('Drop a StorageProxy failed', { err });
+			process.exit(1);
 		}
 	});

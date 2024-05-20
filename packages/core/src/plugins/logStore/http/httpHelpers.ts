@@ -9,7 +9,7 @@ import {
 	StreamResponseTransform,
 } from './dataTransformers';
 import { getMessageLimitForRequest } from './messageLimiter';
-import { hasToVerifyNetworkResponses, isStreamRequest } from './utils';
+import { isStreamRequest } from './utils';
 
 const logger = new Logger(module);
 
@@ -18,8 +18,6 @@ export const sendSuccess = (
 	format: Format,
 	version: number | undefined,
 	streamId: string,
-	requestId: string,
-	participatingNodes: string[],
 	req: Request,
 	res: Response
 ) => {
@@ -40,15 +38,7 @@ export const sendSuccess = (
 
 	const responseTransform = isStreamRequest(req)
 		? new StreamResponseTransform(format, version)
-		: new ResponseTransform(format, version);
-
-	if (hasToVerifyNetworkResponses(req)) {
-		responseTransform.updateMetadata((metadata) => ({
-			...metadata,
-			participatingNodesAddress: participatingNodes,
-			requestId: requestId,
-		}));
-	}
+		: new ResponseTransform(format);
 
 	const messageLimitForRequest = getMessageLimitForRequest(req);
 

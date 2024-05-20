@@ -1,8 +1,8 @@
 import { QueryRequest } from '@logsn/protocol';
+import { Stream } from '@streamr/sdk';
 import { EthereumAddress, Logger, MetricsContext } from '@streamr/utils';
 import { Schema } from 'ajv';
 import { Readable } from 'stream';
-import { Stream } from 'streamr-client';
 
 import { Plugin, PluginOptions } from '../../Plugin';
 import PLUGIN_CONFIG_SCHEMA from './config.schema.json';
@@ -38,9 +38,6 @@ export interface LogStorePluginConfig {
 		chainRpcUrls: {
 			[key: string]: string;
 		};
-	};
-	experimental?: {
-		enableValidator?: boolean;
 	};
 }
 
@@ -152,7 +149,6 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 	}
 
 	public abstract processQueryRequest(request: QueryRequest): Promise<{
-		participatingNodes: string[];
 		data: Readable;
 	}>;
 

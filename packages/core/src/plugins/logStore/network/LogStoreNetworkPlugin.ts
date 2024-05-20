@@ -1,26 +1,19 @@
 import { QueryRequest } from '@logsn/protocol';
 import { StreamPartIDUtils } from '@streamr/protocol';
-import { EthereumAddress, Logger } from '@streamr/utils';
+import { Stream } from '@streamr/sdk';
+import { EthereumAddress, executeSafePromise, Logger } from '@streamr/utils';
 import { Schema } from 'ajv';
-import { Stream } from 'streamr-client';
 
 import { NetworkModeConfig, PluginOptions } from '../../../Plugin';
 import { BroadbandPublisher } from '../../../shared/BroadbandPublisher';
 import { BroadbandSubscriber } from '../../../shared/BroadbandSubscriber';
 import PLUGIN_CONFIG_SCHEMA from '../config.schema.json';
-import { createRecoveryEndpoint } from '../http/recoveryEndpoint';
 import { LogStorePlugin } from '../LogStorePlugin';
+import { AggregationManager } from './AggregationManager';
 import { Heartbeat } from './Heartbeat';
-import { KyvePool } from './KyvePool';
 import { LogStoreNetworkConfig } from './LogStoreNetworkConfig';
 import { MessageMetricsCollector } from './MessageMetricsCollector';
-import { NetworkQueryRequestManager } from './NetworkQueryRequestManager';
-import { PropagationDispatcher } from './PropagationDispatcher';
-import { PropagationResolver } from './PropagationResolver';
-import { QueryResponseManager } from './QueryResponseManager';
-import { ReportPoller } from './ReportPoller';
-import { SystemCache } from './SystemCache';
-import { SystemRecovery } from './SystemRecovery';
+import { PropagationManager } from './PropagationManager';
 
 const METRICS_INTERVAL = 60 * 1000;
 
@@ -31,16 +24,10 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	private readonly systemPublisher: BroadbandPublisher;
 	private readonly heartbeatPublisher: BroadbandPublisher;
 	private readonly heartbeatSubscriber: BroadbandSubscriber;
-	private readonly kyvePool: KyvePool;
 	private readonly messageMetricsCollector: MessageMetricsCollector;
 	private readonly heartbeat: Heartbeat;
-	private readonly systemCache: SystemCache;
-	private readonly systemRecovery: SystemRecovery;
-	private readonly networkQueryRequestManager: NetworkQueryRequestManager;
-	private readonly queryResponseManager: QueryResponseManager;
-	private readonly propagationResolver: PropagationResolver;
-	private readonly propagationDispatcher: PropagationDispatcher;
-	private readonly reportPoller: ReportPoller;
+	private readonly aggregationManager: AggregationManager;
+	private readonly propagationManager: PropagationManager;
 
 	private metricsTimer?: NodeJS.Timer;
 
@@ -66,11 +53,6 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			this.networkConfig.systemStream
 		);
 
-		this.kyvePool = new KyvePool(
-			networkStrictNodeConfig.pool.url,
-			networkStrictNodeConfig.pool.id
-		);
-
 		this.heartbeatSubscriber = new BroadbandSubscriber(
 			this.streamrClient,
 			this.networkConfig.heartbeatStream
@@ -87,47 +69,16 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		);
 
 		this.messageMetricsCollector = new MessageMetricsCollector(
-			this.streamrClient,
-			this.systemSubscriber,
-			this.networkConfig.recoveryStream
+			this.systemSubscriber
 		);
 
-		this.systemCache = new SystemCache(this.systemSubscriber, this.kyvePool);
-
-		this.systemRecovery = new SystemRecovery(
-			this.streamrClient,
-			this.networkConfig.recoveryStream,
-			this.networkConfig.systemStream,
-			this.systemCache
+		this.propagationManager = new PropagationManager(
+			this.systemPublisher,
+			this.systemSubscriber
 		);
 
-		this.propagationResolver = new PropagationResolver(
+		this.aggregationManager = new AggregationManager(
 			this.heartbeat,
-			this.systemSubscriber
-		);
-
-		this.propagationDispatcher = new PropagationDispatcher(
-			this.systemPublisher
-		);
-
-		this.queryResponseManager = new QueryResponseManager(
-			this.systemPublisher,
-			this.systemSubscriber,
-			this.propagationResolver,
-			this.propagationDispatcher
-		);
-
-		this.networkQueryRequestManager = new NetworkQueryRequestManager(
-			this.queryResponseManager,
-			this.propagationResolver,
-			this.systemPublisher,
-			this.systemSubscriber
-		);
-
-		this.reportPoller = new ReportPoller(
-			this.kyvePool,
-			networkStrictNodeConfig.pool,
-			this.signer,
 			this.systemPublisher,
 			this.systemSubscriber
 		);
@@ -151,30 +102,9 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 		const clientId = await this.streamrClient.getAddress();
 
 		await this.heartbeat.start(clientId);
-		await this.propagationResolver.start(this.logStore);
-		this.propagationDispatcher.start(this.logStore);
-
-		if (this.pluginConfig.experimental?.enableValidator) {
-			// start the report polling process
-			const abortController = new AbortController();
-			await this.reportPoller.start(abortController.signal);
-			await this.systemCache.start();
-			await this.systemRecovery.start();
-		}
-
-		await this.networkQueryRequestManager.start(this.logStore);
-		await this.queryResponseManager.start(clientId);
+		await this.aggregationManager.start(clientId, this.logStore.db);
+		await this.propagationManager.start(clientId, this.logStore.db);
 		await this.messageMetricsCollector.start();
-
-		if (this.pluginConfig.experimental?.enableValidator) {
-			this.addHttpServerEndpoint(
-				createRecoveryEndpoint(
-					this.networkConfig.systemStream,
-					this.heartbeat,
-					this.metricsContext
-				)
-			);
-		}
 
 		this.metricsTimer = setInterval(
 			this.logMetrics.bind(this),
@@ -185,23 +115,11 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	override async stop(): Promise<void> {
 		clearInterval(this.metricsTimer);
 
-		const stopValidatorComponents = async () => {
-			await Promise.all([
-				this.reportPoller.stop(),
-				this.systemCache.stop(),
-				this.systemRecovery.stop(),
-			]);
-		};
-
 		await Promise.all([
 			this.messageMetricsCollector.stop(),
 			this.heartbeat.stop(),
-			this.propagationResolver.stop(),
-			this.networkQueryRequestManager.stop(),
-			this.queryResponseManager.stop(),
-			this.pluginConfig.experimental?.enableValidator
-				? stopValidatorComponents()
-				: Promise.resolve(),
+			await this.aggregationManager.stop(),
+			await this.propagationManager.stop(),
 		]);
 
 		await super.stop();
@@ -226,7 +144,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			{
 				onStreamPartAdded: async (streamPart) => {
 					try {
-						await node.subscribeAndWaitForJoin(streamPart); // best-effort, can time out
+						await node.join(streamPart, { minCount: 1, timeout: 5000 }); // best-effort, can time out
 						await this.nodeStreamsRegistry.registerStreamId(
 							StreamPartIDUtils.getStreamID(streamPart)
 						);
@@ -252,7 +170,7 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 					}
 				},
 				onStreamPartRemoved: async (streamPart) => {
-					node.unsubscribe(streamPart);
+					executeSafePromise(() => node.leave(streamPart));
 					await this.nodeStreamsRegistry.unregisterStreamId(
 						StreamPartIDUtils.getStreamID(streamPart)
 					);
@@ -264,17 +182,11 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 	}
 
 	public async processQueryRequest(queryRequest: QueryRequest) {
-		const { participatingNodes } =
-			await this.networkQueryRequestManager.publishQueryRequestAndWaitForPropagateResolution(
-				queryRequest
-			);
+		await this.systemPublisher.publish(queryRequest.serialize());
 
-		const data =
-			this.networkQueryRequestManager.getDataForQueryRequest(queryRequest);
-
+		const aggregator = this.aggregationManager.aggregate(queryRequest);
 		return {
-			data,
-			participatingNodes,
+			data: aggregator,
 		};
 	}
 

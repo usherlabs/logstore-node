@@ -1,11 +1,11 @@
 import { toStreamPartID } from '@streamr/protocol';
-import { Logger, MetricsContext } from '@streamr/utils';
-import { Schema } from 'ajv';
 import {
 	EthereumAddress,
 	formStorageNodeAssignmentStreamId,
 	Stream,
-} from 'streamr-client';
+} from '@streamr/sdk';
+import { Logger, MetricsContext } from '@streamr/utils';
+import { Schema } from 'ajv';
 
 import { Plugin } from '../../Plugin';
 import PLUGIN_CONFIG_SCHEMA from './config.schema.json';

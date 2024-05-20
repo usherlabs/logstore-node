@@ -7,10 +7,10 @@ import {
 	MetricsContext,
 	MetricsDefinition,
 	RateMetric,
+	toLengthPrefixedFrame,
 } from '@streamr/utils';
 import { Request, RequestHandler, Response } from 'express';
 import { pipeline, Readable } from 'stream';
-import { StreamMessage } from 'streamr-client';
 
 import { HttpServerEndpoint } from '../../Plugin';
 import { Format } from '../logStore/http/DataQueryFormat';
@@ -45,7 +45,7 @@ const sendSuccess = (
 			});
 		}
 	});
-	pipeline(data, new ResponseTransform(format, undefined), res, (err) => {
+	pipeline(data, new ResponseTransform(format), res, (err) => {
 		if (err !== undefined && err !== null) {
 			logger.error('Encountered error in pipeline', {
 				streamId,
@@ -90,18 +90,12 @@ type RangeRequest = BaseRequest<{
 	toOffset?: string; // no longer supported
 }>;
 
-export const createPlainTextFormat = (
-	getMessageAsString: (
-		streamMessage: StreamMessage,
-		version: number | undefined
-	) => string
+const createBinaryFormat = (
+	formatMessage: (bytes: Uint8Array) => Uint8Array
 ): Format => {
 	return {
-		getMessageAsString,
-		contentType: 'text/plain',
-		delimiter: '\n',
-		header: '',
-		footer: '',
+		formatMessage,
+		contentType: 'application/octet-stream',
 	};
 };
 
@@ -128,7 +122,7 @@ const handleLast = async (
 		{ raw: true }
 	);
 
-	sendSuccess(Readable.from(data), format, streamId, res);
+	sendSuccess(Readable.from(data.messageStream), format, streamId, res);
 };
 
 const handleFrom = async (
@@ -170,7 +164,7 @@ const handleFrom = async (
 		{ raw: true }
 	);
 
-	sendSuccess(Readable.from(data), format, streamId, res);
+	sendSuccess(Readable.from(data.messageStream), format, streamId, res);
 };
 
 const handleRange = async (
@@ -246,7 +240,7 @@ const handleRange = async (
 		{ raw: true }
 	);
 
-	sendSuccess(Readable.from(data), format, streamId, res);
+	sendSuccess(Readable.from(data.messageStream), format, streamId, res);
 };
 
 const createHandler = (
@@ -262,16 +256,7 @@ const createHandler = (
 				);
 				return;
 			}
-			const format = createPlainTextFormat(
-				(streamMessage) => streamMessage as unknown as string
-			);
-			if (format === undefined) {
-				sendError(
-					`Query parameter "format" is invalid: ${req.query.format}`,
-					res
-				);
-				return;
-			}
+			const format = createBinaryFormat(toLengthPrefixedFrame);
 
 			const streamId = req.params.id;
 			const partition = parseInt(req.params.partition);

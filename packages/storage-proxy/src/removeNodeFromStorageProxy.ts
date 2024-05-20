@@ -1,8 +1,8 @@
-import { EthereumAddress, Logger } from '@streamr/utils';
 import {
 	formStorageNodeAssignmentStreamId,
 	StreamPermission,
-} from 'streamr-client';
+} from '@streamr/sdk';
+import { EthereumAddress, Logger } from '@streamr/utils';
 
 import { getStreamrClient } from './utils/getStreamrClient';
 
@@ -31,6 +31,6 @@ export const removeNodeFromStorageProxy = async (options: Options) => {
 	});
 
 	logger.info(
-		`Removed the StorageProxy Node ${options.node} from the StorageProxy ${clusterId}...`
+		`Removed the StorageProxy Node ${options.node} from the StorageProxy ${clusterId}`
 	);
 };

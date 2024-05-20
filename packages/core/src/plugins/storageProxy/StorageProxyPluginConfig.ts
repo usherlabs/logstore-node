@@ -1,4 +1,4 @@
-import { EthereumAddress } from 'streamr-client';
+import { EthereumAddress } from '@streamr/sdk';
 
 export interface StorageProxyPluginConfig {
 	storageConfig: {

@@ -1,6 +1,13 @@
-import { MessageID, StreamMessage, toStreamID } from '@streamr/protocol';
+import {
+	ContentType,
+	EncryptionType,
+	MessageID,
+	SignatureType,
+	StreamMessage,
+	toStreamID,
+} from '@streamr/protocol';
 import { randomEthereumAddress } from '@streamr/test-utils';
-import { toEthereumAddress } from '@streamr/utils';
+import { hexToBinary, toEthereumAddress, utf8ToBinary } from '@streamr/utils';
 import { types as cassandraTypes, Client } from 'cassandra-driver';
 import toArray from 'stream-to-array';
 
@@ -70,8 +77,11 @@ async function storeMockMessages({
 				toEthereumAddress('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
 				''
 			),
-			content: JSON.stringify({}),
-			signature: 'signature',
+			content: utf8ToBinary(JSON.stringify({})),
+			signature: hexToBinary('0x1234'),
+			contentType: ContentType.JSON,
+			encryptionType: EncryptionType.NONE,
+			signatureType: SignatureType.SECP256K1,
 		});
 		storePromises.push(logStore.store(msg));
 	}

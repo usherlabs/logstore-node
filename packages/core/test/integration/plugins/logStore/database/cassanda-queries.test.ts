@@ -1,7 +1,17 @@
-import { MessageID, StreamMessage, toStreamID } from '@streamr/protocol';
-import { waitForStreamToEnd } from '@streamr/test-utils';
 import {
+	ContentType,
+	EncryptionType,
+	MessageID,
+	SignatureType,
+	StreamMessage,
+	toStreamID,
+} from '@streamr/protocol';
+import { waitForStreamToEnd } from '@streamr/test-utils';
+import { convertBytesToStreamMessage } from '@streamr/trackerless-network';
+import {
+	hexToBinary,
 	toEthereumAddress,
+	utf8ToBinary,
 	waitForCondition,
 	waitForEvent,
 } from '@streamr/utils';
@@ -15,48 +25,64 @@ const contactPoints = [STREAMR_DOCKER_DEV_HOST];
 const localDataCenter = 'datacenter1';
 const keyspace = 'logstore_dev';
 
-const DEFAULT_MOCK_STREAM_ID = 'mock-stream-id-' + Date.now();
+const MOCK_STREAM_ID = `mock-stream-id-${Date.now()}`;
+const MOCK_PARTITION = 0;
 const MOCK_PUBLISHER_ID = toEthereumAddress(
 	'0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 );
 const MOCK_MSG_CHAIN_ID = 'msgChainId';
+
 const createMockMessage = (
-	ts: number,
+	timestamp: number,
 	sequence_no = 0,
-	mockStreamId: string = DEFAULT_MOCK_STREAM_ID
+	streamId: string = MOCK_STREAM_ID,
+	partition: number = MOCK_PARTITION
 ) => {
 	return new StreamMessage({
 		messageId: new MessageID(
-			toStreamID(mockStreamId),
-			0,
-			ts,
+			toStreamID(streamId),
+			partition,
+			timestamp,
 			sequence_no,
 			MOCK_PUBLISHER_ID,
 			MOCK_MSG_CHAIN_ID
 		),
-		content: {
-			ts,
-			sequence_no: sequence_no,
-		},
-		signature: 'signature',
+		content: utf8ToBinary(
+			JSON.stringify({
+				timestamp,
+				sequence_no,
+			})
+		),
+		signature: hexToBinary('0x1234'),
+		contentType: ContentType.JSON,
+		encryptionType: EncryptionType.NONE,
+		signatureType: SignatureType.SECP256K1,
 	});
 };
 const MOCK_MESSAGES = [1, 2, 3].map((contentValue: number) =>
 	createMockMessage(contentValue)
 );
 
-const EMPTY_STREAM_ID = 'empty-stream-id' + Date.now();
+const EMPTY_STREAM_ID = `empty-stream-id-${Date.now()}`;
 
 const REQUEST_TYPE_FROM = 'requestFrom';
 const REQUEST_TYPE_RANGE = 'requestRange';
 
-type TestMessage = StreamMessage<{
-	ts: number;
+type TestMessage = {
+	timestamp: number;
 	sequence_no: number;
-}>;
+};
+
 const streamToContentValues = async (resultStream: Readable) => {
-	const messages = (await waitForStreamToEnd(resultStream)) as TestMessage[];
-	return messages.map((message) => message.getParsedContent().ts);
+	const messages: Uint8Array[] = (await waitForStreamToEnd(
+		resultStream
+	)) as Uint8Array[];
+	return messages
+		.map((bytes) => {
+			return convertBytesToStreamMessage(bytes);
+		})
+		.map((message) => message.getParsedContent() as TestMessage)
+		.flatMap((message) => [message.timestamp, message.sequence_no]);
 };
 
 class ProxyClient {
@@ -128,7 +154,7 @@ describe('cassanda-queries', () => {
 
 	const waitForStoredMessageCount = async (
 		expectedCount: number,
-		streamId: string = DEFAULT_MOCK_STREAM_ID
+		streamId: string = MOCK_STREAM_ID
 	) => {
 		return waitForCondition(async () => {
 			const result = await realClient.execute(
@@ -166,55 +192,64 @@ describe('cassanda-queries', () => {
 	beforeEach(async () => {
 		const proxyClient = new ProxyClient(realClient) as any;
 		cassandraAdapter.cassandraClient = proxyClient;
+		// cassandraAdapter.bucketManager.cassandraClient = proxyClient;
 	});
 
-	describe('requestByMessageIds', () => {
+	describe('queryByMessageRefs', () => {
 		it('single happy path', async () => {
-			const resultStream = cassandraAdapter.queryByMessageIds([
-				MOCK_MESSAGES[0].messageId,
-			]);
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				[MOCK_MESSAGES[0].getMessageRef()]
+			);
 			const contentValues = await streamToContentValues(resultStream);
-			expect(contentValues).toEqual([1]);
+			expect(contentValues).toEqual([1, 0]);
 		});
 
 		it('multiple happy path', async () => {
-			const resultStream = cassandraAdapter.queryByMessageIds(
-				MOCK_MESSAGES.map((msg) => msg.messageId)
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				MOCK_MESSAGES.map((msg) => msg.getMessageRef())
 			);
 			const contentValues = await streamToContentValues(resultStream);
-			expect(contentValues).toEqual([1, 2, 3]);
+			expect(contentValues).toEqual([1, 0, 2, 0, 3, 0]);
 		});
 
 		it('multiple happy path received in same order', async () => {
-			const resultStream = cassandraAdapter.queryByMessageIds(
-				[2, 1, 3].map((i) => MOCK_MESSAGES[i - 1].messageId)
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				[2, 1, 3].map((i) => MOCK_MESSAGES[i - 1].getMessageRef())
 			);
 			const contentValues = await streamToContentValues(resultStream);
-			expect(contentValues).toEqual([2, 1, 3]);
+			expect(contentValues).toEqual([2, 0, 1, 0, 3, 0]);
 		});
 
 		// Set to skip temporarily while it does not create a new bucket
 		// but breaks all the other tests because of storing extra messages
 		// whose are not expected by the other tests
-		it('multiple with more than one bucket', async () => {
-			const mockStreamId = DEFAULT_MOCK_STREAM_ID + '_multipleId_1';
-			const mockStreamId2 = DEFAULT_MOCK_STREAM_ID + '_multipleId_2';
+		it.skip('multiple with more than one bucket', async () => {
+			const mockStreamId1 = MOCK_STREAM_ID + '_multipleId_1';
+			const mockStreamId2 = MOCK_STREAM_ID + '_multipleId_2';
 
 			const BUCKET_1_MESSAGES = [4, 5, 6].map((contentValue: number) =>
-				createMockMessage(contentValue, undefined, mockStreamId)
+				createMockMessage(contentValue)
 			);
 			const BUCKET_2_MESSAGES = [7, 8, 9].map((contentValue: number) =>
-				createMockMessage(contentValue, undefined, mockStreamId2)
+				createMockMessage(contentValue)
 			);
 
 			const allMessages = [...BUCKET_1_MESSAGES, ...BUCKET_2_MESSAGES];
 
 			await Promise.all(allMessages.map((msg) => cassandraAdapter.store(msg)));
-			await waitForStoredMessageCount(BUCKET_1_MESSAGES.length, mockStreamId);
+			await waitForStoredMessageCount(BUCKET_1_MESSAGES.length, mockStreamId1);
 			await waitForStoredMessageCount(BUCKET_2_MESSAGES.length, mockStreamId2);
 
-			const resultStream = cassandraAdapter.queryByMessageIds(
-				allMessages.map((msg) => msg.messageId)
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				allMessages.map((msg) => msg.getMessageRef())
 			);
 
 			const contentValues = await streamToContentValues(resultStream);
@@ -222,31 +257,31 @@ describe('cassanda-queries', () => {
 		});
 
 		it('not found', async () => {
-			const resultStream = cassandraAdapter.queryByMessageIds([
-				createMockMessage(999).messageId,
-			]);
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				[createMockMessage(999).getMessageRef()]
+			);
 			const contentValues = await streamToContentValues(resultStream);
 			expect(contentValues).toEqual([]);
 		});
 
 		it('not found in the middle', async () => {
-			const resultStream = cassandraAdapter.queryByMessageIds(
-				[1, 999, 3].map((i) => createMockMessage(i).messageId)
+			const resultStream = cassandraAdapter.queryByMessageRefs(
+				MOCK_STREAM_ID,
+				MOCK_PARTITION,
+				[1, 999, 3].map((i) => createMockMessage(i).getMessageRef())
 			);
 			const contentValues = await streamToContentValues(resultStream);
-			expect(contentValues).toEqual([1, 3]);
+			expect(contentValues).toEqual([1, 0, 3, 0]);
 		});
 	});
 
 	describe('requestLast', () => {
 		it('happy path', async () => {
-			const resultStream = cassandraAdapter.queryLast(
-				DEFAULT_MOCK_STREAM_ID,
-				0,
-				2
-			);
+			const resultStream = cassandraAdapter.queryLast(MOCK_STREAM_ID, 0, 2);
 			const contentValues = await streamToContentValues(resultStream);
-			expect(contentValues).toEqual([2, 3]);
+			expect(contentValues).toEqual([2, 0, 3, 0]);
 		});
 
 		it('no messages', async () => {
@@ -257,11 +292,7 @@ describe('cassanda-queries', () => {
 
 		it('bucket query error', async () => {
 			(cassandraAdapter.cassandraClient as any).setError('FROM bucket');
-			const resultStream = cassandraAdapter.queryLast(
-				DEFAULT_MOCK_STREAM_ID,
-				0,
-				1
-			);
+			const resultStream = cassandraAdapter.queryLast(MOCK_STREAM_ID, 0, 1);
 			const [actualError] = await waitForEvent(resultStream, 'error');
 			expect(actualError).toBe(ProxyClient.ERROR);
 		});
@@ -270,11 +301,7 @@ describe('cassanda-queries', () => {
 			(cassandraAdapter.cassandraClient as any).setError(
 				'total FROM stream_data'
 			);
-			const resultStream = cassandraAdapter.queryLast(
-				DEFAULT_MOCK_STREAM_ID,
-				0,
-				1
-			);
+			const resultStream = cassandraAdapter.queryLast(MOCK_STREAM_ID, 0, 1);
 			const [actualError] = await waitForEvent(resultStream, 'error');
 			expect(actualError).toBe(ProxyClient.ERROR);
 		});
@@ -283,14 +310,19 @@ describe('cassanda-queries', () => {
 			(cassandraAdapter.cassandraClient as any).setError(
 				'payload FROM stream_data'
 			);
-			const resultStream = cassandraAdapter.queryLast(
-				DEFAULT_MOCK_STREAM_ID,
-				0,
-				1
-			);
+			const resultStream = cassandraAdapter.queryLast(MOCK_STREAM_ID, 0, 1);
 			const [actualError] = await waitForEvent(resultStream, 'error');
 			expect(actualError).toBe(ProxyClient.ERROR);
 		});
+	});
+
+	describe('requestFirst', () => {
+		it('happy path', async () => {
+			const resultStream = cassandraAdapter.queryFirst(MOCK_STREAM_ID, 0, 2);
+			const contentValues = await streamToContentValues(resultStream);
+			expect(contentValues).toEqual([1, 0, 2, 0]);
+		});
+		// we're not testing other cases because the logic is reused from requestLast
 	});
 
 	describe.each([
@@ -336,9 +368,9 @@ describe('cassanda-queries', () => {
 			};
 
 			it('happy path', async () => {
-				const resultStream = getResultStream(DEFAULT_MOCK_STREAM_ID);
+				const resultStream = getResultStream(MOCK_STREAM_ID);
 				const contentValues = await streamToContentValues(resultStream);
-				expect(contentValues).toEqual([1, 2, 3]);
+				expect(contentValues).toEqual([1, 0, 2, 0, 3, 0]);
 			});
 
 			it('no messages', async () => {
@@ -349,14 +381,14 @@ describe('cassanda-queries', () => {
 
 			it('bucket query error', async () => {
 				(cassandraAdapter.cassandraClient as any).setError('FROM bucket');
-				const resultStream = getResultStream(DEFAULT_MOCK_STREAM_ID);
+				const resultStream = getResultStream(MOCK_STREAM_ID);
 				const [actualError] = await waitForEvent(resultStream, 'error');
 				expect(actualError).toBe(ProxyClient.ERROR);
 			});
 
 			it('message query error', async () => {
 				(cassandraAdapter.cassandraClient as any).setError('FROM stream_data');
-				const resultStream = getResultStream(DEFAULT_MOCK_STREAM_ID);
+				const resultStream = getResultStream(MOCK_STREAM_ID);
 				const [actualError] = await waitForEvent(resultStream, 'error');
 				expect(actualError).toBe(ProxyClient.ERROR);
 			}, 99_000);

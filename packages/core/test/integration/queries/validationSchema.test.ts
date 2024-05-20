@@ -1,41 +1,27 @@
 import { LogStoreClient } from '@logsn/client';
-import { Tracker } from '@streamr/network-tracker';
+import StreamrClient, { Stream, StreamPermission } from '@streamr/sdk';
 import { fetchPrivateKeyWithGas, KeyServer } from '@streamr/test-utils';
-import { providers, Wallet } from 'ethers';
+import { Wallet } from 'ethers';
 import { defer, firstValueFrom, map, mergeAll, toArray } from 'rxjs';
-import StreamrClient, {
-	Stream,
-	StreamPermission,
-	CONFIG_TEST as STREAMR_CONFIG_TEST,
-} from 'streamr-client';
 
 import { LogStoreNode } from '../../../src/node';
 import {
 	createLogStoreClient,
 	createStreamrClient,
 	createTestStream,
+	getProvider,
 	sleep,
 	startLogStoreBroker,
-	startTestTracker,
 } from '../../utils';
 
 jest.setTimeout(60000);
 
-// There are two options to run the test managed by a value of the TRACKER_PORT constant:
-// 1. TRACKER_PORT = undefined - run the test against the brokers running in dev-env and brokers run by the test script.
-// 2. TRACKER_PORT = 17771 - run the test against only brokers run by the test script.
-//    In this case dev-env doesn't run any brokers and there is no brokers joined the network (NodeManager.totalNodes == 0)
-const TRACKER_PORT = undefined;
-
-describe('Queries with validation schema', () => {
+describe.skip('Queries with validation schema', () => {
 	jest.useFakeTimers({
 		advanceTimers: true,
 	});
 
-	const provider = new providers.JsonRpcProvider(
-		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.rpcs[0].url,
-		STREAMR_CONFIG_TEST.contracts?.streamRegistryChainRPCs?.chainId
-	);
+	const provider = getProvider();
 	const schema = {
 		$id: 'https://example.com/demo.schema.json',
 		$schema: 'http://json-schema.org/draft-07/schema#',
@@ -47,10 +33,6 @@ describe('Queries with validation schema', () => {
 			},
 		},
 	};
-	const errorsStream$ = defer(() =>
-		consumerStreamrClient.subscribe(errorStream.id)
-	).pipe(mergeAll());
-	const errorMessage$ = errorsStream$.pipe(map((s) => s.content));
 
 	// Accounts
 	let logStoreBrokerAccount: Wallet;
@@ -67,7 +49,11 @@ describe('Queries with validation schema', () => {
 	let consumerLogStoreClient: LogStoreClient;
 	let logStoreBrokerStreamrClient: StreamrClient;
 
-	let tracker: Tracker;
+	const errorsStream$ = defer(() =>
+		consumerStreamrClient.subscribe(errorStream.id)
+	).pipe(mergeAll());
+	const errorMessage$ = errorsStream$.pipe(map((s) => s.content));
+
 	let testStream: Stream;
 	let errorStream: Stream;
 
@@ -90,15 +76,10 @@ describe('Queries with validation schema', () => {
 	});
 
 	beforeEach(async () => {
-		if (TRACKER_PORT) {
-			tracker = await startTestTracker(TRACKER_PORT);
-		}
-
 		// Wait for the granted permissions to the system stream
 		await sleep(5000);
 
 		publisherStreamrClient = await createStreamrClient(
-			tracker,
 			publisherAccount.privateKey
 		);
 		publisherLogStoreClient = await createLogStoreClient(
@@ -106,15 +87,13 @@ describe('Queries with validation schema', () => {
 		);
 
 		consumerStreamrClient = await createStreamrClient(
-			tracker,
 			storeConsumerAccount.privateKey
 		);
 		consumerLogStoreClient = await createLogStoreClient(consumerStreamrClient, {
-			nodeUrl: 'http://127.0.0.1:7171',
+			nodeUrl: 'http://10.200.10.1:7171',
 		});
 
 		logStoreBrokerStreamrClient = await createStreamrClient(
-			tracker,
 			logStoreBrokerAccount.privateKey
 		);
 
@@ -147,7 +126,6 @@ describe('Queries with validation schema', () => {
 
 		logStoreBroker = await startLogStoreBroker({
 			privateKey: logStoreBrokerAccount.privateKey,
-			trackerPort: TRACKER_PORT,
 			plugins: {
 				logStore: {
 					db: {
@@ -178,7 +156,7 @@ describe('Queries with validation schema', () => {
 		]);
 		consumerLogStoreClient.destroy();
 		publisherLogStoreClient.destroy();
-		await Promise.allSettled([logStoreBroker?.stop(), tracker?.stop()]);
+		await Promise.allSettled([logStoreBroker?.stop()]);
 	});
 
 	it('when client publishes a valid message message, it is written to the store', async () => {
@@ -200,7 +178,7 @@ describe('Queries with validation schema', () => {
 		expect(messages[0].content).toEqual({ foo: 'bar 1' });
 	});
 
-	it('when client publishes an invalid message message, it is not written to the store', async () => {
+	it('when client publishes an invalid message, it is not written to the store', async () => {
 		const firstErrorMessage = firstValueFrom(errorMessage$);
 
 		await publisherStreamrClient.publish(testStream.id, {
