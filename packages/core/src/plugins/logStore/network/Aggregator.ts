@@ -21,6 +21,12 @@ import { AggregationList } from './AggregationList';
 
 const logger = new Logger(module);
 
+/**
+ * The Aggregator class handles and processes data queries in a streaming fashion,
+ * aggregating results from both a local database and remote (foreign) nodes.
+ *
+ * @extends PassThrough
+ */
 export class Aggregator extends PassThrough {
 	private readonly database: DatabaseAdapter;
 	private readonly queryRequest: QueryRequest;
@@ -32,6 +38,15 @@ export class Aggregator extends PassThrough {
 	private readonly aggregationList: AggregationList;
 	private readonly queryStreams: Set<Readable>;
 
+	/**
+	 * Initializes the Aggregator with a database adapter, query request,
+	 * list of foreign nodes, and a callback for chunk processing.
+	 *
+	 * @param {DatabaseAdapter} database - The database adapter for querying local data.
+	 * @param {QueryRequest} queryRequest - The query request specifying the data to retrieve.
+	 * @param {EthereumAddress[]} foreignNodes - A list of foreign nodes to compare data to.
+	 * @param {ChunkerCallback<Uint8Array>} chunkCallback - A callback for chunk processing.
+	 */
 	constructor(
 		database: DatabaseAdapter,
 		queryRequest: QueryRequest,
@@ -119,6 +134,11 @@ export class Aggregator extends PassThrough {
 		});
 	}
 
+	/**
+	 * Check if waiting for responses from foreign nodes.
+	 *
+	 * @returns {boolean} True if waiting for foreign nodes, otherwise false.
+	 */
 	private get isWaitingForForeignNodes() {
 		for (const {
 			messageRef,
@@ -132,6 +152,12 @@ export class Aggregator extends PassThrough {
 		return false;
 	}
 
+	/**
+	 * Get or create a response status object for a foreign node.
+	 *
+	 * @param {EthereumAddress} node - The foreign node address.
+	 * @returns {Object} The response status object for the foreign node.
+	 */
 	private getOrCreateForeignNodeResponse(node: EthereumAddress) {
 		let response = this.foreignNodeResponses.get(node);
 
@@ -146,6 +172,12 @@ export class Aggregator extends PassThrough {
 		return response;
 	}
 
+	/**
+	 * Handle QueryResponse messages from foreign nodes.
+	 *
+	 * @param {EthereumAddress} node - The foreign node address.
+	 * @param {QueryResponse} response - The query response from the foreign node.
+	 */
 	public onForeignResponse(node: EthereumAddress, response: QueryResponse) {
 		const foreignNodeResponse = this.getOrCreateForeignNodeResponse(node);
 
@@ -160,6 +192,12 @@ export class Aggregator extends PassThrough {
 		this.doCheck();
 	}
 
+	/**
+	 * Handle QueryPropagate messages from foreign nodes.
+	 *
+	 * @param {EthereumAddress} node - The foreign node address.
+	 * @param {QueryPropagate} response - The propagation response from the foreign node.
+	 */
 	public onPropagation(node: EthereumAddress, response: QueryPropagate) {
 		Promise.all(
 			response.payload.map(async (bytes: Uint8Array) => {
@@ -174,6 +212,9 @@ export class Aggregator extends PassThrough {
 		});
 	}
 
+	/**
+	 * Check the state of aggregation and process accordingly.
+	 */
 	private doCheck() {
 		if (this.isWaitingForForeignNodes) {
 			return;
@@ -192,7 +233,7 @@ export class Aggregator extends PassThrough {
 			const queryRangeOptions = this.queryRequest
 				.queryOptions as QueryRangeOptions;
 
-			// TODO: Handle an errror if the pipe gets broken
+			// TODO: Handle an error if the pipe gets broken
 			const queryStream = this.database.queryRange(
 				this.queryRequest.streamId,
 				this.queryRequest.partition,

@@ -14,6 +14,11 @@ import { PropagationList } from './PropagationList';
 
 const logger = new Logger(module);
 
+/**
+ * The Propagator class handles the propagation of missing data from
+ * the foreign node to the primary node, and manages the streaming
+ * of the propagating data.
+ */
 export class Propagator {
 	private readonly database: DatabaseAdapter;
 	private readonly queryRequest: QueryRequest;
@@ -22,6 +27,15 @@ export class Propagator {
 	private readonly propagationStream: PassThrough;
 	private readonly queryStreams: Set<Readable> = new Set<Readable>();
 
+	/**
+	 * Creates an instance of Propagator.
+	 *
+	 * @param {DatabaseAdapter} database - The database adapter for data queries.
+	 * @param {QueryRequest} queryRequest - The query request to process.
+	 * @param {ChunkerCallback<Uint8Array>} responseChunkCallback - Callback for handling response chunks.
+	 * @param {ChunkerCallback<Uint8Array>} propagationChunkCallback - Callback for handling propagation chunks.
+	 * @param {() => void} closeCallback - Callback to execute when the stream closes.
+	 */
 	constructor(
 		database: DatabaseAdapter,
 		queryRequest: QueryRequest,
@@ -109,6 +123,11 @@ export class Propagator {
 		);
 	}
 
+	/**
+	 * Handles primary response messages by pushing them to the propagation list.
+	 *
+	 * @param {QueryResponse} response - The query response from a primary node.
+	 */
 	public onPrimaryResponse(response: QueryResponse) {
 		response.messageRefs.forEach((messageRef) => {
 			this.propagationList.pushPrimary(messageRef);
@@ -121,6 +140,11 @@ export class Propagator {
 		this.doCheck();
 	}
 
+	/**
+	 * Checks the propagation list and queries the database for message references.
+	 *
+	 * @private
+	 */
 	private doCheck() {
 		const messageRefs = this.propagationList.getDiffAndShrink();
 
@@ -151,6 +175,6 @@ export class Propagator {
 			this.propagationStream.end();
 		}
 
-		// TODO: Handle an errror if the pipe gets broken
+		// TODO: Handle an error if the pipe gets broken
 	}
 }
