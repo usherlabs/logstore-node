@@ -100,31 +100,6 @@
 						"type": {
 							"type": "string",
 							"enum": ["network"]
-						},
-						"pool": {
-							"type": "object",
-							"description": "Kyve Pool configuration for network participant mode",
-							"additionalProperties": false,
-							"properties": {
-								"id": {
-									"description": "The Id of the pool to poll for a new bundle",
-									"type": "string"
-								},
-								"url": {
-									"description": "The URL of the pool to poll for a new bundle",
-									"type": "string"
-								},
-								"pollInterval": {
-									"description": "The interval to which to poll the kyve network for newly validated bundles",
-									"type": "number"
-								}
-							},
-							"required": ["id", "url", "pollInterval"],
-							"default": {
-								"id": "26",
-								"url": "https://api-eu-1.korellia.kyve.network",
-								"pollInterval": 60000
-							}
 						}
 					}
 				}
