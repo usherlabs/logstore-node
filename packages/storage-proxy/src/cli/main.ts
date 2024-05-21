@@ -7,6 +7,7 @@ import {
 	createCommand,
 	dropCommand,
 	removeNodeCommand,
+	updateCommand,
 } from './commands';
 import { devNetworkOption, privateKeyOption } from './options';
 
@@ -17,6 +18,7 @@ program
 	.addOption(devNetworkOption)
 	.addOption(privateKeyOption)
 	.addCommand(createCommand)
+	.addCommand(updateCommand)
 	.addCommand(addNodeCommand)
 	.addCommand(removeNodeCommand)
 	.addCommand(dropCommand)

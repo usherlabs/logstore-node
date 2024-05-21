@@ -16,8 +16,13 @@ import {
 	createStorageProxy,
 	dropStorageProxy,
 	removeNodeFromStorageProxy,
+	updateStorageProxy,
 } from '@logsn/storage-proxy';
-import StreamrClient, { Stream, StreamPermission } from '@streamr/sdk';
+import StreamrClient, {
+	CONFIG_TEST,
+	Stream,
+	StreamPermission,
+} from '@streamr/sdk';
 import { KeyServer } from '@streamr/test-utils';
 import { toEthereumAddress } from '@streamr/utils';
 import { Wallet } from 'ethers';
@@ -83,11 +88,49 @@ describe('StorageProxy management', () => {
 	it(
 		'Creates a StorageProxy',
 		async () => {
+			const metadata = { urls: ['http://10.200.10.1:7777'] };
+
 			await createStorageProxy({
 				privateKey: storageProxyAccount.privateKey,
-				metadata: { urls: ['http://10.200.10.1:7171'] },
+				metadata,
 				devNetwork: true,
 			});
+
+			const streamrClient = new StreamrClient({
+				...CONFIG_TEST,
+				auth: { privateKey: storageProxyAccount.privateKey },
+			});
+
+			const actualMetadata = await streamrClient.getStorageNodeMetadata(
+				storageProxyAccount.address
+			);
+
+			expect(actualMetadata).toEqual(metadata);
+		},
+		30 * 1000
+	);
+
+	it(
+		'Updates a StorageProxy',
+		async () => {
+			const metadata = { urls: ['http://10.200.10.1:7171'] };
+
+			await updateStorageProxy({
+				privateKey: storageProxyAccount.privateKey,
+				metadata,
+				devNetwork: true,
+			});
+
+			const streamrClient = new StreamrClient({
+				...CONFIG_TEST,
+				auth: { privateKey: storageProxyAccount.privateKey },
+			});
+
+			const actualMetadata = await streamrClient.getStorageNodeMetadata(
+				storageProxyAccount.address
+			);
+
+			expect(actualMetadata).toEqual(metadata);
 		},
 		30 * 1000
 	);
@@ -213,7 +256,7 @@ describe('StorageProxy management', () => {
 	);
 
 	it(
-		'Drops s StorageProxy',
+		'Drops a StorageProxy',
 		async () => {
 			await dropStorageProxy({
 				privateKey: storageProxyAccount.privateKey,
