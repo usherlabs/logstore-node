@@ -60,5 +60,6 @@ jobs:
           # we push only if env.ACT is not set
           push: ${{ env.ACT == '' }}
           tags: ${{ env.image_name }}
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
