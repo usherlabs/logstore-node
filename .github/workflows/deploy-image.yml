@@ -10,6 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/usherlabs/logstore-node
 
 jobs:
   build:
@@ -27,7 +28,7 @@ jobs:
       matrix:
         platform:
           - linux/amd64
-#          - linux/arm64
+          - linux/arm64
     steps:
       - name: Create image name
         run: |
@@ -57,11 +58,11 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/usherlabs/logstore-node
+          images: ${{ env.IMAGE_NAME }}
           # tags = latest if master, and branch name
           tags: |
-            type=ref,event=branch
             type=raw,enabled=${{ env.GITHUB_REF == 'refs/heads/master' }},value=latest
+            type=ref,event=branch
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -85,7 +86,7 @@ jobs:
           path: ./Dockerfile
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true
+          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -127,7 +128,11 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/usherlabs/logstore-node
+          # tags = latest if master, and branch name
+          tags: |
+            type=raw,enabled=${{ env.GITHUB_REF == 'refs/heads/master' }},value=latest
+            type=ref,event=branch
 
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
