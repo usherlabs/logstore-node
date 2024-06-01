@@ -37,7 +37,7 @@ jobs:
           if [ $GITHUB_REF != 'refs/heads/master' ]; then
               tag=$(echo $GITHUB_REF | sed 's/refs\/heads\///' | sed 's/\//-/')
           fi
-          image_name=${{ env.REGISTRY }}/usherlabs/logstore-node:$tag
+          image_name=:$tag
           # save for next step
           echo "IMAGE_NAME=$image_name" >> $GITHUB_ENV
 
@@ -57,7 +57,11 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/usherlabs/logstore-node
+          # tags = latest if master, and branch name
+          tags: |
+            type=ref,event=branch
+            type=raw,enabled=${{ env.GITHUB_REF == 'refs/heads/master' }},value=latest
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
