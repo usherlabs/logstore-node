@@ -49,7 +49,7 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           # tags = latest if master, and branch name
           tags: |
-            type=raw,enabled=${{ env.GITHUB_REF == 'refs/heads/master' }},value=latest
+            type=raw,enable=${{ env.GITHUB_REF == 'refs/heads/master' }},value=latest
             type=ref,event=branch
 
       - name: Set up QEMU
@@ -119,7 +119,7 @@ jobs:
           images: ${{ env.REGISTRY }}/usherlabs/logstore-node
           # tags = latest if master, and branch name
           tags: |
-            type=raw,enabled=${{ env.GITHUB_REF == 'refs/heads/master' }},value=latest
+            type=raw,enable=${{ env.GITHUB_REF == 'refs/heads/master' }},value=latest
             type=ref,event=branch
 
       - name: Log in to the Container registry
