@@ -573,6 +573,18 @@ describe('http works', () => {
 			expectAllItemsToBeEqual(queryResponses);
 		});
 	});
+
+	describe('ready endpoint', () => {
+		test('works', async () => {
+			const encodedStreamId = encodeURIComponent(testStream.id);
+			await axios
+				.get(`${BROKER_URL}/stores/${encodedStreamId}/partitions/0/ready`)
+				.then((res) => {
+					// it's ready because the nodes are already connected to it
+					expect(res.data).toStrictEqual({ ready: true });
+				});
+		}, 9999999);
+	});
 });
 
 const expectAllItemsToBeEqual = (items: any[]) => {
