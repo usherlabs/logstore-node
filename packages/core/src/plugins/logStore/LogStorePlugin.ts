@@ -13,6 +13,7 @@ import {
 } from './database/CassandraDBAdapter';
 import { SQLiteDBOptions } from './database/SQLiteDBAdapter';
 import { createDataQueryEndpoint } from './http/dataQueryEndpoint';
+import { createReadyEndpoint } from './http/readyEndpoint';
 import { LogStore, startLogStore } from './LogStore';
 import { LogStoreConfig } from './LogStoreConfig';
 import { MessageListener } from './MessageListener';
@@ -130,6 +131,7 @@ export abstract class LogStorePlugin extends Plugin<LogStorePluginConfig> {
 		await this.messageListener.start(this.maybeLogStore, this.logStoreConfig);
 
 		this.addHttpServerEndpoint(createDataQueryEndpoint(this.metricsContext));
+		this.addHttpServerEndpoint(createReadyEndpoint());
 	}
 
 	async stop(): Promise<void> {
