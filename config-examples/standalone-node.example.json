@@ -21,7 +21,7 @@
 		"logStore": {
 			"db": {
 				"type": "sqlite",
-				"dataPath": ".logstore/data/logstore-node.db"
+				"dataPath": "~/data/logstore-node.db"
 			},
 			"programs": {
 				"chainRpcUrls": {
