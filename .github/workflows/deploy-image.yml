@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - master
-      - develop
       - dev
 
 env:
@@ -28,7 +27,6 @@ jobs:
       matrix:
         platform:
           - linux/amd64
-          - linux/arm64
           - linux/arm64/v8
     steps:
       - name: Prepare
@@ -41,7 +39,6 @@ jobs:
         with:
           submodules: true
           token: ${{ secrets.GITHUB_TOKEN }}
-
 
       - name: Docker meta
         id: meta
@@ -144,4 +141,3 @@ jobs:
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-
