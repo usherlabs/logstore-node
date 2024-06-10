@@ -5,7 +5,7 @@ import {
 	QueryResponse,
 	QueryType,
 } from '@logsn/protocol';
-import { MessageRef } from '@streamr/protocol';
+import { MessageRef, toStreamID } from '@streamr/protocol';
 import { convertBytesToStreamMessage } from '@streamr/trackerless-network';
 import { EthereumAddress, Logger } from '@streamr/utils';
 import { PassThrough, pipeline, Readable } from 'stream';
@@ -70,18 +70,20 @@ export class Aggregator extends PassThrough {
 		this.aggregationList = new AggregationList();
 		this.queryStreams = new Set<Readable>();
 
+		const streamId = toStreamID(this.queryRequest.streamId);
+
 		let queryStream: Readable;
 		switch (this.queryRequest.queryOptions.queryType) {
 			case QueryType.Last:
 				queryStream = this.database.queryLast(
-					this.queryRequest.streamId,
+					streamId,
 					this.queryRequest.partition,
 					this.queryRequest.queryOptions.last
 				);
 				break;
 			case QueryType.From:
 				queryStream = this.database.queryRange(
-					this.queryRequest.streamId,
+					streamId,
 					this.queryRequest.partition,
 					this.queryRequest.queryOptions.from.timestamp,
 					this.queryRequest.queryOptions.from.sequenceNumber ??
@@ -94,7 +96,7 @@ export class Aggregator extends PassThrough {
 				break;
 			case QueryType.Range:
 				queryStream = this.database.queryRange(
-					this.queryRequest.streamId,
+					streamId,
 					this.queryRequest.partition,
 					this.queryRequest.queryOptions.from.timestamp,
 					this.queryRequest.queryOptions.from.sequenceNumber ??
@@ -235,7 +237,7 @@ export class Aggregator extends PassThrough {
 
 			// TODO: Handle an error if the pipe gets broken
 			const queryStream = this.database.queryRange(
-				this.queryRequest.streamId,
+				toStreamID(this.queryRequest.streamId),
 				this.queryRequest.partition,
 				readyFrom.timestamp,
 				readyFrom.sequenceNumber,
