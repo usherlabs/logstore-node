@@ -221,14 +221,16 @@ describe('http works', () => {
 	const createQueryUrl = async ({
 		type,
 		options,
+		streamId = testStream.id,
 	}: {
 		type: string;
 		options: any;
+		streamId?: string;
 	}) => {
 		return consumerLogStoreClient.createQueryUrl(
 			BROKER_URL,
 			{
-				streamId: testStream.id,
+				streamId,
 				partition: 0,
 			},
 			type,
@@ -244,20 +246,30 @@ describe('http works', () => {
 		fromTimestamp,
 		toTimestamp,
 		format,
+		streamId = testStream.id,
 	}: {
 		/// Number of messages to fetch just on the `last` query
 		lastCount: number;
 		fromTimestamp: number;
 		toTimestamp: number;
 		format?: 'raw' | 'object';
+		streamId?: string;
 	}) => {
 		const queryUrlLast = await createQueryUrl({
 			type: 'last',
-			options: { format, count: lastCount },
+			options: {
+				format,
+				count: lastCount,
+				streamId,
+			},
 		});
 		const queryUrlFrom = await createQueryUrl({
 			type: 'from',
-			options: { format, fromTimestamp },
+			options: {
+				format,
+				fromTimestamp,
+				streamId,
+			},
 		});
 		const queryUrlRange = await createQueryUrl({
 			type: 'range',
@@ -265,6 +277,7 @@ describe('http works', () => {
 				format,
 				fromTimestamp,
 				toTimestamp,
+				streamId,
 			},
 		});
 
@@ -583,7 +596,53 @@ describe('http works', () => {
 					// it's ready because the nodes are already connected to it
 					expect(res.data).toStrictEqual({ ready: true });
 				});
-		}, 9999999);
+		});
+	});
+
+	test('Owner address is case insensitive', async () => {
+		await publishMessages(BASE_NUMBER_OF_MESSAGES);
+		await sleep(1000);
+
+		// Define different cases for the owner address
+		const addresses = [
+			`0x${publisherAccount.address.slice(2).toLowerCase()}`,
+			`0x${publisherAccount.address.slice(2).toUpperCase()}`,
+		];
+		// as in <ownerAddress>/<streamPath>
+		const streamPath = testStream.id.slice(testStream.id.indexOf('/') + 1);
+		const streamIds = addresses.map((address) => {
+			// don't use toStreamID because it will convert to lowercase
+			return `${address}/${streamPath}`;
+		});
+
+		const queryUrlsLast = streamIds.map(
+			(streamId) =>
+				`${BROKER_URL}/stores/${encodeURIComponent(streamId)}/data/partitions/0/last?count=${BASE_NUMBER_OF_MESSAGES}`
+		);
+		const { token } = await consumerLogStoreClient.apiAuth();
+
+		// Perform queries using different cases of the owner address
+		const queryResponses = await Promise.all(
+			queryUrlsLast.map(async (url) => {
+				return axios
+					.get(url, {
+						headers: {
+							Authorization: `Basic ${token}`,
+						},
+					})
+					.then(({ data }) => data);
+			})
+		);
+
+		// assert response has data
+		expect(queryResponses[0].messages).toHaveLength(BASE_NUMBER_OF_MESSAGES);
+
+		// Assert that all responses are equal
+		queryResponses.forEach((response, index, responses) => {
+			if (index > 0) {
+				expect(response).toEqual(responses[0]);
+			}
+		});
 	});
 });
 
