@@ -173,7 +173,9 @@ export const createDataQueryEndpoint = (
 	};
 	metricsContext.addMetrics('broker.plugin.logstore', metrics);
 	return {
-		path: `/stores/:id/data/partitions/:partition/:queryType`,
+		// permit usage of slashes in paths
+		// \S = non-whitespace character, we use it because `.` doesn't work well with express in this context
+		path: `/stores/:id(\\S+\?)/data/partitions/:partition/:queryType`,
 		method: 'get',
 		requestHandlers: [
 			// We need to inject it here, because the execution context from

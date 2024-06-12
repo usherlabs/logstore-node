@@ -23,12 +23,14 @@ import {
 } from '@streamr/test-utils';
 import {
 	hexToBinary,
+	MetricsContext,
 	toEthereumAddress,
 	verifySignature,
 	wait,
 } from '@streamr/utils';
 import axios from 'axios';
 import { Wallet } from 'ethers';
+import { Request, RequestHandler, Response } from 'express';
 import { range } from 'lodash';
 import { Readable } from 'stream';
 
@@ -63,6 +65,32 @@ jest.mock('../../../../../src/plugins/logStore/http/constants', () => {
 		get EVENTS_PER_RESPONSE_LIMIT_ON_NON_STREAM() {
 			return mockTestLimit;
 		},
+	};
+});
+
+const dataQueryTestMiddleware = jest.fn();
+
+jest.mock('../../../../../src/plugins/logStore/http/dataQueryEndpoint', () => {
+	const originalModule = jest.requireActual(
+		'../../../../../src/plugins/logStore/http/dataQueryEndpoint'
+	);
+
+	const originalFn = (metrics: MetricsContext) => {
+		const originalResult = originalModule.createDataQueryEndpoint(metrics);
+		return {
+			...originalResult,
+			requestHandlers: [
+				(req, res, next) => {
+					dataQueryTestMiddleware(req, res, next);
+				},
+				...originalResult.requestHandlers,
+			] as RequestHandler[],
+		};
+	};
+
+	return {
+		...originalModule,
+		createDataQueryEndpoint: originalFn,
 	};
 });
 
@@ -643,6 +671,64 @@ describe('http works', () => {
 				expect(response).toEqual(responses[0]);
 			}
 		});
+
+		describe('endpoints are triggered as expected', () => {
+			test('encoded stream id', async () => {
+				// this test works by mocking the data query middleware
+				// in the log store module
+				// we expect the middleware to be called with the correct params at least once,
+				// indicating that the endpoint is triggered for this endpoint
+
+				const encodedStreamId = encodeURIComponent(testStream.id);
+				const { token } = await consumerLogStoreClient.apiAuth();
+				const endpoint = `${BROKER_URL}/stores/${encodedStreamId}/data/partitions/0/last`;
+				// mock endpoint handler
+				dataQueryTestMiddleware.mockImplementationOnce(
+					(req: Request, res: Response) => {
+						expect(req.params.id).toBe(testStream.id);
+						expect(req.params.partition).toBe('0');
+						expect(req.params.queryType).toBe('last');
+						res.json({ ready: true });
+					}
+				);
+
+				await axios
+					.get(endpoint, { headers: { authorization: `Bearer ${token}` } })
+					.then((res) => {
+						// it's ready because the nodes are already connected to it
+						expect(res.data).toStrictEqual({ ready: true });
+					});
+
+				expect(dataQueryTestMiddleware).toHaveBeenCalledTimes(1);
+			});
+
+			test('plain stream id', async () => {
+				// this test works by mocking the data query middleware
+				// in the log store module
+				// we expect the middleware to be called with the correct params at least once,
+				// indicating that the endpoint is triggered for this endpoint
+
+				const { token } = await consumerLogStoreClient.apiAuth();
+				const endpoint = `${BROKER_URL}/stores/${testStream.id}/data/partitions/0/last`;
+				// mock endpoint handler
+				dataQueryTestMiddleware.mockImplementationOnce(
+					(req: Request, res: Response) => {
+						expect(req.params.id).toBe(testStream.id);
+						expect(req.params.partition).toBe('0');
+						expect(req.params.queryType).toBe('last');
+						res.json({ ready: true });
+					}
+				);
+
+				await axios
+					.get(endpoint, { headers: { authorization: `Bearer ${token}` } })
+					.then((res) => {
+						// it's ready because the nodes are already connected to it
+						expect(res.data).toStrictEqual({ ready: true });
+					});
+				expect(dataQueryTestMiddleware).toHaveBeenCalledTimes(1);
+			});
+		})
 	});
 });
 
