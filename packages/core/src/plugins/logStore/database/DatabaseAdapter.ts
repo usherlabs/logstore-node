@@ -1,6 +1,7 @@
 import { MessageRef, StreamMessage } from '@streamr/protocol';
 import { Logger, ObservableEventEmitter } from '@streamr/utils';
 import { Readable } from 'stream';
+import { StreamID } from '@streamr/sdk';
 
 const logger = new Logger(module);
 
@@ -33,8 +34,10 @@ export abstract class DatabaseAdapter extends DatabaseEventEmitter {
 		super();
 	}
 
+	// Note: 	important to use `StreamID` for streamIds, because it checks the correct casing and format
+
 	abstract queryRange(
-		streamId: string,
+		streamId: StreamID,
 		partition: number,
 		fromTimestamp: number,
 		fromSequenceNo: number,
@@ -46,40 +49,40 @@ export abstract class DatabaseAdapter extends DatabaseEventEmitter {
 	): Readable;
 
 	abstract queryByMessageRefs(
-		streamId: string,
+		streamId: StreamID,
 		partition: number,
 		messageRefs: MessageRef[]
 	): Readable;
 
 	abstract queryFirst(
-		streamId: string,
+		streamId: StreamID,
 		partition: number,
 		requestCount: number
 	): Readable;
 
 	abstract queryLast(
-		streamId: string,
+		streamId: StreamID,
 		partition: number,
 		requestCount: number
 	): Readable;
 
 	abstract getFirstMessageDateInStream(
-		streamId: string,
+		streamId: StreamID,
 		partition: number
 	): Promise<number | null>;
 
 	abstract getLastMessageDateInStream(
-		streamId: string,
+		streamId: StreamID,
 		partition: number
 	): Promise<number | null>;
 
 	abstract getNumberOfMessagesInStream(
-		streamId: string,
+		streamId: StreamID,
 		partition: number
 	): Promise<number>;
 
 	abstract getTotalBytesInStream(
-		streamId: string,
+		streamId: StreamID,
 		partition: number
 	): Promise<number>;
 

@@ -249,14 +249,16 @@ describe('http works', () => {
 	const createQueryUrl = async ({
 		type,
 		options,
+		streamId = testStream.id,
 	}: {
 		type: string;
 		options: any;
+		streamId?: string;
 	}) => {
 		return consumerLogStoreClient.createQueryUrl(
 			BROKER_URL,
 			{
-				streamId: testStream.id,
+				streamId,
 				partition: 0,
 			},
 			type,
@@ -272,20 +274,30 @@ describe('http works', () => {
 		fromTimestamp,
 		toTimestamp,
 		format,
+		streamId = testStream.id,
 	}: {
 		/// Number of messages to fetch just on the `last` query
 		lastCount: number;
 		fromTimestamp: number;
 		toTimestamp: number;
 		format?: 'raw' | 'object';
+		streamId?: string;
 	}) => {
 		const queryUrlLast = await createQueryUrl({
 			type: 'last',
-			options: { format, count: lastCount },
+			options: {
+				format,
+				count: lastCount,
+				streamId,
+			},
 		});
 		const queryUrlFrom = await createQueryUrl({
 			type: 'from',
-			options: { format, fromTimestamp },
+			options: {
+				format,
+				fromTimestamp,
+				streamId,
+			},
 		});
 		const queryUrlRange = await createQueryUrl({
 			type: 'range',
@@ -293,6 +305,7 @@ describe('http works', () => {
 				format,
 				fromTimestamp,
 				toTimestamp,
+				streamId,
 			},
 		});
 
@@ -614,62 +627,108 @@ describe('http works', () => {
 		});
 	});
 
-	describe('endpoints are triggered as expected', () => {
-		test('encoded stream id', async () => {
-			// this test works by mocking the data query middleware
-			// in the log store module
-			// we expect the middleware to be called with the correct params at least once,
-			// indicating that the endpoint is triggered for this endpoint
+	test('Owner address is case insensitive', async () => {
+		await publishMessages(BASE_NUMBER_OF_MESSAGES);
+		await sleep(1000);
 
-			const encodedStreamId = encodeURIComponent(testStream.id);
-			const { token } = await consumerLogStoreClient.apiAuth();
-			const endpoint = `${BROKER_URL}/stores/${encodedStreamId}/data/partitions/0/last`;
-			// mock endpoint handler
-			dataQueryTestMiddleware.mockImplementationOnce(
-				(req: Request, res: Response) => {
-					expect(req.params.id).toBe(testStream.id);
-					expect(req.params.partition).toBe('0');
-					expect(req.params.queryType).toBe('last');
-					res.json({ ready: true });
-				}
-			);
-
-			await axios
-				.get(endpoint, { headers: { authorization: `Bearer ${token}` } })
-				.then((res) => {
-					// it's ready because the nodes are already connected to it
-					expect(res.data).toStrictEqual({ ready: true });
-				});
-
-			expect(dataQueryTestMiddleware).toHaveBeenCalledTimes(1);
+		// Define different cases for the owner address
+		const addresses = [
+			`0x${publisherAccount.address.slice(2).toLowerCase()}`,
+			`0x${publisherAccount.address.slice(2).toUpperCase()}`,
+		];
+		// as in <ownerAddress>/<streamPath>
+		const streamPath = testStream.id.slice(testStream.id.indexOf('/') + 1);
+		const streamIds = addresses.map((address) => {
+			// don't use toStreamID because it will convert to lowercase
+			return `${address}/${streamPath}`;
 		});
 
-		test('plain stream id', async () => {
-			// this test works by mocking the data query middleware
-			// in the log store module
-			// we expect the middleware to be called with the correct params at least once,
-			// indicating that the endpoint is triggered for this endpoint
+		const queryUrlsLast = streamIds.map(
+			(streamId) =>
+				`${BROKER_URL}/stores/${encodeURIComponent(streamId)}/data/partitions/0/last?count=${BASE_NUMBER_OF_MESSAGES}`
+		);
+		const { token } = await consumerLogStoreClient.apiAuth();
 
-			const { token } = await consumerLogStoreClient.apiAuth();
-			const endpoint = `${BROKER_URL}/stores/${testStream.id}/data/partitions/0/last`;
-			// mock endpoint handler
-			dataQueryTestMiddleware.mockImplementationOnce(
-				(req: Request, res: Response) => {
-					expect(req.params.id).toBe(testStream.id);
-					expect(req.params.partition).toBe('0');
-					expect(req.params.queryType).toBe('last');
-					res.json({ ready: true });
-				}
-			);
+		// Perform queries using different cases of the owner address
+		const queryResponses = await Promise.all(
+			queryUrlsLast.map(async (url) => {
+				return axios
+					.get(url, {
+						headers: {
+							Authorization: `Basic ${token}`,
+						},
+					})
+					.then(({ data }) => data);
+			})
+		);
 
-			await axios
-				.get(endpoint, { headers: { authorization: `Bearer ${token}` } })
-				.then((res) => {
-					// it's ready because the nodes are already connected to it
-					expect(res.data).toStrictEqual({ ready: true });
-				});
-			expect(dataQueryTestMiddleware).toHaveBeenCalledTimes(1);
+		// assert response has data
+		expect(queryResponses[0].messages).toHaveLength(BASE_NUMBER_OF_MESSAGES);
+
+		// Assert that all responses are equal
+		queryResponses.forEach((response, index, responses) => {
+			if (index > 0) {
+				expect(response).toEqual(responses[0]);
+			}
 		});
+
+		describe('endpoints are triggered as expected', () => {
+			test('encoded stream id', async () => {
+				// this test works by mocking the data query middleware
+				// in the log store module
+				// we expect the middleware to be called with the correct params at least once,
+				// indicating that the endpoint is triggered for this endpoint
+
+				const encodedStreamId = encodeURIComponent(testStream.id);
+				const { token } = await consumerLogStoreClient.apiAuth();
+				const endpoint = `${BROKER_URL}/stores/${encodedStreamId}/data/partitions/0/last`;
+				// mock endpoint handler
+				dataQueryTestMiddleware.mockImplementationOnce(
+					(req: Request, res: Response) => {
+						expect(req.params.id).toBe(testStream.id);
+						expect(req.params.partition).toBe('0');
+						expect(req.params.queryType).toBe('last');
+						res.json({ ready: true });
+					}
+				);
+
+				await axios
+					.get(endpoint, { headers: { authorization: `Bearer ${token}` } })
+					.then((res) => {
+						// it's ready because the nodes are already connected to it
+						expect(res.data).toStrictEqual({ ready: true });
+					});
+
+				expect(dataQueryTestMiddleware).toHaveBeenCalledTimes(1);
+			});
+
+			test('plain stream id', async () => {
+				// this test works by mocking the data query middleware
+				// in the log store module
+				// we expect the middleware to be called with the correct params at least once,
+				// indicating that the endpoint is triggered for this endpoint
+
+				const { token } = await consumerLogStoreClient.apiAuth();
+				const endpoint = `${BROKER_URL}/stores/${testStream.id}/data/partitions/0/last`;
+				// mock endpoint handler
+				dataQueryTestMiddleware.mockImplementationOnce(
+					(req: Request, res: Response) => {
+						expect(req.params.id).toBe(testStream.id);
+						expect(req.params.partition).toBe('0');
+						expect(req.params.queryType).toBe('last');
+						res.json({ ready: true });
+					}
+				);
+
+				await axios
+					.get(endpoint, { headers: { authorization: `Bearer ${token}` } })
+					.then((res) => {
+						// it's ready because the nodes are already connected to it
+						expect(res.data).toStrictEqual({ ready: true });
+					});
+				expect(dataQueryTestMiddleware).toHaveBeenCalledTimes(1);
+			});
+		})
 	});
 });
 
