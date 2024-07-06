@@ -297,7 +297,7 @@ export class SQLiteDBAdapter extends DatabaseAdapter {
 			payload: payload,
 			content_bytes: payload.length,
 		};
-		await this.dbClient.insert(streamDataTable).values(record);
+		await this.dbClient.insert(streamDataTable).values(record).onConflictDoNothing();
 
 		this.emit('write', record.payload);
 

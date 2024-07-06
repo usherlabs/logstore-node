@@ -2,6 +2,7 @@
  * Endpoints for RESTful data requests
  */
 import {
+	Logger,
 	MetricsContext,
 	MetricsDefinition,
 	RateMetric,
@@ -20,6 +21,7 @@ import { sendError, sendSuccess } from './httpHelpers';
 import { injectLogstoreContextMiddleware } from './injectLogstoreContextMiddleware';
 import { FromRequest, LastRequest, RangeRequest } from './requestTypes';
 
+const logger = new Logger(module);
 
 // TODO: move this to protocol-js
 export const MIN_SEQUENCE_NUMBER_VALUE = 0;
@@ -100,6 +102,10 @@ const getDataForRequest = async (
 
 const createHandler = (metrics: MetricsDefinition): RequestHandler => {
 	return async (req: Request, res: Response) => {
+		logger.debug('Received HTTP data query request', {
+			query: req.query,
+			params: req.params,
+		});
 		if (Number.isNaN(parseInt(req.params.partition))) {
 			sendError(
 				`Path parameter "partition" not a number: ${req.params.partition}`,
@@ -167,7 +173,9 @@ export const createDataQueryEndpoint = (
 	};
 	metricsContext.addMetrics('broker.plugin.logstore', metrics);
 	return {
-		path: `/stores/:id/data/partitions/:partition/:queryType`,
+		// permit usage of slashes in paths
+		// \S = non-whitespace character, we use it because `.` doesn't work well with express in this context
+		path: `/stores/:id(\\S+\?)/data/partitions/:partition/:queryType`,
 		method: 'get',
 		requestHandlers: [
 			// We need to inject it here, because the execution context from

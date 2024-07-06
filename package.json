@@ -7,6 +7,7 @@
 	"author": "Ryan Soury <ryan@usher.so>",
 	"license": "GPL-3.0",
 	"scripts": {
+		"lsn": "node ./packages/core/dist/bin/logstore-broker.js",
 		"build": "npx turbo run build --force",
 		"clean": "del packages/*/node_modules packages/*/dist node_modules",
 		"format": "prettier --write \"**/*.{js,jsx,mjs,ts,tsx,json,css,scss,md,sol}\""

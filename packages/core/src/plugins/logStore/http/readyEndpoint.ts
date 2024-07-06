@@ -102,7 +102,7 @@ export const createReadyEndpoint = (): HttpServerEndpoint => {
 	const ctx = logStoreContext.getStore();
 
 	return {
-		path: `/stores/:id/partitions/:partition/ready`,
+		path: `/stores/:id(\\S+\?)/partitions/:partition/ready`,
 		method: 'get',
 		requestHandlers: [
 			// We need to inject it here, because the execution context from
