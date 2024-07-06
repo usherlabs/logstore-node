@@ -1,5 +1,4 @@
 import { QueryRequest, QueryResponse, QueryType } from '@logsn/protocol';
-import { toStreamID } from '@streamr/protocol';
 import { convertBytesToStreamMessage } from '@streamr/trackerless-network';
 import { Logger } from '@streamr/utils';
 import { PassThrough, pipeline, Readable } from 'stream';
@@ -51,20 +50,18 @@ export class Propagator {
 		this.propagationStream = new PassThrough({ objectMode: true });
 		this.queryStreams = new Set<Readable>();
 
-		const streamId = toStreamID(this.queryRequest.streamId);
-
 		let queryStream: Readable;
 		switch (this.queryRequest.queryOptions.queryType) {
 			case QueryType.Last:
 				queryStream = this.database.queryLast(
-					streamId,
+					this.queryRequest.streamId,
 					this.queryRequest.partition,
 					this.queryRequest.queryOptions.last
 				);
 				break;
 			case QueryType.From:
 				queryStream = this.database.queryRange(
-					streamId,
+					this.queryRequest.streamId,
 					this.queryRequest.partition,
 					this.queryRequest.queryOptions.from.timestamp,
 					this.queryRequest.queryOptions.from.sequenceNumber ??
@@ -77,7 +74,7 @@ export class Propagator {
 				break;
 			case QueryType.Range:
 				queryStream = this.database.queryRange(
-					streamId,
+					this.queryRequest.streamId,
 					this.queryRequest.partition,
 					this.queryRequest.queryOptions.from.timestamp,
 					this.queryRequest.queryOptions.from.sequenceNumber ??
@@ -153,7 +150,7 @@ export class Propagator {
 
 		if (messageRefs.length) {
 			const queryStream = this.database.queryByMessageRefs(
-				toStreamID(this.queryRequest.streamId),
+				this.queryRequest.streamId,
 				this.queryRequest.partition,
 				messageRefs
 			);

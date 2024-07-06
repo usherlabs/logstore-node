@@ -144,17 +144,12 @@ export class LogStoreNetworkPlugin extends LogStorePlugin {
 			{
 				onStreamPartAdded: async (streamPart) => {
 					try {
-						await node
-							.join(streamPart, { minCount: 1, timeout: 5000 })
-							.catch(() => {}); // best-effort, can time out. No-op on error
+						await node.join(streamPart, { minCount: 1, timeout: 5000 }); // best-effort, can time out
 						await this.nodeStreamsRegistry.registerStreamId(
 							StreamPartIDUtils.getStreamID(streamPart)
 						);
-					} catch (e) {
-						logger.error('error after joining stream', {
-							error: e,
-							streamPart,
-						});
+					} catch (_e) {
+						// no-op
 					}
 					try {
 						// TODO: Temporary disabled sending of assignment messages through the system stream.

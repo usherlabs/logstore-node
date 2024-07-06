@@ -84,17 +84,6 @@ describe('SQLite', () => {
 		await testDb.store(createMockMessage(1));
 	});
 
-	test('duplicate messages are ignored', async () => {
-		const testDb = new SQLiteDBAdapter({ type: 'sqlite', dataPath: dbPath });
-		await testDb.store(createMockMessage(1));
-		await testDb.store(createMockMessage(1));
-		// try querying more than necessary
-		const stream = testDb.queryLast(MOCK_STREAM_ID, MOCK_PARTITION, 5);
-		const contentValues = await streamToContentValues(stream);
-		// there should be only one message
-		expect(contentValues).toEqual([1, 0]);
-	})
-
 	describe('methods test', () => {
 		let db: SQLiteDBAdapter;
 
