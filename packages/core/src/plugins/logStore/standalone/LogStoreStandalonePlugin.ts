@@ -4,15 +4,13 @@ import {
 	toStreamID,
 	toStreamPartID,
 } from '@streamr/protocol';
-import { executeSafePromise, Logger } from '@streamr/utils';
+import { executeSafePromise } from '@streamr/utils';
 import _ from 'lodash';
 
 import { PluginOptions, StandaloneModeConfig } from '../../../Plugin';
 import { BaseQueryRequestManager } from '../BaseQueryRequestManager';
 import { LogStorePlugin } from '../LogStorePlugin';
 import { LogStoreStandaloneConfig } from './LogStoreStandaloneConfig';
-
-const logger = new Logger(module);
 
 export class LogStoreStandalonePlugin extends LogStorePlugin {
 	private standaloneQueryRequestManager: BaseQueryRequestManager;
@@ -67,17 +65,12 @@ export class LogStoreStandalonePlugin extends LogStorePlugin {
 		const logStoreConfig = new LogStoreStandaloneConfig(streamPartIds, {
 			onStreamPartAdded: async (streamPart) => {
 				try {
-					await node
-						.join(streamPart, { minCount: 1, timeout: 5000 })
-						.catch(() => {}); // best-effort, can time out. No-op on error
+					await node.join(streamPart, { minCount: 1, timeout: 5000 }); // best-effort, can time out
 					await this.nodeStreamsRegistry.registerStreamId(
 						StreamPartIDUtils.getStreamID(streamPart)
 					);
-				} catch (e) {
-					logger.error('error after joining stream', {
-						error: e,
-						streamPart,
-					});
+				} catch (_e) {
+					// no-op
 				}
 			},
 			onStreamPartRemoved: async (streamPart) => {

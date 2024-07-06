@@ -1,4 +1,4 @@
-import { StreamMessage, toStreamID } from '@streamr/protocol';
+import { StreamMessage } from '@streamr/protocol';
 import { Logger, MetricsContext, RateMetric } from '@streamr/utils';
 import { Readable } from 'stream';
 
@@ -58,11 +58,10 @@ export class LogStore extends DatabaseEventEmitter {
 		partition: number,
 		requestCount: number
 	): Readable {
-		const verifiedStreamId = toStreamID(streamId);
 		if (requestCount < 0) {
-			return this.db.queryFirst(verifiedStreamId, partition, -requestCount);
+			return this.db.queryFirst(streamId, partition, -requestCount);
 		} else {
-			return this.db.queryLast(verifiedStreamId, partition, requestCount);
+			return this.db.queryLast(streamId, partition, requestCount);
 		}
 	}
 
@@ -85,7 +84,7 @@ export class LogStore extends DatabaseEventEmitter {
 
 		return this.db
 			.queryRange(
-				toStreamID(streamId),
+				streamId,
 				partition,
 				fromTimestamp,
 				fromSequenceNo,
@@ -131,7 +130,7 @@ export class LogStore extends DatabaseEventEmitter {
 		}
 		return this.db
 			.queryRange(
-				toStreamID(streamId),
+				streamId,
 				partition,
 				fromTimestamp,
 				fromSequenceNo,
@@ -167,7 +166,7 @@ export class LogStore extends DatabaseEventEmitter {
 		partition: number
 	): Promise<number> {
 		const firstMessageDateInStream = await this.db.getFirstMessageDateInStream(
-			toStreamID(streamId),
+			streamId,
 			partition
 		);
 		return firstMessageDateInStream
@@ -180,7 +179,7 @@ export class LogStore extends DatabaseEventEmitter {
 		partition: number
 	): Promise<number> {
 		const lastMessageDateInStream = await this.db.getLastMessageDateInStream(
-			toStreamID(streamId),
+			streamId,
 			partition
 		);
 		return lastMessageDateInStream
@@ -192,14 +191,14 @@ export class LogStore extends DatabaseEventEmitter {
 		streamId: string,
 		partition: number
 	): Promise<number> {
-		return this.db.getNumberOfMessagesInStream(toStreamID(streamId), partition);
+		return this.db.getNumberOfMessagesInStream(streamId, partition);
 	}
 
 	async getTotalBytesInStream(
 		streamId: string,
 		partition: number
 	): Promise<number> {
-		return this.db.getTotalBytesInStream(toStreamID(streamId), partition);
+		return this.db.getTotalBytesInStream(streamId, partition);
 	}
 
 	public async close(): Promise<void> {

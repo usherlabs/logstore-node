@@ -1,7 +1,5 @@
 import StreamrClient, { Stream } from '@streamr/sdk';
-import { Logger, ObservableEventEmitter } from '@streamr/utils';
-
-const logger = new Logger(module);
+import { ObservableEventEmitter } from '@streamr/utils';
 
 export class NodeStreamsRegistry extends ObservableEventEmitter<{
 	registerStream: (stream: Stream) => void;
@@ -24,8 +22,6 @@ export class NodeStreamsRegistry extends ObservableEventEmitter<{
 		const stream = await this.streamrClient.getStream(streamId);
 		this.registeredStreams.set(streamId, stream);
 
-	  logger.info('Registered stream to be tracked', { streamId });
-
 		this.emit('registerStream', stream);
 	}
 
@@ -35,8 +31,6 @@ export class NodeStreamsRegistry extends ObservableEventEmitter<{
 			return;
 		}
 		this.registeredStreams.delete(streamId);
-
-		logger.info('Unregistered stream from being tracked', { streamId });
 
 		this.emit('unregisterStream', stream);
 	}
