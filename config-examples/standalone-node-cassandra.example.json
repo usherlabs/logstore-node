@@ -26,11 +26,6 @@
 				"password": "",
 				"keyspace": "logstore_1",
 				"datacenter": "datacenter1"
-			},
-			"programs": {
-				"chainRpcUrls": {
-					"137": "https://polygon.llamarpc.com"
-				}
 			}
 		}
 	}

@@ -22,11 +22,6 @@
 			"db": {
 				"type": "sqlite",
 				"dataPath": "~/data/logstore-node.db"
-			},
-			"programs": {
-				"chainRpcUrls": {
-					"137": "https://polygon.llamarpc.com"
-				}
 			}
 		}
 	}
