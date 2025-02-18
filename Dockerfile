@@ -3,9 +3,6 @@ FROM node:18.18-buster
 RUN apt update
 RUN apt install -y libsecret-1-dev
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
-RUN wget -O - https://bootstrap.pypa.io/get-pip.py | python
-
 RUN npm i -g pnpm
 
 USER node
